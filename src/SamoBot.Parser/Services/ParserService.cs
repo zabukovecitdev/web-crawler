@@ -7,6 +7,7 @@ using SamoBot.Infrastructure.Data.Abstractions;
 using SamoBot.Infrastructure.Database;
 using SamoBot.Infrastructure.Models;
 using SamoBot.Infrastructure.Options;
+using SamoBot.Infrastructure.Services.Abstractions;
 using SamoBot.Infrastructure.Storage.Abstractions;
 using SamoBot.Infrastructure.Validators;
 
@@ -54,6 +55,7 @@ public class ParserService : IParserService
             var urlFetchRepository = scope.ServiceProvider.GetRequiredService<IUrlFetchRepository>();
             var discoveredUrlRepository = scope.ServiceProvider.GetRequiredService<IDiscoveredUrlRepository>();
             var parsedDocumentRepository = scope.ServiceProvider.GetRequiredService<IParsedDocumentRepository>();
+            var indexJobService = scope.ServiceProvider.GetRequiredService<IIndexJobService>();
             var htmlParser = scope.ServiceProvider.GetRequiredService<IHtmlParser>();
 
             var unparsedFetches = await urlFetchRepository.GetUnparsedHtmlFetches(BatchSize, transaction, cancellationToken);
@@ -78,7 +80,7 @@ public class ParserService : IParserService
 
                 try
                 {
-                    await ProcessFetch(fetch, htmlParser, urlFetchRepository, discoveredUrlRepository, parsedDocumentRepository, cancellationToken);
+                    await ProcessFetch(fetch, htmlParser, urlFetchRepository, discoveredUrlRepository, parsedDocumentRepository, indexJobService, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -102,6 +104,7 @@ public class ParserService : IParserService
         IUrlFetchRepository urlFetchRepository,
         IDiscoveredUrlRepository discoveredUrlRepository,
         IParsedDocumentRepository parsedDocumentRepository,
+        IIndexJobService indexJobService,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(fetch.ObjectName))
@@ -161,11 +164,13 @@ public class ParserService : IParserService
                 _logger.LogInformation("Skipping link extraction for fetch {FetchId} due to nofollow directive", fetch.Id);
             }
 
-            await parsedDocumentRepository.SaveParsedDocument(fetch.Id, parsedDocument, cancellationToken);
+            var documentId = await parsedDocumentRepository.SaveParsedDocument(fetch.Id, parsedDocument, cancellationToken);
+
+            await indexJobService.QueueForIndexing(documentId, cancellationToken);
 
             await urlFetchRepository.MarkAsParsed(fetch.Id, cancellationToken);
 
-            _logger.LogDebug("Saved parsed document and marked fetch {FetchId} as parsed", fetch.Id);
+            _logger.LogDebug("Saved parsed document {DocumentId} and queued for indexing, marked fetch {FetchId} as parsed", documentId, fetch.Id);
         }
         catch (Minio.Exceptions.ObjectNotFoundException ex)
         {

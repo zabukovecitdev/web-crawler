@@ -25,8 +25,6 @@ public class ParsedDocumentEntity
     public string? TwitterCardData { get; set; }
     public string? JsonLdData { get; set; }
     public DateTimeOffset? ParsedAt { get; set; }
-    public DateTimeOffset? IndexedAt { get; set; }
-    public DateTimeOffset? IndexingStartedAt { get; set; }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

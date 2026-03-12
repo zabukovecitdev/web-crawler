@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Meilisearch;
 using SamoBot.Infrastructure.Data;
-using SamoBot.Infrastructure.Data.Abstractions;
 using SamoBot.Infrastructure.Models;
 using SamoBot.Infrastructure.Options;
 using SamoBot.Infrastructure.Services.Abstractions;
@@ -11,18 +10,15 @@ namespace SamoBot.Infrastructure.Services;
 
 public class IndexService : IIndexerService
 {
-    private readonly IParsedDocumentRepository _parsedDocumentRepository;
     private readonly MeilisearchClient _meilisearchClient;
     private readonly MeilisearchOptions _options;
     private readonly ILogger<IndexService> _logger;
 
     public IndexService(
-        IParsedDocumentRepository parsedDocumentRepository,
         MeilisearchClient meilisearchClient,
         IOptions<MeilisearchOptions> options,
         ILogger<IndexService> logger)
     {
-        _parsedDocumentRepository = parsedDocumentRepository;
         _meilisearchClient = meilisearchClient;
         _options = options.Value;
         _logger = logger;
@@ -50,14 +46,49 @@ public class IndexService : IIndexerService
         try
         {
             var index = _meilisearchClient.Index(_options.IndexName);
-            await index.AddDocumentsAsync(meilisearchDocs, cancellationToken: cancellationToken);
-            var ids = list.Select(d => d.Id).ToList();
-            await _parsedDocumentRepository.MarkAsIndexed(ids, cancellationToken);
+            var taskInfo = await index.AddDocumentsAsync(meilisearchDocs, primaryKey: "id", cancellationToken: cancellationToken);
+            
+            var task = await _meilisearchClient.WaitForTaskAsync(taskInfo.TaskUid, cancellationToken: cancellationToken);
+            if (task.Status == TaskInfoStatus.Failed)
+            {
+                var errorMessage = task.Error != null && task.Error.TryGetValue("message", out var msg) ? msg : "Unknown error";
+                throw new InvalidOperationException($"Meilisearch indexing failed: {errorMessage}");
+            }
+            
             _logger.LogInformation("Indexed {Count} documents in Meilisearch", list.Count);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Meilisearch unreachable or error; skipping index of {Count} documents", list.Count);
+            throw;
+        }
+    }
+
+    public async Task Delete(IEnumerable<int> documentIds, CancellationToken cancellationToken = default)
+    {
+        var ids = documentIds.ToList();
+        if (ids.Count == 0)
+            return;
+
+        try
+        {
+            var index = _meilisearchClient.Index(_options.IndexName);
+            var stringIds = ids.Select(id => id.ToString()).ToList();
+            var taskInfo = await index.DeleteDocumentsAsync(stringIds, cancellationToken);
+            
+            var task = await _meilisearchClient.WaitForTaskAsync(taskInfo.TaskUid, cancellationToken: cancellationToken);
+            if (task.Status == TaskInfoStatus.Failed)
+            {
+                var errorMessage = task.Error != null && task.Error.TryGetValue("message", out var msg) ? msg : "Unknown error";
+                throw new InvalidOperationException($"Meilisearch deletion failed: {errorMessage}");
+            }
+            
+            _logger.LogInformation("Deleted {Count} documents from Meilisearch", ids.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Meilisearch unreachable or error; failed to delete {Count} documents", ids.Count);
+            throw;
         }
     }
 }

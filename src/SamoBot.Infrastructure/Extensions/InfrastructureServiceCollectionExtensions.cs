@@ -126,6 +126,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDiscoveredUrlRepository, DiscoveredUrlRepository>();
         services.AddScoped<IUrlFetchRepository, UrlFetchRepository>();
         services.AddScoped<IParsedDocumentRepository, ParsedDocumentRepository>();
+        services.AddScoped<IIndexJobRepository, IndexJobRepository>();
+        services.AddScoped<IIndexJobService, IndexJobService>();
         services.AddSingleton<MeilisearchClient>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<MeilisearchOptions>>().Value;
