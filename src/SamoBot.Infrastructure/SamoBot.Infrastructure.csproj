@@ -32,6 +32,7 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.11.71" />
     <PackageReference Include="RobotsTxtCore" Version="3.0.0" />
     <PackageReference Include="MeiliSearch" Version="0.18.0" />
+    <PackageReference Include="Neo4j.Driver" Version="5.28.0" />
   </ItemGroup>
 
 </Project>

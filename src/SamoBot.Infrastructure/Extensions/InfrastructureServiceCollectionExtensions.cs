@@ -1,18 +1,21 @@
 using System.Data;
 using System.Text.Json;
 using Dapper;
+using Meilisearch;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Minio;
+using Neo4j.Driver;
 using Polly;
 using SamoBot.Infrastructure.Abstractions;
 using SamoBot.Infrastructure.Cache;
 using SamoBot.Infrastructure.Data;
 using SamoBot.Infrastructure.Data.Abstractions;
 using SamoBot.Infrastructure.Database;
-using Meilisearch;
+using SamoBot.Infrastructure.Graph;
+using SamoBot.Infrastructure.Graph.Abstractions;
 using SamoBot.Infrastructure.Options;
 using SamoBot.Infrastructure.Parsers;
 using SamoBot.Infrastructure.Policies;
@@ -52,6 +55,8 @@ public static class InfrastructureServiceCollectionExtensions
             configuration.GetSection(RedisOptions.SectionName));
         services.Configure<MeilisearchOptions>(
             configuration.GetSection(MeilisearchOptions.SectionName));
+        services.Configure<Neo4jOptions>(
+            configuration.GetSection(Neo4jOptions.SectionName));
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
@@ -133,6 +138,29 @@ public static class InfrastructureServiceCollectionExtensions
             var options = sp.GetRequiredService<IOptions<MeilisearchOptions>>().Value;
             return new MeilisearchClient(options.Host, options.ApiKey);
         });
+        services.AddSingleton<IDriver?>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<Neo4jOptions>>().Value;
+            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Neo4j");
+            if (!opts.Enabled) { logger.LogWarning("Neo4j disabled."); return null; }
+            try
+            {
+                return GraphDatabase.Driver(opts.Uri, AuthTokens.Basic(opts.Username, opts.Password));
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to create Neo4j driver. Graph writes skipped.");
+                return null;
+            }
+        });
+        services.AddScoped<IPageGraphRepository>(sp =>
+        {
+            var driver = sp.GetService<IDriver?>();
+            return driver is null
+                ? new NullPageGraphRepository()
+                : new PageGraphRepository(driver, sp.GetRequiredService<ILogger<PageGraphRepository>>());
+        });
+        services.AddHostedService<GraphConstraintInitializer>();
         services.AddScoped<IIndexerService, IndexService>();
         services.AddScoped<IUrlFetchService, UrlFetchService>();
         services.AddSingleton<IHtmlContentValidator, HtmlContentValidator>();

@@ -94,6 +94,10 @@ services:
       - Minio__Port=9000
       - Minio__AccessKey=minioadmin
       - Minio__SecretKey=minioadmin
+      - Neo4j__Uri=bolt://neo4j:7687
+      - Neo4j__Username=neo4j
+      - Neo4j__Password=password
+      - Neo4j__Enabled=true
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -105,6 +109,8 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+      neo4j:
+        condition: service_healthy
     networks:
       - frontend
     profiles: ["legacy"]
@@ -219,12 +225,32 @@ services:
       - frontend
     restart: unless-stopped
 
+  neo4j:
+    image: neo4j:5
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc"]'
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - frontend
+
 volumes:
   rabbitmq_data:
   postgres_data:
   minio_data:
   redis_data:
   meilisearch_data:
+  neo4j_data:
 
 networks:
   frontend:

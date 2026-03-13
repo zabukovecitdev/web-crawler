@@ -5,6 +5,7 @@ using Npgsql;
 using SamoBot.Infrastructure.Abstractions;
 using SamoBot.Infrastructure.Data.Abstractions;
 using SamoBot.Infrastructure.Database;
+using SamoBot.Infrastructure.Graph.Abstractions;
 using SamoBot.Infrastructure.Models;
 using SamoBot.Infrastructure.Options;
 using SamoBot.Infrastructure.Services.Abstractions;
@@ -57,6 +58,7 @@ public class ParserService : IParserService
             var parsedDocumentRepository = scope.ServiceProvider.GetRequiredService<IParsedDocumentRepository>();
             var indexJobService = scope.ServiceProvider.GetRequiredService<IIndexJobService>();
             var htmlParser = scope.ServiceProvider.GetRequiredService<IHtmlParser>();
+            var pageGraphRepository = scope.ServiceProvider.GetRequiredService<IPageGraphRepository>();
 
             var unparsedFetches = await urlFetchRepository.GetUnparsedHtmlFetches(BatchSize, transaction, cancellationToken);
             var fetchList = unparsedFetches.ToList();
@@ -80,7 +82,7 @@ public class ParserService : IParserService
 
                 try
                 {
-                    await ProcessFetch(fetch, htmlParser, urlFetchRepository, discoveredUrlRepository, parsedDocumentRepository, indexJobService, cancellationToken);
+                    await ProcessFetch(fetch, htmlParser, urlFetchRepository, discoveredUrlRepository, parsedDocumentRepository, indexJobService, pageGraphRepository, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -105,6 +107,7 @@ public class ParserService : IParserService
         IDiscoveredUrlRepository discoveredUrlRepository,
         IParsedDocumentRepository parsedDocumentRepository,
         IIndexJobService indexJobService,
+        IPageGraphRepository pageGraphRepository,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(fetch.ObjectName))
@@ -167,6 +170,25 @@ public class ParserService : IParserService
             var documentId = await parsedDocumentRepository.SaveParsedDocument(fetch.Id, parsedDocument, cancellationToken);
 
             await indexJobService.QueueForIndexing(documentId, cancellationToken);
+
+            try
+            {
+                if (parsedDocument.Links.Count > 0)
+                {
+                    await pageGraphRepository.UpsertPageLinksAsync(
+                        discoveredUrl.Url,
+                        discoveredUrl.NormalizedUrl ?? discoveredUrl.Url,
+                        sourceUri.Host,
+                        fetch.DiscoveredUrlId,
+                        documentId,
+                        parsedDocument.Links,
+                        cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to write links to Neo4j for fetch {FetchId}", fetch.Id);
+            }
 
             await urlFetchRepository.MarkAsParsed(fetch.Id, cancellationToken);
 
