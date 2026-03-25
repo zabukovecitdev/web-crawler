@@ -14,7 +14,8 @@ builder.Configuration
     .AddJsonFile($"secrets.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddMeilisearch(builder.Configuration);
 builder.Services.AddHostedService<IndexerWorker>();
 
 builder.Logging.ClearProviders();

@@ -15,7 +15,12 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddRabbitMq(builder.Configuration);
+builder.Services.AddMinioStorage(builder.Configuration);
+builder.Services.AddCrawling(builder.Configuration);
+builder.Services.AddNeo4j(builder.Configuration);
 builder.Services.AddHostedService<MinioBucketInitializationService>();
 builder.Services.AddParserServices();
 builder.Services.AddHostedService<ParserWorker>();

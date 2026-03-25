@@ -17,7 +17,11 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddRabbitMq(builder.Configuration);
+builder.Services.AddMinioStorage(builder.Configuration);
+builder.Services.AddCrawling(builder.Configuration);
 builder.Services.AddSingleton<IMessageConsumer, UrlDiscoveryConsumer>();
 builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 builder.Services.AddParserServices();

@@ -15,7 +15,8 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddRabbitMq(builder.Configuration);
 builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 builder.Services.AddHostedService<SchedulerWorker>();
 builder.Services.AddHostedService<OrphanedInFlightWorker>();

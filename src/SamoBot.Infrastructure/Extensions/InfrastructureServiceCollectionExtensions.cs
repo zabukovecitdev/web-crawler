@@ -33,30 +33,12 @@ namespace SamoBot.Infrastructure.Extensions;
 
 public static class InfrastructureServiceCollectionExtensions
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        // So that JsonElement is sent as PostgreSQL JSONB when used as a parameter (e.g. RobotsTxtRepository.SaveAsync).
         SqlMapper.AddTypeHandler<JsonElement>(new DapperJsonElementTypeHandler());
-        services.Configure<MessageBrokerOptions>(
-            configuration.GetSection(MessageBrokerOptions.SectionName));
-        services.Configure<RabbitMQConnectionOptions>(
-            configuration.GetSection(RabbitMQConnectionOptions.SectionName));
-        services.Configure<DiscoveredUrlQueueOptions>(
-            configuration.GetSection(DiscoveredUrlQueueOptions.SectionName));
-        services.Configure<ScheduledUrlQueueOptions>(
-            configuration.GetSection(ScheduledUrlQueueOptions.SectionName));
+
         services.Configure<DatabaseOptions>(
             configuration.GetSection(DatabaseOptions.SectionName));
-        services.Configure<MinioOptions>(
-            configuration.GetSection(MinioOptions.SectionName));
-        services.Configure<CrawlerOptions>(
-            configuration.GetSection(CrawlerOptions.SectionName));
-        services.Configure<RedisOptions>(
-            configuration.GetSection(RedisOptions.SectionName));
-        services.Configure<MeilisearchOptions>(
-            configuration.GetSection(MeilisearchOptions.SectionName));
-        services.Configure<Neo4jOptions>(
-            configuration.GetSection(Neo4jOptions.SectionName));
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
@@ -75,7 +57,20 @@ public static class InfrastructureServiceCollectionExtensions
             return new QueryFactory(connection, compiler);
         });
 
-        // Redis connection - optional, application will work without it
+        services.AddScoped<IDiscoveredUrlRepository, DiscoveredUrlRepository>();
+        services.AddScoped<IUrlFetchRepository, UrlFetchRepository>();
+        services.AddScoped<IParsedDocumentRepository, ParsedDocumentRepository>();
+        services.AddScoped<IIndexJobRepository, IndexJobRepository>();
+        services.AddScoped<IIndexJobService, IndexJobService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddRedisCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<RedisOptions>(
+            configuration.GetSection(RedisOptions.SectionName));
+
         services.AddSingleton<IConnectionMultiplexer?>(sp =>
         {
             try
@@ -83,18 +78,14 @@ public static class InfrastructureServiceCollectionExtensions
                 var options = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
                 var logger = loggerFactory.CreateLogger("Redis");
-                
-                var configuration = ConfigurationOptions.Parse(options.ConnectionString);
-                configuration.DefaultDatabase = options.Database;
-                configuration.AbortOnConnectFail = false; // Don't abort on connect failure - allows app to start
-                configuration.ConnectRetry = 3; // Retry connection attempts
-                configuration.ConnectTimeout = 5000; // 5 second timeout
-                
-                var multiplexer = ConnectionMultiplexer.Connect(configuration);
-                
-                // ConnectionMultiplexer.Connect() with AbortOnConnectFail=false won't throw,
-                // but connection might not be ready immediately. DomainRateLimiter will check
-                // IsConnected on each operation and fallback to in-memory if not connected.
+
+                var redisConfig = ConfigurationOptions.Parse(options.ConnectionString);
+                redisConfig.DefaultDatabase = options.Database;
+                redisConfig.AbortOnConnectFail = false;
+                redisConfig.ConnectRetry = 3;
+                redisConfig.ConnectTimeout = 5000;
+
+                var multiplexer = ConnectionMultiplexer.Connect(redisConfig);
                 logger.LogInformation("Redis multiplexer created. Connection will be established asynchronously.");
                 return multiplexer;
             }
@@ -109,15 +100,75 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<ICache, RedisCache>();
 
-        // Robots.txt services
+        return services;
+    }
+
+    public static IServiceCollection AddRabbitMq(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MessageBrokerOptions>(
+            configuration.GetSection(MessageBrokerOptions.SectionName));
+        services.Configure<RabbitMQConnectionOptions>(
+            configuration.GetSection(RabbitMQConnectionOptions.SectionName));
+        services.Configure<DiscoveredUrlQueueOptions>(
+            configuration.GetSection(DiscoveredUrlQueueOptions.SectionName));
+        services.Configure<ScheduledUrlQueueOptions>(
+            configuration.GetSection(ScheduledUrlQueueOptions.SectionName));
+
+        services.AddSingleton<IUrlScheduler, UrlScheduler>();
+        services.AddSingleton<IDiscoveredUrlPublisher, DiscoveredUrlPublisher>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMinioStorage(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MinioOptions>(
+            configuration.GetSection(MinioOptions.SectionName));
+
+        services.AddScoped<IMinioClient>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
+            var endpoint = $"{options.Endpoint}:{options.Port}";
+
+            var client = new MinioClient()
+                .WithEndpoint(endpoint)
+                .WithCredentials(options.AccessKey, options.SecretKey);
+
+            if (options.UseSsl)
+            {
+                client = client.WithSSL();
+            }
+
+            if (!string.IsNullOrEmpty(options.Region))
+            {
+                client = client.WithRegion(options.Region);
+            }
+
+            return client.Build();
+        });
+
+        services.AddScoped<IMinioHtmlUploader, MinioHtmlUploader>();
+        services.AddScoped<IObjectNameGenerator, ObjectNameGenerator>();
+        services.AddScoped<Storage.Abstractions.IStorageManager, MinioStorageManager>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddCrawling(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<CrawlerOptions>(
+            configuration.GetSection(CrawlerOptions.SectionName));
+
+        // Robots.txt
         services.AddSingleton<IRobotsTxtParser, Parsers.RobotsTxtParser>();
         services.AddScoped<IRobotsTxtRepository, RobotsTxtRepository>();
         services.AddScoped<IRobotsTxtService, RobotsTxtService>();
 
         // Validators
         services.AddSingleton<IMetaRobotsValidator, MetaRobotsValidator>();
+        services.AddSingleton<IHtmlContentValidator, HtmlContentValidator>();
 
-        // Policies - register individual policies and policy chain
+        // Crawl policies
         services.AddScoped<RobotsTxtPolicy>();
         services.AddScoped<PolitenessPolicy>();
         services.AddScoped<ICrawlPolicy>(sp => new PolicyChain(new ICrawlPolicy[]
@@ -126,18 +177,72 @@ public static class InfrastructureServiceCollectionExtensions
             sp.GetRequiredService<PolitenessPolicy>()
         }));
 
-        services.AddSingleton<IUrlScheduler, UrlScheduler>();
-        services.AddSingleton<IDiscoveredUrlPublisher, DiscoveredUrlPublisher>();
-        services.AddScoped<IDiscoveredUrlRepository, DiscoveredUrlRepository>();
-        services.AddScoped<IUrlFetchRepository, UrlFetchRepository>();
-        services.AddScoped<IParsedDocumentRepository, ParsedDocumentRepository>();
-        services.AddScoped<IIndexJobRepository, IndexJobRepository>();
-        services.AddScoped<IIndexJobService, IndexJobService>();
+        // Fetch & pipeline
+        services.AddSingleton<IUrlFetchService, UrlFetchService>();
+        services.AddScoped<IFetchRecordPersistenceService, FetchRecordPersistenceService>();
+        services.AddScoped<IContentProcessingPipeline, ContentProcessingPipeline>();
+        services.AddScoped<Storage.Abstractions.IHtmlParser, Storage.Services.HtmlParser>();
+
+        // Retry policy
+        services.AddSingleton<IAsyncPolicy<HttpResponseMessage>>(sp =>
+        {
+            var crawlerOptions = sp.GetRequiredService<IOptions<CrawlerOptions>>().Value;
+            var logger = sp.GetRequiredService<ILogger<MinioStorageManager>>();
+            return CrawlerRetryPolicyBuilder.BuildRetryPolicy(crawlerOptions, logger);
+        });
+
+        // HTTP clients
+        services.AddHttpClient("crawl")
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.All
+            })
+            .ConfigureHttpClient(client =>
+            {
+                client.DefaultRequestHeaders.Add("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+                client.DefaultRequestHeaders.Add("Accept",
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+
+                client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
+                client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+                client.DefaultRequestHeaders.Add("DNT", "1");
+                client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
+                client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
+                client.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
+                client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "none");
+                client.DefaultRequestHeaders.Add("Sec-Fetch-User", "?1");
+                client.DefaultRequestHeaders.Add("Cache-Control", "max-age=0");
+            });
+
+        services.AddHttpClient();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMeilisearch(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MeilisearchOptions>(
+            configuration.GetSection(MeilisearchOptions.SectionName));
+
         services.AddSingleton<MeilisearchClient>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<MeilisearchOptions>>().Value;
             return new MeilisearchClient(options.Host, options.ApiKey);
         });
+
+        services.AddScoped<IIndexerService, IndexService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddNeo4j(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<Neo4jOptions>(
+            configuration.GetSection(Neo4jOptions.SectionName));
+
         services.AddSingleton<IDriver?>(sp =>
         {
             var opts = sp.GetRequiredService<IOptions<Neo4jOptions>>().Value;
@@ -153,6 +258,7 @@ public static class InfrastructureServiceCollectionExtensions
                 return null;
             }
         });
+
         services.AddScoped<IPageGraphRepository>(sp =>
         {
             var driver = sp.GetService<IDriver?>();
@@ -160,78 +266,25 @@ public static class InfrastructureServiceCollectionExtensions
                 ? new NullPageGraphRepository()
                 : new PageGraphRepository(driver, sp.GetRequiredService<ILogger<PageGraphRepository>>());
         });
-        services.AddHostedService<GraphConstraintInitializer>();
-        services.AddScoped<IIndexerService, IndexService>();
-        services.AddScoped<IUrlFetchService, UrlFetchService>();
-        services.AddSingleton<IHtmlContentValidator, HtmlContentValidator>();
-        services.AddScoped<IMinioHtmlUploader, MinioHtmlUploader>();
-        services.AddScoped<IObjectNameGenerator, ObjectNameGenerator>();
-        services.AddScoped<IFetchRecordPersistenceService, FetchRecordPersistenceService>();
-        services.AddScoped<IContentProcessingPipeline, ContentProcessingPipeline>();
-        services.AddScoped<Storage.Abstractions.IHtmlParser, Storage.Services.HtmlParser>();
 
-        services.AddScoped<IMinioClient>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
-            var endpoint = $"{options.Endpoint}:{options.Port}";
-            
-            var client = new MinioClient()
-                .WithEndpoint(endpoint)
-                .WithCredentials(options.AccessKey, options.SecretKey);
-            
-            if (options.UseSsl)
-            {
-                client = client.WithSSL();
-            }
-            
-            if (!string.IsNullOrEmpty(options.Region))
-            {
-                client = client.WithRegion(options.Region);
-            }
-            
-            return client.Build();
-        });
-        
-        services.AddSingleton<IAsyncPolicy<HttpResponseMessage>>(sp =>
-        {
-            var crawlerOptions = sp.GetRequiredService<IOptions<CrawlerOptions>>().Value;
-            var logger = sp.GetRequiredService<ILogger<MinioStorageManager>>();
-            return CrawlerRetryPolicyBuilder.BuildRetryPolicy(crawlerOptions, logger);
-        });
-        
-        services.AddScoped<Storage.Abstractions.IStorageManager, MinioStorageManager>();
-        
-        services.AddHttpClient("crawl")
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                AutomaticDecompression = System.Net.DecompressionMethods.All
-            })
-            .ConfigureHttpClient(client =>
-            {
-                client.DefaultRequestHeaders.Add("User-Agent", 
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                
-                client.DefaultRequestHeaders.Add("Accept", 
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-                
-                client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
-                
-                client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-                
-                client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-                
-                client.DefaultRequestHeaders.Add("DNT", "1");
-                
-                client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
-                
-                client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
-                client.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
-                client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "none");
-                client.DefaultRequestHeaders.Add("Sec-Fetch-User", "?1");
-                client.DefaultRequestHeaders.Add("Cache-Control", "max-age=0");
-            });
-        
-        services.AddHttpClient();
+        services.AddHostedService<GraphConstraintInitializer>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers all infrastructure services. Prefer using the individual Add* methods
+    /// to only register what each service actually needs.
+    /// </summary>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDatabase(configuration);
+        services.AddRedisCache(configuration);
+        services.AddRabbitMq(configuration);
+        services.AddMinioStorage(configuration);
+        services.AddCrawling(configuration);
+        services.AddMeilisearch(configuration);
+        services.AddNeo4j(configuration);
 
         return services;
     }
