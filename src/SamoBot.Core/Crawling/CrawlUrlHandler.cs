@@ -35,7 +35,7 @@ public sealed class CrawlUrlHandler(
 
     private async Task<string?> SaveContent(ClaimedUrl url, FetchResponse response, CancellationToken ct)
     {
-        if (!response.IsHtml || !response.HasContent)
+        if (!response.IsSuccess || !response.IsHtml || !response.HasContent)
         {
             return null;
         }

@@ -71,11 +71,23 @@ public class CrawlUrlHandlerTests
     [Fact]
     public async Task Handle_NonHtmlContent_IsNotStored()
     {
-        var handler = Handler(new FakeFetcher(response: TestData.Response(200, contentType: "application/pdf")));
+        var pdf = new FetchResponse { StatusCode = 200, ContentType = "application/pdf", Content = "%PDF-1.4 binary"u8.ToArray() };
+        var handler = Handler(new FakeFetcher(response: pdf));
 
         await handler.Handle(TestData.Url(), default);
 
         _store.SavedUrls.Should().BeEmpty();
         _frontier.Completed.Single().Fetch!.ObjectName.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_HtmlErrorPage_IsNotStored()
+    {
+        var response = new FetchResponse { StatusCode = 404, ContentType = "text/html", Content = "<html>missing</html>"u8.ToArray() };
+        var handler = Handler(new FakeFetcher(response: response));
+
+        await handler.Handle(TestData.Url(), default);
+
+        _store.SavedUrls.Should().BeEmpty();
     }
 }
