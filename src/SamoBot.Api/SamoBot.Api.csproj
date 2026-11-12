@@ -1,25 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <AnalysisMode>None</AnalysisMode>
-    <RunAnalyzers>false</RunAnalyzers>
-    <NoWarn>$(NoWarn);RMG012;RMG020;RMG066;CS8981;nullable</NoWarn>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SamoBot.Infrastructure\SamoBot.Infrastructure.csproj" />
-    <ProjectReference Include="..\SamoBot.Settings\SamoBot.Settings.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\SamoBot.Settings\appsettings.json" Link="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\SamoBot.Adapters\SamoBot.Adapters.csproj" />
+    <ProjectReference Include="..\SamoBot.Core\SamoBot.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,113 +1,84 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SamoBot.Infrastructure.Data.Abstractions;
-using SamoBot.Infrastructure.Services.Abstractions;
+using SamoBot.Api.Contracts;
+using SamoBot.Core.Domain;
+using SamoBot.Core.Jobs;
+using SamoBot.Core.Ports;
 
 namespace SamoBot.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/crawl-jobs")]
 [Authorize]
-public class CrawlJobsController : ControllerBase
+public sealed class CrawlJobsController(CrawlJobService service, ICrawlJobRepository jobs, IJobPageReader pages) : ControllerBase
 {
-    private readonly ICrawlJobService _crawlJobService;
-    private readonly ICrawlJobRepository _jobs;
-    private readonly IDiscoveredUrlRepository _discoveredUrls;
-    private readonly ICrawlJobEventRepository _events;
-
-    public CrawlJobsController(
-        ICrawlJobService crawlJobService,
-        ICrawlJobRepository jobs,
-        IDiscoveredUrlRepository discoveredUrls,
-        ICrawlJobEventRepository events)
-    {
-        _crawlJobService = crawlJobService;
-        _jobs = jobs;
-        _discoveredUrls = discoveredUrls;
-        _events = events;
-    }
-
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int limit = 50, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> List([FromQuery] int limit = 50, CancellationToken ct = default)
     {
-        var jobs = await _jobs.ListRecent(Math.Clamp(limit, 1, 200), cancellationToken);
-        return Ok(jobs);
+        var recent = await jobs.ListRecent(Math.Clamp(limit, 1, 200), ct);
+        return Ok(recent.Select(CrawlJobResponse.From));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Get(int id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Get(int id, CancellationToken ct = default)
     {
-        var job = await _crawlJobService.GetAsync(id, cancellationToken);
-        return job == null ? NotFound() : Ok(job);
+        var job = await jobs.Get(id, ct);
+        return job is null ? NotFound() : Ok(CrawlJobResponse.From(job));
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateCrawlJobRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create([FromBody] CreateCrawlJobRequest request, CancellationToken ct = default)
     {
-        var owner = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        var job = await _crawlJobService.CreateAsync(
-            owner,
-            request.SeedUrls,
-            request.MaxDepth,
-            request.MaxUrls,
-            request.UseJsRendering,
-            request.RespectRobots,
-            cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = job.Id }, job);
+        var owner = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var created = await service.Create(
+            new NewCrawlJob(owner, request.SeedUrls, request.MaxDepth, request.MaxUrls, request.UseJsRendering ?? false, request.RespectRobots ?? true),
+            ct);
+        if (created.IsFailed)
+        {
+            return BadRequest(created.Errors.Select(error => error.Message));
+        }
+
+        var response = CrawlJobResponse.From(created.Value);
+        return CreatedAtAction(nameof(Get), new { id = response.Id }, response);
     }
 
     [HttpPost("{id:int}/actions")]
-    public async Task<IActionResult> Actions(int id, [FromBody] CrawlJobActionRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Actions(int id, [FromBody] CrawlJobActionRequest request, CancellationToken ct = default)
     {
-        var ok = request.Action.ToLowerInvariant() switch
+        var result = request.Action.ToLowerInvariant() switch
         {
-            "start" => await _crawlJobService.StartAsync(id, cancellationToken),
-            "pause" => await _crawlJobService.PauseAsync(id, cancellationToken),
-            "cancel" => await _crawlJobService.CancelAsync(id, cancellationToken),
-            _ => false
+            "start" => await service.Start(id, ct),
+            "pause" => await service.Pause(id, ct),
+            "cancel" => await service.Cancel(id, ct),
+            _ => FluentResults.Result.Fail($"Unknown action {request.Action}.")
         };
 
-        return ok ? Ok() : BadRequest();
+        return result.IsSuccess ? Ok() : BadRequest();
     }
 
     [HttpGet("{id:int}/pages")]
-    public async Task<IActionResult> Pages(int id, [FromQuery] int limit = 50, [FromQuery] int offset = 0, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Pages(
+        int id, [FromQuery] int limit = 50, [FromQuery] int offset = 0, CancellationToken ct = default)
     {
-        var job = await _jobs.GetById(id, cancellationToken);
-        if (job == null)
+        if (await jobs.Get(id, ct) is null)
         {
             return NotFound();
         }
 
-        var pages = await _discoveredUrls.GetByCrawlJobId(id, Math.Clamp(limit, 1, 200), Math.Max(0, offset), cancellationToken);
-        var total = await _discoveredUrls.CountByCrawlJobId(id, cancellationToken);
-        return Ok(new { total, items = pages });
+        var items = await pages.ListPages(id, Math.Clamp(limit, 1, 200), Math.Max(0, offset), ct);
+        return Ok(new PagesResponse(await pages.CountPages(id, ct), items));
     }
 
     [HttpGet("{id:int}/events")]
-    public async Task<IActionResult> Events(int id, [FromQuery] long after = 0, [FromQuery] int limit = 100, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Events(
+        int id, [FromQuery] long after = 0, [FromQuery] int limit = 100, CancellationToken ct = default)
     {
-        var job = await _jobs.GetById(id, cancellationToken);
-        if (job == null)
+        if (await jobs.Get(id, ct) is null)
         {
             return NotFound();
         }
 
-        var items = await _events.GetAfter(id, after, Math.Clamp(limit, 1, 500), cancellationToken);
-        return Ok(items);
+        return Ok(await pages.ListEvents(id, after, Math.Clamp(limit, 1, 500), ct));
     }
-}
-
-public class CreateCrawlJobRequest
-{
-    public List<string> SeedUrls { get; set; } = [];
-    public int? MaxDepth { get; set; }
-    public int? MaxUrls { get; set; }
-    public bool UseJsRendering { get; set; }
-    public bool RespectRobots { get; set; } = true;
-}
-
-public class CrawlJobActionRequest
-{
-    public string Action { get; set; } = string.Empty;
 }

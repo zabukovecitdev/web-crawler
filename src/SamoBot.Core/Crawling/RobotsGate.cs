@@ -20,11 +20,12 @@ public sealed class RobotsGate(
             return true;
         }
 
-        var rules = await GetRules(url.Host, ct);
+        var rules = await RulesFor(url.Host, ct);
         return rules.IsAllowed(new Uri(url.Url).PathAndQuery, UserAgent);
     }
 
-    private async Task<RobotsRules> GetRules(string host, CancellationToken ct)
+    /// <summary>Returns the rules of a host. The dashboard uses this too.</summary>
+    public async Task<RobotsRules> RulesFor(string host, CancellationToken ct)
     {
         var key = $"robots:{host}";
         if (cache.TryGetValue(key, out RobotsRules? cached) && cached is not null)

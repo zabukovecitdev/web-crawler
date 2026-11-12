@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SamoBot.Api\SamoBot.Api.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Adapters\SamoBot.Adapters.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Core\SamoBot.Core.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Migrations\SamoBot.Migrations.csproj" />
