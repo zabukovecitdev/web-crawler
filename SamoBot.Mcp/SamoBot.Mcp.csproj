@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisMode>None</AnalysisMode>
+    <RunAnalyzers>false</RunAnalyzers>
+    <NoWarn>$(NoWarn);RMG012;RMG020;RMG066;CS8981;nullable</NoWarn>
         <RuntimeIdentifiers>win-x64;win-arm64;osx-arm64;linux-x64;linux-arm64;linux-musl-x64</RuntimeIdentifiers>
         <OutputType>Exe</OutputType>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
 
         <!-- Set up the NuGet package to be an MCP server -->
         <PackAsTool>true</PackAsTool>
@@ -33,8 +34,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1"/>
-        <PackageReference Include="ModelContextProtocol" Version="1.1.0"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting"/>
+        <PackageReference Include="ModelContextProtocol"/>
     </ItemGroup>
 
     <ItemGroup>

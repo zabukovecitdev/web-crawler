@@ -8,6 +8,13 @@ public class CreateCrawlJobsAndEvents : Migration
 {
     public override void Up()
     {
+        CreateJobsTable();
+        CreateEventsTable();
+        ExtendDiscoveredUrls();
+    }
+
+    private void CreateJobsTable()
+    {
         Create.Table(TableNames.Database.CrawlJobs)
             .WithColumn("Id").AsInt32().PrimaryKey().Identity()
             .WithColumn("OwnerUserId").AsString(256).Nullable()
@@ -25,7 +32,10 @@ public class CreateCrawlJobsAndEvents : Migration
         Create.Index("IX_CrawlJobs_Status")
             .OnTable(TableNames.Database.CrawlJobs)
             .OnColumn("Status").Ascending();
+    }
 
+    private void CreateEventsTable()
+    {
         Create.Table(TableNames.Database.CrawlJobEvents)
             .WithColumn("Id").AsInt64().PrimaryKey().Identity()
             .WithColumn("CrawlJobId").AsInt32().NotNullable()
@@ -44,7 +54,10 @@ public class CreateCrawlJobsAndEvents : Migration
             .OnTable(TableNames.Database.CrawlJobEvents)
             .OnColumn("CrawlJobId").Ascending()
             .OnColumn("Id").Ascending();
+    }
 
+    private void ExtendDiscoveredUrls()
+    {
         Alter.Table(TableNames.Database.DiscoveredUrls)
             .AddColumn("CrawlJobId").AsInt32().Nullable()
             .AddColumn("Depth").AsInt32().NotNullable().WithDefaultValue(0)
