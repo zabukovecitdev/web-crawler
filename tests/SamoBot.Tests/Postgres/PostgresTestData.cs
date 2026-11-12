@@ -42,6 +42,16 @@ public static class PostgresTestData
             new { host, url, status, next = nextCrawlAt ?? TestData.Now, jobId, depth });
     }
 
+    /// <summary>Inserts a fetch with stored HTML for a URL. The parser can claim it.</summary>
+    public static Task<int> InsertFetch(NpgsqlDataSource dataSource, int urlId, string objectName = "obj", bool parsed = false) =>
+        Scalar<int>(
+            dataSource,
+            """
+            INSERT INTO "UrlFetches" ("DiscoveredUrlId", "FetchedAt", "StatusCode", "ContentType", "ObjectName", "ParsedAt")
+            VALUES (@urlId, @fetchedAt, 200, 'text/html', @objectName, @parsedAt) RETURNING "Id"
+            """,
+            new { urlId, fetchedAt = TestData.Now, objectName, parsedAt = parsed ? TestData.Now : (DateTimeOffset?)null });
+
     public static Task<T> Scalar<T>(NpgsqlDataSource dataSource, string sql, object? parameters = null) =>
         Run(dataSource, async connection => (await connection.ExecuteScalarAsync<T>(sql, parameters))!);
 
