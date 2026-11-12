@@ -45,4 +45,14 @@ public class JobScopeTests
     {
         JobScope.Filter(Parent(depth: 1, maxDepth: 2), ["https://a.example/p"]).Should().HaveCount(1);
     }
+
+    [Fact]
+    public void Filter_TreatsAHostWithAnotherPortAsAnotherHost()
+    {
+        var parent = Parent() with { AllowedHosts = ["a.example:8080"] };
+
+        var result = JobScope.Filter(parent, ["https://a.example:8080/p", "https://a.example/q"]);
+
+        result.Should().Equal(new NewUrl(7, "https://a.example:8080/p", "https://a.example:8080/p", "a.example:8080", 1));
+    }
 }

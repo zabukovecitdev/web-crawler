@@ -48,7 +48,7 @@ public sealed record Redirected(string TargetUrl) : CrawlOutcome
             return null;
         }
 
-        return new NewUrl(url.CrawlJobId, target.AbsoluteUri, normalized.AbsoluteUri, normalized.Host, url.Depth);
+        return new NewUrl(url.CrawlJobId, target.AbsoluteUri, normalized.AbsoluteUri, normalized.Authority, url.Depth);
     }
 
     private static bool IsWeb(Uri uri) => uri.Scheme is "http" or "https";

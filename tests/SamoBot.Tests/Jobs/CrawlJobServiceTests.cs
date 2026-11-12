@@ -120,4 +120,12 @@ public class CrawlJobServiceTests
         job.Status.Should().Be(CrawlJobStatus.Cancelled);
         _events.Published.Should().ContainSingle(e => e.EventType == CrawlEventTypes.JobCancelled);
     }
+
+    [Fact]
+    public async Task Create_KeepsANonDefaultPortInTheAllowedHost()
+    {
+        var result = await _service.Create(Request("http://localhost:5000/start"), default);
+
+        result.Value.AllowedHosts.Should().Equal("localhost:5000");
+    }
 }

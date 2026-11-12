@@ -15,8 +15,8 @@ public static class JobScope
 
         return urls
             .Select(url => new Uri(url))
-            .Where(uri => IsAllowedHost(parent, uri.Host))
-            .Select(uri => new NewUrl(parent.CrawlJobId, uri.AbsoluteUri, uri.AbsoluteUri, uri.Host, depth))
+            .Where(uri => IsAllowedHost(parent, uri.Authority))
+            .Select(uri => new NewUrl(parent.CrawlJobId, uri.AbsoluteUri, uri.AbsoluteUri, uri.Authority, depth))
             .ToList();
     }
 

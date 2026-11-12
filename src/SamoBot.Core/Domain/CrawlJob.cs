@@ -50,7 +50,7 @@ public sealed class CrawlJob
         SeedUrls
             .Select(seed => UrlNormalizer.TryClean(seed, out var clean) ? clean : null)
             .OfType<Uri>()
-            .Select(clean => new NewUrl(Id, clean.AbsoluteUri, clean.AbsoluteUri, clean.Host, 0))
+            .Select(clean => new NewUrl(Id, clean.AbsoluteUri, clean.AbsoluteUri, clean.Authority, 0))
             .DistinctBy(seed => seed.NormalizedUrl)
             .ToList();
 
@@ -86,7 +86,7 @@ public sealed class CrawlJob
         UpdatedAt = now;
     }
 
-    private static string? HostOf(string seed) => UrlNormalizer.TryClean(seed, out var clean) ? clean!.Host : null;
+    private static string? HostOf(string seed) => UrlNormalizer.TryClean(seed, out var clean) ? clean!.Authority : null;
 
     private Result Transition(bool isAllowed, CrawlJobStatus target, DateTimeOffset now)
     {
