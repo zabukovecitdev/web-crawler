@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SamoBot.Core\SamoBot.Core.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Infrastructure\SamoBot.Infrastructure.csproj" />
   </ItemGroup>
 

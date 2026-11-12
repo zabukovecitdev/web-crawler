@@ -1,11 +1,11 @@
 using System.Web;
 using FluentResults;
 
-namespace SamoBot.Infrastructure.Utilities;
+namespace SamoBot.Core.Common;
 
 public static class UrlNormalizer
 {
-    // TODO: This Url normalization should be done with some sort of pipeline which can be easily extended and configured
+    // Note: This URL normalization could be done with some sort of pipeline which can be easily extended and configured
     private static readonly HashSet<string> TrackingParameters = new(StringComparer.OrdinalIgnoreCase)
     {
         "utm_source",
@@ -69,7 +69,11 @@ public static class UrlNormalizer
         return true;
     }
 
-    private static Uri Normalize(this Uri uri)
+    private static Uri Normalize(this Uri uri) => Rebuild(uri, removeTracking: false);
+
+    private static Uri NormalizeAndRemoveTracking(this Uri uri) => Rebuild(uri, removeTracking: true);
+
+    private static Uri Rebuild(Uri uri, bool removeTracking)
     {
         var builder = new UriBuilder(uri)
         {
@@ -78,68 +82,39 @@ public static class UrlNormalizer
             Fragment = string.Empty
         };
 
-        if ((builder.Scheme == "http" && builder.Port == 80) ||
-            (builder.Scheme == "https" && builder.Port == 443))
+        if (IsDefaultPort(builder))
         {
             builder.Port = -1;
         }
 
         // Keep trailing slashes as-is for web crawler accuracy
         // Some sites treat /page and /page/ as different resources
-
         if (!string.IsNullOrEmpty(builder.Query))
         {
-            var queryParameters = HttpUtility.ParseQueryString(builder.Query);
-
-            var keys = queryParameters.AllKeys
-                .Where(key => key != null)
-                .OrderBy(key => key, StringComparer.InvariantCultureIgnoreCase);
-
-            var normalized = HttpUtility.ParseQueryString(string.Empty);
-            foreach (var key in keys)
-            {
-                normalized[key] = queryParameters[key];
-            }
-
-            builder.Query = normalized.ToString();
+            builder.Query = SortQuery(builder.Query, removeTracking);
         }
 
         return builder.Uri;
     }
 
-    private static Uri NormalizeAndRemoveTracking(this Uri uri)
+    private static bool IsDefaultPort(UriBuilder builder) =>
+        (builder.Scheme == "http" && builder.Port == 80) ||
+        (builder.Scheme == "https" && builder.Port == 443);
+
+    private static string SortQuery(string query, bool removeTracking)
     {
-        var builder = new UriBuilder(uri)
-        {
-            Scheme = uri.Scheme.ToLowerInvariant(),
-            Host = uri.Host.ToLowerInvariant(),
-            Fragment = string.Empty
-        };
+        var parameters = HttpUtility.ParseQueryString(query);
+        var keys = parameters.AllKeys
+            .Where(key => key != null && !(removeTracking && IsTrackingParameter(key)))
+            .OrderBy(key => key, StringComparer.InvariantCultureIgnoreCase);
 
-        if ((builder.Scheme == "http" && builder.Port == 80) ||
-            (builder.Scheme == "https" && builder.Port == 443))
+        var normalized = HttpUtility.ParseQueryString(string.Empty);
+        foreach (var key in keys)
         {
-            builder.Port = -1;
+            normalized[key] = parameters[key];
         }
 
-        if (!string.IsNullOrEmpty(builder.Query))
-        {
-            var queryParameters = HttpUtility.ParseQueryString(builder.Query);
-
-            var keys = queryParameters.AllKeys
-                .Where(key => key != null && !IsTrackingParameter(key))
-                .OrderBy(key => key, StringComparer.InvariantCultureIgnoreCase);
-
-            var normalized = HttpUtility.ParseQueryString(string.Empty);
-            foreach (var key in keys)
-            {
-                normalized[key] = queryParameters[key];
-            }
-
-            builder.Query = normalized.ToString();
-        }
-
-        return builder.Uri;
+        return normalized.ToString() ?? string.Empty;
     }
 
     private static bool IsTrackingParameter(string? parameterName)
@@ -149,16 +124,7 @@ public static class UrlNormalizer
             return false;
         }
 
-        if (TrackingParameters.Contains(parameterName))
-        {
-            return true;
-        }
-
-        if (parameterName.StartsWith("utm_", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return false;
+        return TrackingParameters.Contains(parameterName) ||
+               parameterName.StartsWith("utm_", StringComparison.OrdinalIgnoreCase);
     }
 }

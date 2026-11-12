@@ -1,6 +1,6 @@
 using FluentAssertions;
 using FluentResults;
-using SamoBot.Infrastructure.Utilities;
+using SamoBot.Core.Common;
 
 namespace SamoBot.Tests;
 

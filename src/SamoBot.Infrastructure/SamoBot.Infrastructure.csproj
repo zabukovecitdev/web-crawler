@@ -37,4 +37,8 @@
     <PackageReference Include="Microsoft.Playwright" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SamoBot.Core\SamoBot.Core.csproj" />
+  </ItemGroup>
+
 </Project>
