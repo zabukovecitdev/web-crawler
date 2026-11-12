@@ -43,12 +43,12 @@ public sealed record Redirected(string TargetUrl) : CrawlOutcome
             return null;
         }
 
-        if (!UrlNormalizer.TryClean(target.ToString(), out var normalized) || normalized is null)
+        if (!UrlNormalizer.TryClean(target.AbsoluteUri, out var normalized) || normalized is null)
         {
             return null;
         }
 
-        return new NewUrl(url.CrawlJobId, target.ToString(), normalized.ToString(), normalized.Host, url.Depth);
+        return new NewUrl(url.CrawlJobId, target.AbsoluteUri, normalized.AbsoluteUri, normalized.Host, url.Depth);
     }
 
     private static bool IsWeb(Uri uri) => uri.Scheme is "http" or "https";
