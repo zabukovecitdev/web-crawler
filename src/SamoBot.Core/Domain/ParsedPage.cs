@@ -37,4 +37,6 @@ public sealed record RobotsDirectives
     public bool NoArchive { get; init; }
     public bool NoSnippet { get; init; }
     public bool None { get; init; }
+
+    public bool ForbidsFollow => NoFollow || None;
 }
