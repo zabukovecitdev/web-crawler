@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentResults" />
+    <PackageReference Include="RobotsTxtParser" />
   </ItemGroup>
 
 </Project>
