@@ -44,7 +44,7 @@ public sealed class HttpFetcher(HttpClient httpClient, IOptions<ChromeRenderingO
         using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
         await using var body = await response.Content.ReadAsStreamAsync(ct);
-        var content = await ReadLimited(body, ct);
+        var content = await BodyReader.ReadLimited(body, MaxBodyBytes, ct);
 
         return new FetchResponse
         {
@@ -62,24 +62,4 @@ public sealed class HttpFetcher(HttpClient httpClient, IOptions<ChromeRenderingO
         Error = error,
         ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds
     };
-
-    /// <summary>Reads at most <see cref="MaxBodyBytes"/> bytes. It stops reading after the limit.</summary>
-    private static async Task<byte[]> ReadLimited(Stream stream, CancellationToken ct)
-    {
-        using var buffer = new MemoryStream();
-        var chunk = new byte[81920];
-        while (buffer.Length < MaxBodyBytes)
-        {
-            var wanted = (int)Math.Min(chunk.Length, MaxBodyBytes - buffer.Length);
-            var read = await stream.ReadAsync(chunk.AsMemory(0, wanted), ct);
-            if (read == 0)
-            {
-                break;
-            }
-
-            await buffer.WriteAsync(chunk.AsMemory(0, read), ct);
-        }
-
-        return buffer.ToArray();
-    }
 }
