@@ -34,8 +34,16 @@ public sealed class CrawlJob
     public Result Pause(DateTimeOffset now) =>
         Transition(Status is CrawlJobStatus.Running, CrawlJobStatus.Paused, now);
 
-    public Result Cancel(DateTimeOffset now) =>
-        Transition(Status is not CrawlJobStatus.Completed, CrawlJobStatus.Cancelled, now);
+    public Result Cancel(DateTimeOffset now)
+    {
+        var result = Transition(Status is not CrawlJobStatus.Completed, CrawlJobStatus.Cancelled, now);
+        if (result.IsSuccess)
+        {
+            CompletedAt = now;
+        }
+
+        return result;
+    }
 
     public void Complete(DateTimeOffset now)
     {
