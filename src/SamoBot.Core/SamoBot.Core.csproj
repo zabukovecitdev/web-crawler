@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentResults" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="RobotsTxtParser" />
   </ItemGroup>
 
