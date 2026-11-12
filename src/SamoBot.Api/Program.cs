@@ -3,20 +3,13 @@ using Microsoft.OpenApi.Models;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Hosting;
 using SamoBot.Api.Hubs;
-using SamoBot.Infrastructure.Extensions;
+using SamoBot.Adapters;
+using SamoBot.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
-
-builder.Services.AddDatabase(builder.Configuration);
-builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddMinioStorage(builder.Configuration);
-builder.Services.AddCrawling(builder.Configuration);
+builder.Services.AddSamoBotCore();
+builder.Services.AddSamoBotAdapters(builder.Configuration);
 
 builder.Services.Configure<ApiKeyOptions>(builder.Configuration.GetSection(ApiKeyOptions.SectionName));
 builder.Services.AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
@@ -50,7 +43,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddSignalR();
-builder.Services.AddHostedService<CrawlTelemetryRedisSubscriber>();
+builder.Services.AddHostedService<CrawlEventListener>();
 
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:5173"];
 builder.Services.AddCors(options =>
@@ -76,4 +69,4 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<CrawlJobHub>("/hubs/crawl-job");
 
-app.Run();
+await app.RunAsync();
