@@ -1,10 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <AnalysisMode>None</AnalysisMode>
-    <RunAnalyzers>false</RunAnalyzers>
-    <NoWarn>$(NoWarn);RMG012;RMG020;RMG066;CS8981;nullable</NoWarn>
         <RuntimeIdentifiers>win-x64;win-arm64;osx-arm64;linux-x64;linux-arm64;linux-musl-x64</RuntimeIdentifiers>
         <OutputType>Exe</OutputType>
 
@@ -39,14 +35,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\src\SamoBot.Infrastructure\SamoBot.Infrastructure.csproj"/>
-        <ProjectReference Include="..\src\SamoBot.Settings\SamoBot.Settings.csproj"/>
+        <ProjectReference Include="..\src\SamoBot.Adapters\SamoBot.Adapters.csproj"/>
+        <ProjectReference Include="..\src\SamoBot.Core\SamoBot.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\src\SamoBot.Settings\appsettings.json" Link="appsettings.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
 </Project>

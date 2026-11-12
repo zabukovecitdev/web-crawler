@@ -22,7 +22,7 @@ public static class AdaptersServiceCollectionExtensions
         .AddPostgresAdapters()
         .AddFetchers(configuration)
         .AddStorage(configuration)
-        .AddSearch(configuration)
+        .AddSamoBotSearch(configuration)
         .AddSingleton<IHtmlParser, HtmlAgilityPackParser>();
 
     private static IServiceCollection AddPostgresAdapters(this IServiceCollection services) => services
@@ -57,7 +57,8 @@ public static class AdaptersServiceCollectionExtensions
         return services.AddSingleton<IContentStore, MinioContentStore>();
     }
 
-    private static IServiceCollection AddSearch(this IServiceCollection services, IConfiguration configuration)
+    /// <summary>Registers only the search index. The MCP server needs nothing else.</summary>
+    public static IServiceCollection AddSamoBotSearch(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MeilisearchOptions>(configuration.GetSection(MeilisearchOptions.SectionName));
         services.AddSingleton(provider =>
