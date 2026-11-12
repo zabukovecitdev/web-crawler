@@ -27,6 +27,9 @@ public class RedesignFrontier : Migration
             .AddColumn("LeaseUntil").AsDateTimeOffset().Nullable()
             .AddColumn("FailReason").AsString().Nullable();
 
+        // A disabled URL has no next crawl time.
+        Execute.Sql($@"ALTER TABLE ""{UrlsTable}"" ALTER COLUMN ""NextCrawlAt"" DROP NOT NULL;");
+
         Delete.UniqueConstraint("IX_DiscoveredUrls_NormalizedUrl_Unique").FromTable(UrlsTable);
         Create.UniqueConstraint("UQ_DiscoveredUrls_CrawlJobId_NormalizedUrl")
             .OnTable(UrlsTable)
@@ -124,5 +127,8 @@ public class RedesignFrontier : Migration
         Delete.UniqueConstraint("UQ_DiscoveredUrls_CrawlJobId_NormalizedUrl").FromTable(UrlsTable);
         Create.UniqueConstraint("IX_DiscoveredUrls_NormalizedUrl_Unique").OnTable(UrlsTable).Columns("NormalizedUrl");
         Delete.Column("LeaseUntil").Column("FailReason").FromTable(UrlsTable);
+
+        Execute.Sql($@"UPDATE ""{UrlsTable}"" SET ""NextCrawlAt"" = now() WHERE ""NextCrawlAt"" IS NULL;");
+        Execute.Sql($@"ALTER TABLE ""{UrlsTable}"" ALTER COLUMN ""NextCrawlAt"" SET NOT NULL;");
     }
 }
