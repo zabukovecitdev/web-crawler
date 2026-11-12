@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\SamoBot.Adapters\SamoBot.Adapters.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Core\SamoBot.Core.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Migrations\SamoBot.Migrations.csproj" />
+    <ProjectReference Include="..\..\src\SamoBot.Worker\SamoBot.Worker.csproj" />
     <ProjectReference Include="..\..\src\SamoBot.Infrastructure\SamoBot.Infrastructure.csproj" />
   </ItemGroup>
 
