@@ -6,6 +6,7 @@ namespace SamoBot.Tests.Fakes;
 public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
 {
     public List<(ClaimedUrl Url, UrlUpdate Update, FetchRecord? Fetch)> Completed { get; } = [];
+    public List<(int JobId, IReadOnlyList<NewUrl> Seeds)> AddedSeeds { get; } = [];
     public (int BatchSize, TimeSpan Lease)? LastClaim { get; private set; }
 
     public Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
@@ -20,5 +21,9 @@ public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
         return Task.CompletedTask;
     }
 
-    public Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct) => Task.CompletedTask;
+    public Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct)
+    {
+        AddedSeeds.Add((crawlJobId, seeds));
+        return Task.CompletedTask;
+    }
 }

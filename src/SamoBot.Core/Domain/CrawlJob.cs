@@ -1,4 +1,5 @@
 using FluentResults;
+using SamoBot.Core.Common;
 
 namespace SamoBot.Core.Domain;
 
@@ -19,6 +20,39 @@ public sealed class CrawlJob
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? StartedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
+
+    /// <summary>Creates a pending job. Invalid seed URLs are dropped. The hosts of the valid seeds become the allowed hosts.</summary>
+    public static Result<CrawlJob> Create(NewCrawlJob request, DateTimeOffset now)
+    {
+        var seeds = request.SeedUrls.Where(seed => !string.IsNullOrWhiteSpace(seed)).ToList();
+        var hosts = seeds.Select(HostOf).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (hosts.Count == 0)
+        {
+            return Result.Fail("At least one valid seed URL is required.");
+        }
+
+        return Result.Ok(new CrawlJob
+        {
+            OwnerUserId = request.OwnerUserId,
+            SeedUrls = seeds,
+            AllowedHosts = hosts,
+            MaxDepth = request.MaxDepth,
+            MaxUrls = request.MaxUrls,
+            UseJsRendering = request.UseJsRendering,
+            RespectRobots = request.RespectRobots,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+    }
+
+    /// <summary>Returns the valid seed URLs as depth-0 frontier entries.</summary>
+    public IReadOnlyList<NewUrl> ToSeedUrls() =>
+        SeedUrls
+            .Select(seed => UrlNormalizer.TryClean(seed, out var clean) ? clean : null)
+            .OfType<Uri>()
+            .Select(clean => new NewUrl(Id, clean.AbsoluteUri, clean.AbsoluteUri, clean.Host, 0))
+            .DistinctBy(seed => seed.NormalizedUrl)
+            .ToList();
 
     public Result Start(DateTimeOffset now)
     {
@@ -51,6 +85,8 @@ public sealed class CrawlJob
         CompletedAt = now;
         UpdatedAt = now;
     }
+
+    private static string? HostOf(string seed) => UrlNormalizer.TryClean(seed, out var clean) ? clean!.Host : null;
 
     private Result Transition(bool isAllowed, CrawlJobStatus target, DateTimeOffset now)
     {
