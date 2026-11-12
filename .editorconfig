@@ -18,10 +18,3 @@ dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.S138.severity = none
 dotnet_diagnostic.S104.severity = none
 dotnet_diagnostic.CA1707.severity = none
-
-# Temporary: remove in T7.1 together with these two old test files.
-[**/PolitenessPolicyTests.cs]
-dotnet_diagnostic.CA1305.severity = none
-
-[**/RedisCachePolitenessTests.cs]
-dotnet_diagnostic.CA1305.severity = none
