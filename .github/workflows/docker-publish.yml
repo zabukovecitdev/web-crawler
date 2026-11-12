@@ -15,7 +15,24 @@ env:
   COMMIT_HASH: ${{ github.sha }}
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build with analyzers as errors
+        run: dotnet build SamoBot.sln -warnaserror
+      - name: Unit tests
+        run: dotnet test tests/SamoBot.Tests --no-build --filter "Category!=Integration"
+      - name: Integration tests
+        run: dotnet test tests/SamoBot.Tests --no-build --filter "Category=Integration"
+
   build:
+    needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,16 +42,12 @@ jobs:
     strategy:
       matrix:
         image:
-          - name: samo-bot
-            dockerfile: src/SamoBot/Dockerfile
-          - name: samobot-crawler
-            dockerfile: src/SamoBot.Crawler/Dockerfile
+          - name: samobot-worker
+            dockerfile: src/SamoBot.Worker/Dockerfile
+          - name: samobot-api
+            dockerfile: src/SamoBot.Api/Dockerfile
           - name: samobot-migrations
             dockerfile: src/SamoBot.Migrations/Dockerfile
-          - name: samo-bot-scheduler
-            dockerfile: src/SamoBot.Scheduler/Dockerfile
-          - name: samo-bot-parser
-            dockerfile: src/SamoBot.Parser/Dockerfile
 
     steps:
       - name: Checkout repository
