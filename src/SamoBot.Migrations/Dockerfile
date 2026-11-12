@@ -5,6 +5,7 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 COPY ["src/SamoBot.Migrations/SamoBot.Migrations.csproj", "src/SamoBot.Migrations/"]
 RUN dotnet restore "src/SamoBot.Migrations/SamoBot.Migrations.csproj"
 COPY . .
