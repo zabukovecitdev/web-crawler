@@ -78,3 +78,20 @@ A job is complete when no URL is in flight, no URL waits for its first fetch or 
 | Braces on `if`, `for`, `foreach`, `while` | always | IDE0011 |
 
 `#pragma warning disable` and `[SuppressMessage]` are not permitted.
+
+### Frontend limits
+
+`src/frontend/eslint.config.js` applies the same limits to TypeScript. `npm run lint` fails on any of them.
+
+| Rule | Limit | ESLint rule |
+|---|---|---|
+| Cyclomatic complexity of a function | 8 | `complexity` |
+| Cognitive complexity of a function | 10 | `sonarjs/cognitive-complexity` |
+| Lines in a function | 30 in `.ts`, 60 in `.tsx` (a component holds its markup) | `max-lines-per-function` |
+| Parameters of a function | 6 | `max-params` |
+| Nesting depth of control blocks | 2 | `max-depth` |
+| Lines in a file | 300 | `max-lines` |
+| Braces on `if`, `for`, `while` | always | `curly` |
+
+`eslint-disable` comments and `@ts-ignore` are not permitted (`noInlineConfig`).
+
