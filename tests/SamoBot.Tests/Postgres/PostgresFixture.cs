@@ -48,7 +48,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 }
 
 [CollectionDefinition(Name)]
-public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>
+public sealed class PostgresDatabaseDefinition : ICollectionFixture<PostgresFixture>
 {
     public const string Name = "Postgres";
 }

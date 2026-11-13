@@ -2,7 +2,7 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Ports;
 
-public interface IIndexQueue
+public interface IIndexBacklog
 {
     Task<IReadOnlyList<PageToIndex>> Claim(int batchSize, CancellationToken ct);
 

@@ -6,7 +6,7 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -21,7 +21,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     private PostgresUrlFrontier Frontier() => new(postgres.DataSource, _time);
 
     [Fact]
-    public async Task Claim_ParallelCalls_ReturnNoCommonUrl()
+    public async Task ClaimParallelCallsReturnNoCommonUrl()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, allowedHosts: "[]");
         for (var i = 0; i < 12; i++)
@@ -37,7 +37,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_GivesOneUrlPerHostAndThenWaitsForTheHostDelay()
+    public async Task ClaimGivesOneUrlPerHostAndThenWaitsForTheHostDelay()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/deep", depth: 2);
@@ -55,7 +55,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_DoesNotReturnUrlsOfAPausedJob()
+    public async Task ClaimDoesNotReturnUrlsOfAPausedJob()
     {
         var paused = await PostgresTestData.InsertJob(postgres.DataSource, status: "Paused");
         await PostgresTestData.InsertUrl(postgres.DataSource, paused, "https://a.example/");
@@ -64,7 +64,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_ReturnsTheUrlAgainAfterTheLeaseExpires()
+    public async Task ClaimReturnsTheUrlAgainAfterTheLeaseExpires()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var id = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
@@ -81,7 +81,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_IsNotBlockedByHostsWithoutDueUrls()
+    public async Task ClaimIsNotBlockedByHostsWithoutDueUrls()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, allowedHosts: "[]");
         for (var i = 0; i < 25; i++)
@@ -116,7 +116,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     };
 
     [Fact]
-    public async Task Complete_StoresFetchAndUpdatesTheUrlInOneStep()
+    public async Task CompleteStoresFetchAndUpdatesTheUrlInOneStep()
     {
         var url = await ClaimOne("https://a.example/");
         var update = new Succeeded(TimeSpan.FromDays(1)).ToUpdate(url, TestData.Now);
@@ -134,7 +134,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Complete_OfADisabledUrlWithoutFetch_StoresReasonAndNoNextCrawl()
+    public async Task CompleteOfADisabledUrlWithoutFetchStoresReasonAndNoNextCrawl()
     {
         var url = await ClaimOne("https://a.example/");
 
@@ -148,7 +148,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Complete_OfARedirect_AddsTheTargetAtTheSameDepthWithItsHostRow()
+    public async Task CompleteOfARedirectAddsTheTargetAtTheSameDepthWithItsHostRow()
     {
         var url = await ClaimOne("https://a.example/old", depth: 1);
         var update = new Redirected("/new").ToUpdate(url, TestData.Now);
@@ -163,7 +163,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Complete_OfAnOffSiteRedirect_DoesNotAddTheTarget()
+    public async Task CompleteOfAnOffSiteRedirectDoesNotAddTheTarget()
     {
         var url = await ClaimOne("https://a.example/old");
         var update = new Redirected("https://elsewhere.example/").ToUpdate(url, TestData.Now);
@@ -175,7 +175,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AddSeeds_InsertsSeedsAndHostsAndIgnoresDuplicates()
+    public async Task AddSeedsInsertsSeedsAndHostsAndIgnoresDuplicates()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, status: "Pending");
         var seeds = new[] { new NewUrl(job, "https://a.example/", "https://a.example/", "a.example", 0) };
@@ -189,7 +189,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AddSeeds_StopsAtTheMaximumNumberOfUrlsOfTheJob()
+    public async Task AddSeedsStopsAtTheMaximumNumberOfUrlsOfTheJob()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, maxUrls: 2);
         var seeds = Enumerable.Range(0, 5)

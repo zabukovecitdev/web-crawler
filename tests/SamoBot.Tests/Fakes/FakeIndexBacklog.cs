@@ -3,7 +3,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Tests.Fakes;
 
-public sealed class FakeIndexQueue(params PageToIndex[] due) : IIndexQueue
+public sealed class FakeIndexBacklog(params PageToIndex[] due) : IIndexBacklog
 {
     public int? LastBatchSize { get; private set; }
     public List<int> Indexed { get; } = [];

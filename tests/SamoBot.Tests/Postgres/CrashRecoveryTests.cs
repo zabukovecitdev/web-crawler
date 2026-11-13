@@ -5,7 +5,7 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -18,7 +18,7 @@ public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task ABatchThatIsNeverCompleted_IsClaimedAgainAfterTheLeaseExpires()
+    public async Task ABatchThatIsNeverCompletedIsClaimedAgainAfterTheLeaseExpires()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, allowedHosts: "[]");
         for (var i = 0; i < 8; i++)
@@ -36,15 +36,15 @@ public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AFetchThatIsNeverParsed_IsClaimedAgainAfterTheLeaseExpires()
+    public async Task AFetchThatIsNeverParsedIsClaimedAgainAfterTheLeaseExpires()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var url = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
         await PostgresTestData.InsertFetch(postgres.DataSource, url);
 
-        var crashed = await new PostgresParseQueue(postgres.DataSource, _time).Claim(10, Lease, default);
+        var crashed = await new PostgresParseBacklog(postgres.DataSource, _time).Claim(10, Lease, default);
         _time.Advance(Lease + TimeSpan.FromSeconds(1));
-        var recovered = await new PostgresParseQueue(postgres.DataSource, _time).Claim(10, Lease, default);
+        var recovered = await new PostgresParseBacklog(postgres.DataSource, _time).Claim(10, Lease, default);
 
         recovered.Select(fetch => fetch.FetchId).Should().Equal(crashed.Select(fetch => fetch.FetchId));
     }

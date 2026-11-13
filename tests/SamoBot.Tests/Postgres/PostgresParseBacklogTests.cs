@@ -6,9 +6,9 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
-public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
+public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(5);
 
@@ -18,7 +18,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private PostgresParseQueue Queue() => new(postgres.DataSource, _time);
+    private PostgresParseBacklog Queue() => new(postgres.DataSource, _time);
 
     private async Task<(int JobId, int UrlId)> JobWithUrl(string url = "https://a.example/", int? maxUrls = null)
     {
@@ -28,7 +28,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_ReturnsUnparsedFetchesWithTheScopeOfTheirJob()
+    public async Task ClaimReturnsUnparsedFetchesWithTheScopeOfTheirJob()
     {
         var (job, urlId) = await JobWithUrl();
         var fetchId = await PostgresTestData.InsertFetch(postgres.DataSource, urlId, "obj-1");
@@ -45,7 +45,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_DoesNotReturnALeasedFetchUntilTheLeaseExpires()
+    public async Task ClaimDoesNotReturnALeasedFetchUntilTheLeaseExpires()
     {
         var (_, urlId) = await JobWithUrl();
         var fetchId = await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
@@ -62,7 +62,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Claim_ParallelCalls_ReturnNoCommonFetch()
+    public async Task ClaimParallelCallsReturnNoCommonFetch()
     {
         var (_, urlId) = await JobWithUrl();
         for (var i = 0; i < 10; i++)
@@ -77,7 +77,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Complete_StoresThePageAddsLinksAndMarksTheFetchParsed()
+    public async Task CompleteStoresThePageAddsLinksAndMarksTheFetchParsed()
     {
         var (job, urlId) = await JobWithUrl();
         await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
@@ -99,7 +99,7 @@ public class PostgresParseQueueTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Complete_CalledTwice_KeepsOneDocumentAndTruncatesLongFields()
+    public async Task CompleteCalledTwiceKeepsOneDocumentAndTruncatesLongFields()
     {
         var (_, urlId) = await JobWithUrl();
         await PostgresTestData.InsertFetch(postgres.DataSource, urlId);

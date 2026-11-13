@@ -21,7 +21,7 @@ public class HttpFetcherTests
     };
 
     [Fact]
-    public async Task Fetch_ReturnsStatusContentAndContentType()
+    public async Task FetchReturnsStatusContentAndContentType()
     {
         var response = await Fetcher(_ => Html(HttpStatusCode.OK, "<p>hi</p>")).Fetch(TestData.Url(), default);
 
@@ -32,7 +32,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_ReportsTheLocationOfARedirectAndDoesNotThrow()
+    public async Task FetchReportsTheLocationOfARedirectAndDoesNotThrow()
     {
         var response = await Fetcher(_ =>
         {
@@ -46,7 +46,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_OfAServerError_ReturnsTheStatusWithoutThrowing()
+    public async Task FetchOfAServerErrorReturnsTheStatusWithoutThrowing()
     {
         var response = await Fetcher(_ => Html(HttpStatusCode.InternalServerError, string.Empty)).Fetch(TestData.Url(), default);
 
@@ -55,7 +55,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_OfANetworkError_ReturnsStatusZeroWithTheError()
+    public async Task FetchOfANetworkErrorReturnsStatusZeroWithTheError()
     {
         var response = await Fetcher(_ => throw new HttpRequestException("connection refused")).Fetch(TestData.Url(), default);
 
@@ -64,7 +64,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_OfATimeout_ReturnsStatusZeroWithTimeout()
+    public async Task FetchOfATimeoutReturnsStatusZeroWithTimeout()
     {
         var response = await Fetcher(_ => throw new TaskCanceledException("timed out")).Fetch(TestData.Url(), default);
 
@@ -73,7 +73,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_StopsReadingAfterTheBodyLimit()
+    public async Task FetchStopsReadingAfterTheBodyLimit()
     {
         var big = new string('x', HttpFetcher.MaxBodyBytes + 100_000);
 
@@ -83,7 +83,7 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task Fetch_WhenTheCallerCancels_Throws()
+    public async Task FetchWhenTheCallerCancelsThrows()
     {
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
@@ -99,7 +99,7 @@ public class HttpFetcherTests
     [InlineData(true, false, true)]
     [InlineData(false, true, true)]
     [InlineData(true, true, false)]
-    public void Supports_UsesTheBrowserOnlyForJsUrlsWhenRenderingIsEnabled(bool useJs, bool chromeEnabled, bool expected)
+    public void SupportsUsesTheBrowserOnlyForJsUrlsWhenRenderingIsEnabled(bool useJs, bool chromeEnabled, bool expected)
     {
         var fetcher = Fetcher(_ => Html(HttpStatusCode.OK), chromeEnabled);
 

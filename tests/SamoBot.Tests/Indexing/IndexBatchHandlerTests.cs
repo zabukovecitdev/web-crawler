@@ -8,9 +8,9 @@ namespace SamoBot.Tests.Indexing;
 public class IndexBatchHandlerTests
 {
     [Fact]
-    public async Task HandleBatch_IndexesAllPagesInOneCallThenMarksThemIndexed()
+    public async Task HandleBatchIndexesAllPagesInOneCallThenMarksThemIndexed()
     {
-        var queue = new FakeIndexQueue(
+        var queue = new FakeIndexBacklog(
             new PageToIndex { PageId = 10, UrlFetchId = 1 },
             new PageToIndex { PageId = 11, UrlFetchId = 2 });
         var index = new FakeSearchIndex();
@@ -24,11 +24,11 @@ public class IndexBatchHandlerTests
     }
 
     [Fact]
-    public async Task HandleBatch_WithoutPages_DoesNotCallTheIndex()
+    public async Task HandleBatchWithoutPagesDoesNotCallTheIndex()
     {
         var index = new FakeSearchIndex();
 
-        var count = await new IndexBatchHandler(new FakeIndexQueue(), index).HandleBatch(default);
+        var count = await new IndexBatchHandler(new FakeIndexBacklog(), index).HandleBatch(default);
 
         count.Should().Be(0);
         index.Calls.Should().BeEmpty();

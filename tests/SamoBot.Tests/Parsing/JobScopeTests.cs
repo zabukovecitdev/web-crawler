@@ -19,7 +19,7 @@ public class JobScopeTests
     };
 
     [Fact]
-    public void Filter_KeepsOnlyAllowedHostsAndSetsChildDepth()
+    public void FilterKeepsOnlyAllowedHostsAndSetsChildDepth()
     {
         var result = JobScope.Filter(Parent(depth: 1), ["https://a.example/p", "https://other.example/q"]);
 
@@ -27,7 +27,7 @@ public class JobScopeTests
     }
 
     [Fact]
-    public void Filter_ComparesHostsWithoutCase()
+    public void FilterComparesHostsWithoutCase()
     {
         var parent = Parent() with { AllowedHosts = ["A.Example"] };
 
@@ -35,19 +35,19 @@ public class JobScopeTests
     }
 
     [Fact]
-    public void Filter_WhenChildDepthExceedsMaxDepth_ReturnsNothing()
+    public void FilterWhenChildDepthExceedsMaxDepthReturnsNothing()
     {
         JobScope.Filter(Parent(depth: 2, maxDepth: 2), ["https://a.example/p"]).Should().BeEmpty();
     }
 
     [Fact]
-    public void Filter_WhenChildDepthEqualsMaxDepth_KeepsLinks()
+    public void FilterWhenChildDepthEqualsMaxDepthKeepsLinks()
     {
         JobScope.Filter(Parent(depth: 1, maxDepth: 2), ["https://a.example/p"]).Should().HaveCount(1);
     }
 
     [Fact]
-    public void Filter_TreatsAHostWithAnotherPortAsAnotherHost()
+    public void FilterTreatsAHostWithAnotherPortAsAnotherHost()
     {
         var parent = Parent() with { AllowedHosts = ["a.example:8080"] };
 

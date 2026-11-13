@@ -21,7 +21,7 @@ public sealed class CrawlJobService(
 
         var job = created.Value;
         var id = await jobs.Insert(job, ct);
-        var saved = await jobs.Get(id, ct) ?? job;
+        var saved = await jobs.Find(id, ct) ?? job;
         await events.Publish(id, CrawlEventTypes.JobCreated, new { seedCount = job.SeedUrls.Count }, ct);
         return Result.Ok(saved);
     }
@@ -79,7 +79,7 @@ public sealed class CrawlJobService(
 
     private async Task<Result<CrawlJob>> Load(int id, CancellationToken ct)
     {
-        var job = await jobs.Get(id, ct);
+        var job = await jobs.Find(id, ct);
         return job is null ? Result.Fail<CrawlJob>($"Job {id} was not found.") : Result.Ok(job);
     }
 }

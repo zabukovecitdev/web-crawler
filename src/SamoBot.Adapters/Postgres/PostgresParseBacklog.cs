@@ -8,7 +8,7 @@ using SamoBot.Core.Ports;
 namespace SamoBot.Adapters.Postgres;
 
 /// <summary>The parse work queue. A fetch is claimed with a lease. One transaction stores the page, its links and the parsed mark.</summary>
-public sealed class PostgresParseQueue(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IParseQueue
+public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IParseBacklog
 {
     private const string ClaimSql = $"""
         WITH picked AS (
@@ -55,7 +55,7 @@ public sealed class PostgresParseQueue(NpgsqlDataSource dataSource, TimeProvider
         UPDATE "{TableNames.UrlFetches}" SET "ParsedAt" = @Now, "LeaseUntil" = NULL WHERE "Id" = @FetchId
         """;
 
-    static PostgresParseQueue() => DapperTypeHandlers.Register();
+    static PostgresParseBacklog() => DapperTypeHandlers.Register();
 
     public async Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
     {

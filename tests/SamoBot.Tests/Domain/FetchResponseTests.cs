@@ -17,7 +17,7 @@ public class FetchResponseTests
     [InlineData("text/html; charset=utf-8")]
     [InlineData("TEXT/HTML")]
     [InlineData("application/xhtml+xml")]
-    public void IsHtml_WhenTheMediaTypeIsHtml_ReturnsTrue(string contentType)
+    public void IsHtmlWhenTheMediaTypeIsHtmlReturnsTrue(string contentType)
     {
         Response(contentType, "plain").IsHtml.Should().BeTrue();
     }
@@ -25,7 +25,7 @@ public class FetchResponseTests
     [Theory]
     [InlineData(null, "<!DOCTYPE html><title>x</title>")]
     [InlineData("application/octet-stream", "  <html lang=en>")]
-    public void IsHtml_WhenTheMediaTypeIsMissingOrWrong_LooksAtTheFirstBytes(string? contentType, string body)
+    public void IsHtmlWhenTheMediaTypeIsMissingOrWrongLooksAtTheFirstBytes(string? contentType, string body)
     {
         Response(contentType, body).IsHtml.Should().BeTrue();
     }
@@ -34,7 +34,7 @@ public class FetchResponseTests
     [InlineData("application/json", "{\"a\":1}")]
     [InlineData(null, "")]
     [InlineData("text/plain", "just text")]
-    public void IsHtml_ForOtherContent_ReturnsFalse(string? contentType, string body)
+    public void IsHtmlForOtherContentReturnsFalse(string? contentType, string body)
     {
         Response(contentType, body).IsHtml.Should().BeFalse();
     }
@@ -45,7 +45,7 @@ public class FetchResponseTests
     [InlineData(299, true)]
     [InlineData(300, false)]
     [InlineData(0, false)]
-    public void IsSuccess_IsTrueOnlyFor2xx(int status, bool expected)
+    public void IsSuccessIsTrueOnlyFor2xx(int status, bool expected)
     {
         new FetchResponse { StatusCode = status }.IsSuccess.Should().Be(expected);
     }

@@ -27,7 +27,7 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenRobotsBlock_DisablesUrlAndDoesNotFetch()
+    public async Task HandleWhenRobotsBlockDisablesUrlAndDoesNotFetch()
     {
         var fetcher = new FakeFetcher();
         var handler = Handler(fetcher, "User-agent: *\nDisallow: /\n");
@@ -41,7 +41,7 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task Handle_HtmlSuccess_StoresContentCompletesAndPublishes()
+    public async Task HandleHtmlSuccessStoresContentCompletesAndPublishes()
     {
         var url = TestData.Url();
         var handler = Handler(new FakeFetcher(response: TestData.Response(200)));
@@ -57,7 +57,7 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ServerError_SchedulesRetryWithoutStoringContent()
+    public async Task HandleServerErrorSchedulesRetryWithoutStoringContent()
     {
         var handler = Handler(new FakeFetcher(response: TestData.Response(500)));
 
@@ -69,7 +69,7 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task Handle_NonHtmlContent_IsNotStored()
+    public async Task HandleNonHtmlContentIsNotStored()
     {
         var pdf = new FetchResponse { StatusCode = 200, ContentType = "application/pdf", Content = "%PDF-1.4 binary"u8.ToArray() };
         var handler = Handler(new FakeFetcher(response: pdf));
@@ -81,7 +81,7 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task Handle_HtmlErrorPage_IsNotStored()
+    public async Task HandleHtmlErrorPageIsNotStored()
     {
         var response = new FetchResponse { StatusCode = 404, ContentType = "text/html", Content = "<html>missing</html>"u8.ToArray() };
         var handler = Handler(new FakeFetcher(response: response));

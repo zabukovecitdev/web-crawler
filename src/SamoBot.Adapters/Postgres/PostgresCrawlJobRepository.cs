@@ -54,7 +54,7 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
 
     static PostgresCrawlJobRepository() => DapperTypeHandlers.Register();
 
-    public async Task<CrawlJob?> Get(int id, CancellationToken ct)
+    public async Task<CrawlJob?> Find(int id, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         return await connection.QuerySingleOrDefaultAsync<CrawlJob>(new CommandDefinition(GetSql, new { Id = id }, cancellationToken: ct));

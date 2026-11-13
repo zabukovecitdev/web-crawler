@@ -12,7 +12,7 @@ public class BackoffPolicyTests
     [InlineData(5, 32)]
     [InlineData(6, 60)]
     [InlineData(50, 60)]
-    public void DelayFor_DoublesEachFailureUpToOneHour(int failCount, int expectedMinutes)
+    public void DelayForDoublesEachFailureUpToOneHour(int failCount, int expectedMinutes)
     {
         BackoffPolicy.DelayFor(failCount).Should().Be(TimeSpan.FromMinutes(expectedMinutes));
     }

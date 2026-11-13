@@ -2,12 +2,12 @@ using FluentAssertions;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresFixtureTests(PostgresFixture postgres)
 {
     [Fact]
-    public async Task Migrations_CreateTheRedesignedSchema()
+    public async Task MigrationsCreateTheRedesignedSchema()
     {
         await using var command = postgres.DataSource.CreateCommand(
             """SELECT count(*) FROM information_schema.tables WHERE table_name IN ('Hosts', 'DiscoveredUrls') AND table_schema = 'public'""");

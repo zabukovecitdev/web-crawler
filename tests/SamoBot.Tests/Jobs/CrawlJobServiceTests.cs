@@ -33,7 +33,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Create_InsertsPendingJobAndPublishesEvent()
+    public async Task CreateInsertsPendingJobAndPublishesEvent()
     {
         var result = await _service.Create(Request("https://A.example/start", "https://b.example/"), default);
 
@@ -44,7 +44,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Create_WithoutValidSeed_FailsAndInsertsNothing()
+    public async Task CreateWithoutValidSeedFailsAndInsertsNothing()
     {
         var result = await _service.Create(Request("", "not a url"), default);
 
@@ -53,7 +53,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Start_AddsNormalizedSeedsSavesRunningJobAndPublishes()
+    public async Task StartAddsNormalizedSeedsSavesRunningJobAndPublishes()
     {
         var job = AddJob();
 
@@ -68,13 +68,13 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Start_OfUnknownJob_Fails()
+    public async Task StartOfUnknownJobFails()
     {
         (await _service.Start(99, default)).IsFailed.Should().BeTrue();
     }
 
     [Fact]
-    public async Task Start_OfRunningJob_FailsWithoutSideEffects()
+    public async Task StartOfRunningJobFailsWithoutSideEffects()
     {
         AddJob(CrawlJobStatus.Running);
 
@@ -87,7 +87,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Pause_OfRunningJob_SavesAndPublishes()
+    public async Task PauseOfRunningJobSavesAndPublishes()
     {
         var job = AddJob(CrawlJobStatus.Running);
 
@@ -99,7 +99,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Pause_OfPendingJob_FailsWithoutSaving()
+    public async Task PauseOfPendingJobFailsWithoutSaving()
     {
         AddJob();
 
@@ -110,7 +110,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Cancel_SavesAndPublishes()
+    public async Task CancelSavesAndPublishes()
     {
         var job = AddJob(CrawlJobStatus.Running);
 
@@ -122,7 +122,7 @@ public class CrawlJobServiceTests
     }
 
     [Fact]
-    public async Task Create_KeepsANonDefaultPortInTheAllowedHost()
+    public async Task CreateKeepsANonDefaultPortInTheAllowedHost()
     {
         var result = await _service.Create(Request("http://localhost:5000/start"), default);
 

@@ -25,7 +25,7 @@ public class RobotsGateTests
         new("a.example", content, _time.GetUtcNow(), _time.GetUtcNow().AddHours(hours));
 
     [Fact]
-    public async Task IsAllowed_WhenRobotsAreNotRespected_ReturnsTrueWithoutLookup()
+    public async Task IsAllowedWhenRobotsAreNotRespectedReturnsTrueWithoutLookup()
     {
         var gate = Gate(Rules(BlockPrivate), out var source);
 
@@ -37,7 +37,7 @@ public class RobotsGateTests
     }
 
     [Fact]
-    public async Task IsAllowed_DownloadsSavesAndAppliesRules()
+    public async Task IsAllowedDownloadsSavesAndAppliesRules()
     {
         var gate = Gate(Rules(BlockPrivate), out var source);
 
@@ -49,7 +49,7 @@ public class RobotsGateTests
     }
 
     [Fact]
-    public async Task IsAllowed_UsesFreshStoredRulesWithoutDownload()
+    public async Task IsAllowedUsesFreshStoredRulesWithoutDownload()
     {
         _store.Seed(Rules(BlockPrivate));
         var gate = Gate(Rules(string.Empty), out var source);
@@ -61,7 +61,7 @@ public class RobotsGateTests
     }
 
     [Fact]
-    public async Task IsAllowed_DownloadsAgainWhenStoredRulesExpired()
+    public async Task IsAllowedDownloadsAgainWhenStoredRulesExpired()
     {
         _store.Seed(Rules(BlockPrivate, hours: -1));
         var gate = Gate(Rules("User-agent: *\nDisallow:\n"), out var source);

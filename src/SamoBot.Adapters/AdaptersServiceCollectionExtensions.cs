@@ -27,8 +27,8 @@ public static class AdaptersServiceCollectionExtensions
 
     private static IServiceCollection AddPostgresAdapters(this IServiceCollection services) => services
         .AddSingleton<IUrlFrontier, PostgresUrlFrontier>()
-        .AddSingleton<IParseQueue, PostgresParseQueue>()
-        .AddSingleton<IIndexQueue, PostgresIndexQueue>()
+        .AddSingleton<IParseBacklog, PostgresParseBacklog>()
+        .AddSingleton<IIndexBacklog, PostgresIndexBacklog>()
         .AddSingleton<ICrawlJobRepository, PostgresCrawlJobRepository>()
         .AddSingleton<IJobPageReader, PostgresJobPageReader>()
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()

@@ -21,7 +21,7 @@ namespace SamoBot.Tests.EndToEnd;
 /// A whole crawl with real PostgreSQL, RustFS and Meilisearch and a real HTTP stub site.
 /// The clock is fake, so the retry backoff of the failing page costs no real time.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infrastructure)
     : IClassFixture<InfrastructureFixture>, IAsyncLifetime
@@ -75,7 +75,7 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         while (DateTime.UtcNow < deadline)
         {
             var worked = await RunHandlersOnce(provider);
-            if ((await jobs.Get(jobId, default))!.Status == CrawlJobStatus.Completed)
+            if ((await jobs.Find(jobId, default))!.Status == CrawlJobStatus.Completed)
             {
                 return;
             }
@@ -91,7 +91,7 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         PostgresTestData.Rows<T>(postgres.DataSource, sql, parameters);
 
     [Fact]
-    public async Task CrawlingTheStubSite_FollowsTheRulesOfTheDesign()
+    public async Task CrawlingTheStubSiteFollowsTheRulesOfTheDesign()
     {
         await using var site = await StubSite.Start();
         await using var provider = Build();

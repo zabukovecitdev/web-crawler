@@ -36,7 +36,7 @@ public class CrawlJobTests
     [InlineData(CrawlJobStatus.Running, false)]
     [InlineData(CrawlJobStatus.Completed, false)]
     [InlineData(CrawlJobStatus.Cancelled, false)]
-    public void Start_IsAllowedOnlyFromPendingOrPaused(CrawlJobStatus from, bool allowed)
+    public void StartIsAllowedOnlyFromPendingOrPaused(CrawlJobStatus from, bool allowed)
     {
         var job = JobIn(from);
 
@@ -49,7 +49,7 @@ public class CrawlJobTests
     [InlineData(CrawlJobStatus.Pending, false)]
     [InlineData(CrawlJobStatus.Paused, false)]
     [InlineData(CrawlJobStatus.Completed, false)]
-    public void Pause_IsAllowedOnlyFromRunning(CrawlJobStatus from, bool allowed)
+    public void PauseIsAllowedOnlyFromRunning(CrawlJobStatus from, bool allowed)
     {
         var job = JobIn(from);
 
@@ -63,7 +63,7 @@ public class CrawlJobTests
     [InlineData(CrawlJobStatus.Paused, true)]
     [InlineData(CrawlJobStatus.Cancelled, true)]
     [InlineData(CrawlJobStatus.Completed, false)]
-    public void Cancel_IsAllowedFromEveryStatusExceptCompleted(CrawlJobStatus from, bool allowed)
+    public void CancelIsAllowedFromEveryStatusExceptCompleted(CrawlJobStatus from, bool allowed)
     {
         var job = JobIn(from);
 
@@ -72,7 +72,7 @@ public class CrawlJobTests
     }
 
     [Fact]
-    public void Start_SetsStartedAtOnlyOnce()
+    public void StartSetsStartedAtOnlyOnce()
     {
         var job = JobIn(CrawlJobStatus.Paused);
 
@@ -83,7 +83,7 @@ public class CrawlJobTests
     }
 
     [Fact]
-    public void Complete_SetsStatusAndCompletedAt()
+    public void CompleteSetsStatusAndCompletedAt()
     {
         var job = JobIn(CrawlJobStatus.Running);
 

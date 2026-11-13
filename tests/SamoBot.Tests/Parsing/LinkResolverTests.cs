@@ -12,13 +12,13 @@ public class LinkResolverTests
         LinkResolver.Resolve(Page, hrefs.Select(href => new ParsedLink { Url = href }));
 
     [Fact]
-    public void Resolve_RootRelativeLink_UsesPageHost()
+    public void ResolveRootRelativeLinkUsesPageHost()
     {
         Resolve("/about").Should().Equal("https://a.example/about");
     }
 
     [Fact]
-    public void Resolve_RelativeAndAbsoluteLinks_AreResolvedAgainstThePage()
+    public void ResolveRelativeAndAbsoluteLinksAreResolvedAgainstThePage()
     {
         Resolve("y", "https://b.example/z").Should().Equal("https://a.example/y", "https://b.example/z");
     }
@@ -29,19 +29,19 @@ public class LinkResolverTests
     [InlineData("tel:+4912345")]
     [InlineData("ftp://a.example/file")]
     [InlineData("")]
-    public void Resolve_NonWebLinks_AreRemoved(string href)
+    public void ResolveNonWebLinksAreRemoved(string href)
     {
         Resolve(href).Should().BeEmpty();
     }
 
     [Fact]
-    public void Resolve_NormalizesLinks()
+    public void ResolveNormalizesLinks()
     {
         Resolve("/p?b=2&a=1&utm_source=x#frag").Should().Equal("https://a.example/p?a=1&b=2");
     }
 
     [Fact]
-    public void Resolve_RemovesDuplicatesAfterNormalization()
+    public void ResolveRemovesDuplicatesAfterNormalization()
     {
         Resolve("/p#one", "/p#two", "https://A.example/p").Should().Equal("https://a.example/p");
     }

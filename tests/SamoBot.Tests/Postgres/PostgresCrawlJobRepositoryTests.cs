@@ -6,7 +6,7 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -21,11 +21,11 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
         TestData.Now).Value;
 
     [Fact]
-    public async Task InsertAndGet_RoundTripAllFieldsIncludingJsonListsAndStatus()
+    public async Task InsertAndGetRoundTripAllFieldsIncludingJsonListsAndStatus()
     {
         var id = await Repository().Insert(NewJob(), default);
 
-        var job = await Repository().Get(id, default);
+        var job = await Repository().Find(id, default);
 
         job.Should().NotBeNull();
         job!.Id.Should().Be(id);
@@ -38,28 +38,28 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     }
 
     [Fact]
-    public async Task Save_StoresTheTransitionsOfALoadedJob()
+    public async Task SaveStoresTheTransitionsOfALoadedJob()
     {
         var id = await Repository().Insert(NewJob(), default);
-        var job = (await Repository().Get(id, default))!;
+        var job = (await Repository().Find(id, default))!;
 
         job.Start(TestData.Now.AddMinutes(5)).IsSuccess.Should().BeTrue();
         await Repository().Save(job, default);
 
-        var reloaded = (await Repository().Get(id, default))!;
+        var reloaded = (await Repository().Find(id, default))!;
         reloaded.Status.Should().Be(CrawlJobStatus.Running);
         reloaded.StartedAt.Should().Be(TestData.Now.AddMinutes(5));
         reloaded.UpdatedAt.Should().Be(TestData.Now.AddMinutes(5));
     }
 
     [Fact]
-    public async Task Get_OfAMissingJob_ReturnsNull()
+    public async Task GetOfAMissingJobReturnsNull()
     {
-        (await Repository().Get(999, default)).Should().BeNull();
+        (await Repository().Find(999, default)).Should().BeNull();
     }
 
     [Fact]
-    public async Task ListRecent_ReturnsNewestFirstWithinTheLimit()
+    public async Task ListRecentReturnsNewestFirstWithinTheLimit()
     {
         var first = await Repository().Insert(NewJob(), default);
         var second = await Repository().Insert(NewJob(), default);
@@ -88,7 +88,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
         await Repository().CompleteFinishedJobs(TestData.Now.AddHours(1), default);
 
     [Fact]
-    public async Task CompleteFinishedJobs_CompletesAJobWhoseUrlsAreAllDone()
+    public async Task CompleteFinishedJobsCompletesAJobWhoseUrlsAreAllDone()
     {
         var job = await RunningJob();
         var done = await Url(job, "a");
@@ -106,7 +106,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     [InlineData("InFlight", true, 0)]
     [InlineData("Idle", false, 0)]
     [InlineData("Idle", true, 2)]
-    public async Task CompleteFinishedJobs_DoesNotCompleteAJobWithPendingWork(string status, bool crawled, int failCount)
+    public async Task CompleteFinishedJobsDoesNotCompleteAJobWithPendingWork(string status, bool crawled, int failCount)
     {
         var job = await RunningJob();
         await Url(job, "a", status, crawled, failCount);
@@ -115,7 +115,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     }
 
     [Fact]
-    public async Task CompleteFinishedJobs_DoesNotCompleteAJobWithAnUnparsedPage()
+    public async Task CompleteFinishedJobsDoesNotCompleteAJobWithAnUnparsedPage()
     {
         var job = await RunningJob();
         var done = await Url(job, "a");
@@ -125,7 +125,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     }
 
     [Fact]
-    public async Task CompleteFinishedJobs_IgnoresJobsThatAreNotRunning()
+    public async Task CompleteFinishedJobsIgnoresJobsThatAreNotRunning()
     {
         await Url(await RunningJob("Paused"), "a");
 

@@ -9,7 +9,7 @@ namespace SamoBot.Tests.Jobs;
 public class JobCompletionHandlerTests
 {
     [Fact]
-    public async Task HandleBatch_PublishesOneEventForEachCompletedJobAndReturnsZero()
+    public async Task HandleBatchPublishesOneEventForEachCompletedJobAndReturnsZero()
     {
         var jobs = new FakeCrawlJobRepository { FinishedJobIds = [3, 4] };
         var events = new FakeEventPublisher();

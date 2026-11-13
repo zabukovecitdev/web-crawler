@@ -4,7 +4,7 @@ using SamoBot.Core.Ports;
 namespace SamoBot.Core.Parsing;
 
 /// <summary>Parses one stored fetch and hands the page and its in-scope links to the parse queue.</summary>
-public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser parser, IParseQueue queue)
+public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser parser, IParseBacklog queue)
 {
     public async Task Handle(FetchToParse fetch, CancellationToken ct)
     {

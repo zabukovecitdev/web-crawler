@@ -64,7 +64,7 @@ public class PollingWorkerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenTheHandlerThrows_LogsAndTriesAgainAfterTheErrorDelay()
+    public async Task ExecuteAsyncWhenTheHandlerThrowsLogsAndTriesAgainAfterTheErrorDelay()
     {
         _script.Behavior = call => call == 1 ? throw new InvalidOperationException("boom") : 0;
         using var worker = Worker();
@@ -80,7 +80,7 @@ public class PollingWorkerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenABatchHasNoWork_WaitsTheIdleDelay()
+    public async Task ExecuteAsyncWhenABatchHasNoWorkWaitsTheIdleDelay()
     {
         using var worker = Worker();
 
@@ -95,7 +95,7 @@ public class PollingWorkerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenABatchHasWork_RunsTheNextBatchWithoutWaiting()
+    public async Task ExecuteAsyncWhenABatchHasWorkRunsTheNextBatchWithoutWaiting()
     {
         _script.Behavior = _ => 5;
         using var worker = Worker();
@@ -108,7 +108,7 @@ public class PollingWorkerTests
     }
 
     [Fact]
-    public async Task StopAsync_EndsTheLoop()
+    public async Task StopAsyncEndsTheLoop()
     {
         using var worker = Worker();
         await worker.StartAsync(default);

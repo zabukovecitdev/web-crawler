@@ -12,7 +12,7 @@ public sealed class FakeRobotsStore : IRobotsStore
 
     public void Seed(RobotsRules rules) => _rows[rules.Host] = rules;
 
-    public Task<RobotsRules?> Get(string host, CancellationToken ct)
+    public Task<RobotsRules?> Find(string host, CancellationToken ct)
     {
         GetCalls++;
         return Task.FromResult(_rows.GetValueOrDefault(host));

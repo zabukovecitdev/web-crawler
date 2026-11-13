@@ -14,7 +14,7 @@ public class ApiJsonContractTests
     private static JsonElement Serialize<T>(T value) => JsonSerializer.SerializeToElement(value, Web);
 
     [Fact]
-    public void CrawlJob_HasStringStatusAndAJsonStringOfSeedUrls()
+    public void CrawlJobHasStringStatusAndAJsonStringOfSeedUrls()
     {
         var job = CrawlJob.Create(new NewCrawlJob("u1", ["https://a.example/"], 2, 10, false, true), TestData.Now).Value;
 
@@ -28,7 +28,7 @@ public class ApiJsonContractTests
     }
 
     [Fact]
-    public void JobPage_HasAStringStatusAndTheFieldsTheDashboardReads()
+    public void JobPageHasAStringStatusAndTheFieldsTheDashboardReads()
     {
         var json = Serialize(new JobPage { Id = 1, Host = "a.example", Url = "https://a.example/", Status = UrlStatus.InFlight, Depth = 1 });
 
@@ -38,7 +38,7 @@ public class ApiJsonContractTests
     }
 
     [Fact]
-    public void JobEvent_HasAStringPayload()
+    public void JobEventHasAStringPayload()
     {
         var json = Serialize(new JobEvent { Id = 3, CrawlJobId = 1, EventType = "JobStarted", Payload = "{}", CreatedAt = TestData.Now });
 

@@ -4,7 +4,7 @@ namespace SamoBot.Core.Ports;
 
 public interface ICrawlJobRepository
 {
-    Task<CrawlJob?> Get(int id, CancellationToken ct);
+    Task<CrawlJob?> Find(int id, CancellationToken ct);
 
     Task<IReadOnlyList<CrawlJob>> ListRecent(int limit, CancellationToken ct);
 

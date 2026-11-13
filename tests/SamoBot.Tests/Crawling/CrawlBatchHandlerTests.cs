@@ -11,7 +11,7 @@ namespace SamoBot.Tests.Crawling;
 public class CrawlBatchHandlerTests
 {
     [Fact]
-    public async Task HandleBatch_ClaimsTwentyUrlsWithFiveMinuteLeaseAndCrawlsEach()
+    public async Task HandleBatchClaimsTwentyUrlsWithFiveMinuteLeaseAndCrawlsEach()
     {
         var time = new FakeTimeProvider(TestData.Now);
         var frontier = new FakeUrlFrontier(TestData.Url("https://a.example/1"), TestData.Url("https://b.example/2"));

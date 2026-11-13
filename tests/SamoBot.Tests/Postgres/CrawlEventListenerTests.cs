@@ -7,7 +7,7 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class CrawlEventListenerTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -16,7 +16,7 @@ public class CrawlEventListenerTests(PostgresFixture postgres) : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task Listener_SendsAPublishedEventToTheGroupOfItsJob()
+    public async Task ListenerSendsAPublishedEventToTheGroupOfItsJob()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var hub = new RecordingHubContext();

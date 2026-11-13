@@ -10,7 +10,7 @@ public class ObjectNameGeneratorTests
     private static string Hash(string url) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url))).ToLowerInvariant();
 
     [Fact]
-    public void GenerateHierarchical_UsesDomainPathAndHash()
+    public void GenerateHierarchicalUsesDomainPathAndHash()
     {
         const string url = "https://Example.com/a/b?x=1";
 
@@ -18,7 +18,7 @@ public class ObjectNameGeneratorTests
     }
 
     [Fact]
-    public void GenerateHierarchical_ForTheRootPath_UsesIndex()
+    public void GenerateHierarchicalForTheRootPathUsesIndex()
     {
         const string url = "https://example.com/";
 
@@ -26,7 +26,7 @@ public class ObjectNameGeneratorTests
     }
 
     [Fact]
-    public void GenerateHierarchical_ReplacesUnsafeCharacters()
+    public void GenerateHierarchicalReplacesUnsafeCharacters()
     {
         const string url = "https://example.com/a b/ü";
 
@@ -38,13 +38,13 @@ public class ObjectNameGeneratorTests
     [InlineData("text/plain; charset=utf-8", "https://example.com/x", "txt")]
     [InlineData(null, "https://example.com/file.PDF", "pdf")]
     [InlineData("application/unknown", "https://example.com/x", "html")]
-    public void GenerateHierarchical_ChoosesTheExtensionFromTheMediaTypeThenThePath(string? contentType, string url, string extension)
+    public void GenerateHierarchicalChoosesTheExtensionFromTheMediaTypeThenThePath(string? contentType, string url, string extension)
     {
         ObjectNameGenerator.GenerateHierarchical(url, contentType).Should().EndWith($".{extension}");
     }
 
     [Fact]
-    public void GenerateHierarchical_ForAnInvalidUrl_UsesTheHashOnly()
+    public void GenerateHierarchicalForAnInvalidUrlUsesTheHashOnly()
     {
         ObjectNameGenerator.GenerateHierarchical("not a url", "text/html").Should().Be($"{Hash("not a url")}.html");
     }

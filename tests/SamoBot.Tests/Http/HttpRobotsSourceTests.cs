@@ -16,7 +16,7 @@ public class HttpRobotsSourceTests
     private static HttpResponseMessage Status(HttpStatusCode code, string body = "") => new(code) { Content = new StringContent(body) };
 
     [Fact]
-    public async Task Download_OfAFoundFile_ParsesTheRulesAndExpiresAfterOneDay()
+    public async Task DownloadOfAFoundFileParsesTheRulesAndExpiresAfterOneDay()
     {
         var (source, handler) = Build(_ => Status(HttpStatusCode.OK, "User-agent: *\nDisallow: /private\n"));
 
@@ -32,7 +32,7 @@ public class HttpRobotsSourceTests
     [InlineData(HttpStatusCode.NotFound)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.Gone)]
-    public async Task Download_OfAMissingFile_AllowsEverythingForOneDay(HttpStatusCode code)
+    public async Task DownloadOfAMissingFileAllowsEverythingForOneDay(HttpStatusCode code)
     {
         var (source, _) = Build(_ => Status(code));
 
@@ -45,7 +45,7 @@ public class HttpRobotsSourceTests
     [Theory]
     [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
-    public async Task Download_OfAServerError_BlocksEverythingForOneHour(HttpStatusCode code)
+    public async Task DownloadOfAServerErrorBlocksEverythingForOneHour(HttpStatusCode code)
     {
         var (source, _) = Build(_ => Status(code));
 
@@ -56,7 +56,7 @@ public class HttpRobotsSourceTests
     }
 
     [Fact]
-    public async Task Download_WhenBothSchemesFailToConnect_BlocksEverythingForOneHour()
+    public async Task DownloadWhenBothSchemesFailToConnectBlocksEverythingForOneHour()
     {
         var (source, handler) = Build(_ => throw new HttpRequestException("refused"));
 
@@ -68,7 +68,7 @@ public class HttpRobotsSourceTests
     }
 
     [Fact]
-    public async Task Download_WhenHttpsFails_FallsBackToHttpAndKeepsThePort()
+    public async Task DownloadWhenHttpsFailsFallsBackToHttpAndKeepsThePort()
     {
         var (source, handler) = Build(request => request.RequestUri!.Scheme == "https"
             ? throw new HttpRequestException("refused")

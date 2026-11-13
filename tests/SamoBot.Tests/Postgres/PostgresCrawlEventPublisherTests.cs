@@ -4,7 +4,7 @@ using SamoBot.Adapters.Postgres;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresCrawlEventPublisherTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -13,7 +13,7 @@ public class PostgresCrawlEventPublisherTests(PostgresFixture postgres) : IAsync
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task Publish_StoresTheEventAndNotifiesListenersWithTheEnvelope()
+    public async Task PublishStoresTheEventAndNotifiesListenersWithTheEnvelope()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await using var listener = await postgres.DataSource.OpenConnectionAsync();

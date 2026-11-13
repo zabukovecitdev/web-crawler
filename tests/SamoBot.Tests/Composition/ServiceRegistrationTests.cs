@@ -37,7 +37,7 @@ public class ServiceRegistrationTests
     [InlineData(typeof(IndexBatchHandler))]
     [InlineData(typeof(JobCompletionHandler))]
     [InlineData(typeof(CrawlJobService))]
-    public async Task Resolve_BuildsEachHandlerAndServiceWithAllItsDependencies(Type type)
+    public async Task ResolveBuildsEachHandlerAndServiceWithAllItsDependencies(Type type)
     {
         await using var provider = Build();
         await using var scope = provider.CreateAsyncScope();
@@ -50,7 +50,7 @@ public class ServiceRegistrationTests
     }
 
     [Fact]
-    public async Task Resolve_GivesExactlyOneSupportingFetcherForEveryUrl()
+    public async Task ResolveGivesExactlyOneSupportingFetcherForEveryUrl()
     {
         await using var provider = Build();
         await using var scope = provider.CreateAsyncScope();
@@ -65,7 +65,7 @@ public class ServiceRegistrationTests
     }
 
     [Fact]
-    public async Task Resolve_ReusesTheSameMeilisearchIndexForReadingAndWriting()
+    public async Task ResolveReusesTheSameMeilisearchIndexForReadingAndWriting()
     {
         await using var provider = Build();
 
@@ -74,7 +74,7 @@ public class ServiceRegistrationTests
     }
 
     [Fact]
-    public async Task Resolve_BuildsTheFetcherResolverThatTheCrawlerUses()
+    public async Task ResolveBuildsTheFetcherResolverThatTheCrawlerUses()
     {
         await using var provider = Build();
         await using var scope = provider.CreateAsyncScope();

@@ -23,7 +23,7 @@ public sealed class CrawlJobsController(CrawlJobService service, ICrawlJobReposi
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id, CancellationToken ct = default)
     {
-        var job = await jobs.Get(id, ct);
+        var job = await jobs.Find(id, ct);
         return job is null ? NotFound() : Ok(CrawlJobResponse.From(job));
     }
 
@@ -61,7 +61,7 @@ public sealed class CrawlJobsController(CrawlJobService service, ICrawlJobReposi
     public async Task<IActionResult> Pages(
         int id, [FromQuery] int limit = 50, [FromQuery] int offset = 0, CancellationToken ct = default)
     {
-        if (await jobs.Get(id, ct) is null)
+        if (await jobs.Find(id, ct) is null)
         {
             return NotFound();
         }
@@ -74,7 +74,7 @@ public sealed class CrawlJobsController(CrawlJobService service, ICrawlJobReposi
     public async Task<IActionResult> Events(
         int id, [FromQuery] long after = 0, [FromQuery] int limit = 100, CancellationToken ct = default)
     {
-        if (await jobs.Get(id, ct) is null)
+        if (await jobs.Find(id, ct) is null)
         {
             return NotFound();
         }

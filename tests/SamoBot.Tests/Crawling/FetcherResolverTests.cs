@@ -7,7 +7,7 @@ namespace SamoBot.Tests.Crawling;
 public class FetcherResolverTests
 {
     [Fact]
-    public void For_ReturnsFirstFetcherThatSupportsTheUrl()
+    public void ForReturnsFirstFetcherThatSupportsTheUrl()
     {
         var first = new FakeFetcher(supports: false);
         var second = new FakeFetcher(supports: true);
@@ -17,7 +17,7 @@ public class FetcherResolverTests
     }
 
     [Fact]
-    public void For_WithoutSupportingFetcher_Throws()
+    public void ForWithoutSupportingFetcherThrows()
     {
         var resolver = new FetcherResolver([new FakeFetcher(supports: false)]);
 

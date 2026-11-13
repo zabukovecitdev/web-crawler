@@ -21,7 +21,7 @@ public class CrawlOutcomeTests
     };
 
     [Fact]
-    public void Succeeded_SetsIdleResetsFailCountAndSchedulesRecrawl()
+    public void SucceededSetsIdleResetsFailCountAndSchedulesRecrawl()
     {
         var update = new Succeeded(TimeSpan.FromDays(1)).ToUpdate(Url(), Now);
 
@@ -29,7 +29,7 @@ public class CrawlOutcomeTests
     }
 
     [Fact]
-    public void RetryLater_IncrementsFailCountAndAppliesDelay()
+    public void RetryLaterIncrementsFailCountAndAppliesDelay()
     {
         var update = new RetryLater("http-500", TimeSpan.FromMinutes(4)).ToUpdate(Url(), Now);
 
@@ -37,7 +37,7 @@ public class CrawlOutcomeTests
     }
 
     [Fact]
-    public void Disabled_KeepsFailCountAndStoresReason()
+    public void DisabledKeepsFailCountAndStoresReason()
     {
         var update = new Disabled("robots").ToUpdate(Url(), Now);
 
@@ -45,7 +45,7 @@ public class CrawlOutcomeTests
     }
 
     [Fact]
-    public void Redirected_DisablesUrlAndAddsTargetAtSameDepth()
+    public void RedirectedDisablesUrlAndAddsTargetAtSameDepth()
     {
         var update = new Redirected("/new?b=2&a=1").ToUpdate(Url(), Now);
 
@@ -55,7 +55,7 @@ public class CrawlOutcomeTests
     }
 
     [Fact]
-    public void Redirected_ToNonWebScheme_AddsNoNewUrl()
+    public void RedirectedToNonWebSchemeAddsNoNewUrl()
     {
         var update = new Redirected("ftp://a.example/file").ToUpdate(Url(), Now);
 

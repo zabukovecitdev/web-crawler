@@ -26,7 +26,7 @@ public sealed class PostgresRobotsStore(NpgsqlDataSource dataSource) : IRobotsSt
         UPDATE "{TableNames.Hosts}" SET "CrawlDelayMs" = @CrawlDelayMs WHERE "Host" = @Host
         """;
 
-    public async Task<RobotsRules?> Get(string host, CancellationToken ct)
+    public async Task<RobotsRules?> Find(string host, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         var row = await connection.QuerySingleOrDefaultAsync<StoredRules>(new CommandDefinition(GetSql, new { Host = host }, cancellationToken: ct));

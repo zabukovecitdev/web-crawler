@@ -11,7 +11,7 @@ public class OutcomeClassifierTests
     [InlineData(200)]
     [InlineData(204)]
     [InlineData(299)]
-    public void Classify_Status2xx_ReturnsSucceededWithOneDay(int status)
+    public void ClassifyStatus2xxReturnsSucceededWithOneDay(int status)
     {
         OutcomeClassifier.Classify(TestData.Response(status), 3).Should().Be(new Succeeded(TimeSpan.FromDays(1)));
     }
@@ -22,13 +22,13 @@ public class OutcomeClassifierTests
     [InlineData(303)]
     [InlineData(307)]
     [InlineData(308)]
-    public void Classify_RedirectWithLocation_ReturnsRedirected(int status)
+    public void ClassifyRedirectWithLocationReturnsRedirected(int status)
     {
         OutcomeClassifier.Classify(TestData.Response(status, "/next"), 0).Should().Be(new Redirected("/next"));
     }
 
     [Fact]
-    public void Classify_RedirectWithoutLocation_ReturnsDisabledWithHttpStatus()
+    public void ClassifyRedirectWithoutLocationReturnsDisabledWithHttpStatus()
     {
         OutcomeClassifier.Classify(TestData.Response(301), 0).Should().Be(new Disabled("http-301"));
     }
@@ -38,7 +38,7 @@ public class OutcomeClassifierTests
     [InlineData(500, "http-500")]
     [InlineData(503, "http-503")]
     [InlineData(599, "http-599")]
-    public void Classify_RetryableStatusBelowLimit_ReturnsRetryLaterWithBackoff(int status, string reason)
+    public void ClassifyRetryableStatusBelowLimitReturnsRetryLaterWithBackoff(int status, string reason)
     {
         var outcome = OutcomeClassifier.Classify(TestData.Response(status), 2);
 
@@ -46,7 +46,7 @@ public class OutcomeClassifierTests
     }
 
     [Fact]
-    public void Classify_NetworkError_ReturnsRetryLaterWithErrorText()
+    public void ClassifyNetworkErrorReturnsRetryLaterWithErrorText()
     {
         var response = new FetchResponse { StatusCode = 0, Error = "timeout" };
 
@@ -57,7 +57,7 @@ public class OutcomeClassifierTests
     [InlineData(0)]
     [InlineData(429)]
     [InlineData(500)]
-    public void Classify_RetryableStatusAtLimit_ReturnsDisabledMaxFailures(int status)
+    public void ClassifyRetryableStatusAtLimitReturnsDisabledMaxFailures(int status)
     {
         OutcomeClassifier.Classify(TestData.Response(status), 4).Should().Be(new Disabled("max-failures"));
     }
@@ -67,7 +67,7 @@ public class OutcomeClassifierTests
     [InlineData(404, "http-404")]
     [InlineData(410, "http-410")]
     [InlineData(304, "http-304")]
-    public void Classify_OtherStatus_ReturnsDisabledWithHttpStatus(int status, string reason)
+    public void ClassifyOtherStatusReturnsDisabledWithHttpStatus(int status, string reason)
     {
         OutcomeClassifier.Classify(TestData.Response(status), 0).Should().Be(new Disabled(reason));
     }

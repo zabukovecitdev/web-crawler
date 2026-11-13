@@ -3,7 +3,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Tests.Fakes;
 
-public sealed class FakeParseQueue(params FetchToParse[] due) : IParseQueue
+public sealed class FakeParseBacklog(params FetchToParse[] due) : IParseBacklog
 {
     public List<(FetchToParse Fetch, ParsedPage Page, IReadOnlyList<NewUrl> Links)> Completed { get; } = [];
     public (int BatchSize, TimeSpan Lease)? LastClaim { get; private set; }

@@ -8,7 +8,7 @@ public class RobotsRulesTests
     private static readonly DateTimeOffset Now = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void IsAllowed_AppliesDisallowRule()
+    public void IsAllowedAppliesDisallowRule()
     {
         var rules = new RobotsRules("a.example", "User-agent: *\nDisallow: /private\n", Now, Now.AddDays(1));
 
@@ -17,7 +17,7 @@ public class RobotsRulesTests
     }
 
     [Fact]
-    public void CrawlDelay_IsReadFromContent()
+    public void CrawlDelayIsReadFromContent()
     {
         var rules = new RobotsRules("a.example", "User-agent: *\nCrawl-delay: 3\n", Now, Now.AddDays(1));
 
@@ -25,7 +25,7 @@ public class RobotsRulesTests
     }
 
     [Fact]
-    public void CrawlDelay_IsNullWhenContentHasNone()
+    public void CrawlDelayIsNullWhenContentHasNone()
     {
         var rules = new RobotsRules("a.example", "User-agent: *\nDisallow:\n", Now, Now.AddDays(1));
 
@@ -33,7 +33,7 @@ public class RobotsRulesTests
     }
 
     [Fact]
-    public void AllowAll_AllowsEveryPathAndExpiresAfterTtl()
+    public void AllowAllAllowsEveryPathAndExpiresAfterTtl()
     {
         var rules = RobotsRules.AllowAll("a.example", Now, TimeSpan.FromHours(24));
 
@@ -42,7 +42,7 @@ public class RobotsRulesTests
     }
 
     [Fact]
-    public void DisallowAll_BlocksEveryPath()
+    public void DisallowAllBlocksEveryPath()
     {
         var rules = RobotsRules.DisallowAll("a.example", Now, TimeSpan.FromHours(1));
 

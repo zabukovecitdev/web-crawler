@@ -6,7 +6,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace SamoBot.Tests.Postgres;
 
-[Collection(PostgresCollection.Name)]
+[Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetime
 {
@@ -28,11 +28,11 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task IndexQueue_ClaimsOnlyPagesThatAreNotIndexedAndMarksThemIndexed()
+    public async Task IndexBacklogClaimsOnlyPagesThatAreNotIndexedAndMarksThemIndexed()
     {
         var first = await ParsedDocument("one");
         var second = await ParsedDocument("two");
-        var queue = new PostgresIndexQueue(postgres.DataSource, _time);
+        var queue = new PostgresIndexBacklog(postgres.DataSource, _time);
 
         var claimed = await queue.Claim(10, default);
         await queue.MarkIndexed([first], default);
@@ -45,7 +45,7 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task JobPageReader_ListsPagesCountsThemAndListsEventsAfterAnId()
+    public async Task JobPageReaderListsPagesCountsThemAndListsEventsAfterAnId()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/1");
@@ -70,7 +70,7 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task RobotsStore_SavesReplacesAndReadsRulesAndSetsTheHostDelay()
+    public async Task RobotsStoreSavesReplacesAndReadsRulesAndSetsTheHostDelay()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
@@ -79,10 +79,10 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
         await store.Save(new RobotsRules("a.example", "User-agent: *\nDisallow: /x\n", TestData.Now, TestData.Now.AddDays(1)), default);
         await store.Save(new RobotsRules("a.example", "User-agent: *\nCrawl-delay: 3\n", TestData.Now, TestData.Now.AddDays(2)), default);
 
-        var rules = await store.Get("a.example", default);
+        var rules = await store.Find("a.example", default);
         rules!.CrawlDelay.Should().Be(TimeSpan.FromSeconds(3));
         rules.ExpiresAt.Should().Be(TestData.Now.AddDays(2));
-        (await store.Get("missing.example", default)).Should().BeNull();
+        (await store.Find("missing.example", default)).Should().BeNull();
         var delay = await PostgresTestData.Scalar<int>(postgres.DataSource, """SELECT "CrawlDelayMs" FROM "Hosts" WHERE "Host" = 'a.example'""");
         delay.Should().Be(3000);
     }

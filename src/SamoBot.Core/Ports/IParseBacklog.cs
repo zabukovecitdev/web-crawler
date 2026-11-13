@@ -2,7 +2,7 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Ports;
 
-public interface IParseQueue
+public interface IParseBacklog
 {
     Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct);
 

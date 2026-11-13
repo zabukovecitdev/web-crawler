@@ -37,7 +37,7 @@ public class HtmlAgilityPackParserTests
     private static ParsedPage Parse(string html) => new HtmlAgilityPackParser().Parse(new MemoryStream(Encoding.UTF8.GetBytes(html)));
 
     [Fact]
-    public void Parse_ExtractsMetadata()
+    public void ParseExtractsMetadata()
     {
         var page = Parse(Page);
 
@@ -50,7 +50,7 @@ public class HtmlAgilityPackParserTests
     }
 
     [Fact]
-    public void Parse_ExtractsTextWithoutScriptsAndStyles()
+    public void ParseExtractsTextWithoutScriptsAndStyles()
     {
         var page = Parse(Page);
 
@@ -59,7 +59,7 @@ public class HtmlAgilityPackParserTests
     }
 
     [Fact]
-    public void Parse_ExtractsLinksAndImagesAndSkipsEntriesWithoutTarget()
+    public void ParseExtractsLinksAndImagesAndSkipsEntriesWithoutTarget()
     {
         var page = Parse(Page);
 
@@ -70,7 +70,7 @@ public class HtmlAgilityPackParserTests
     }
 
     [Fact]
-    public void Parse_ExtractsRobotsAndStructuredData()
+    public void ParseExtractsRobotsAndStructuredData()
     {
         var page = Parse(Page);
 
@@ -84,7 +84,7 @@ public class HtmlAgilityPackParserTests
     }
 
     [Fact]
-    public void Parse_OfAnEmptyDocument_ReturnsEmptyValues()
+    public void ParseOfAnEmptyDocumentReturnsEmptyValues()
     {
         var page = Parse(string.Empty);
 

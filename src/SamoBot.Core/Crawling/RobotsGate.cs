@@ -40,7 +40,7 @@ public sealed class RobotsGate(
 
     private async Task<RobotsRules> LoadFresh(string host, CancellationToken ct)
     {
-        var stored = await store.Get(host, ct);
+        var stored = await store.Find(host, ct);
         if (stored is not null && stored.ExpiresAt > timeProvider.GetUtcNow())
         {
             return stored;

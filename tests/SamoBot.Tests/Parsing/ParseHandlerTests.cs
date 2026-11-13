@@ -25,16 +25,16 @@ public class ParseHandlerTests
         RobotsDirectives = new RobotsDirectives { NoFollow = noFollow }
     };
 
-    private static (FakeParseQueue Queue, ParsePageHandler Handler) Build(ParsedPage page)
+    private static (FakeParseBacklog Queue, ParsePageHandler Handler) Build(ParsedPage page)
     {
         var store = new FakeContentStore();
         store.Put("page-1", "<html></html>");
-        var queue = new FakeParseQueue(Fetch);
+        var queue = new FakeParseBacklog(Fetch);
         return (queue, new ParsePageHandler(store, new FakeHtmlParser(page), queue));
     }
 
     [Fact]
-    public async Task Handle_ResolvesAndFiltersLinksThenCompletes()
+    public async Task HandleResolvesAndFiltersLinksThenCompletes()
     {
         var (queue, handler) = Build(Page());
 
@@ -46,7 +46,7 @@ public class ParseHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithNoFollowDirective_PassesEmptyLinkList()
+    public async Task HandleWithNoFollowDirectivePassesEmptyLinkList()
     {
         var (queue, handler) = Build(Page(noFollow: true));
 
@@ -56,7 +56,7 @@ public class ParseHandlerTests
     }
 
     [Fact]
-    public async Task HandleBatch_ClaimsTenFetchesWithFiveMinuteLease()
+    public async Task HandleBatchClaimsTenFetchesWithFiveMinuteLease()
     {
         var (queue, pageHandler) = Build(Page());
 
