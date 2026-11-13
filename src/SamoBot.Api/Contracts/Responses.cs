@@ -24,4 +24,7 @@ public sealed record ExplainResponse(
     string UserAgent,
     bool AllowedByRobots,
     int? CrawlDelayMs,
-    RobotsResponse RobotsTxt);
+    RobotsResponse RobotsTxt)
+{
+    public string? MatchedRule { get; init; }
+}
