@@ -3,7 +3,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Parsing;
 
-public sealed class ParseBatchHandler(IParseQueue queue, ParsePageHandler pageHandler) : IWorkHandler
+public sealed class ParseBatchHandler(IParseBacklog queue, ParsePageHandler pageHandler) : IWorkHandler
 {
     private const int BatchSize = 10;
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(5);

@@ -3,7 +3,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Indexing;
 
-public sealed class IndexBatchHandler(IIndexQueue queue, ISearchIndex searchIndex) : IWorkHandler
+public sealed class IndexBatchHandler(IIndexBacklog queue, ISearchIndex searchIndex) : IWorkHandler
 {
     private const int BatchSize = 50;
 

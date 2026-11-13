@@ -15,15 +15,15 @@ A polite web crawler with a dashboard. PostgreSQL is the only queue.
         claim with a lease     |     record one result
    +---------------------------+--------------------------+
    |  Worker                                              |
-   |  crawl loop --> MinIO (HTML)                         |
-   |  parse loop <-- MinIO, adds links to the frontier    |
+   |  crawl loop --> RustFS (HTML)                        |
+   |  parse loop <-- RustFS, adds links to the frontier   |
    |  index loop --> Meilisearch                          |
    |  completion loop (marks finished jobs)               |
    +------------------------------------------------------+
 ```
 
 Projects: `Core` (domain, use cases, port interfaces, no I/O packages), `Adapters` (PostgreSQL, HTTP,
-browser, MinIO, Meilisearch, HTML), `Worker`, `Api`, `Migrations`, `SamoBot.Mcp` (search server for AI tools).
+browser, S3 storage, Meilisearch, HTML), `Worker`, `Api`, `Migrations`, `SamoBot.Mcp` (search server for AI tools).
 The compiler enforces the dependency rule: `Core` references no project.
 
 ## How to run
@@ -32,15 +32,15 @@ The compiler enforces the dependency rule: `Core` references no project.
 DASHBOARD_API_KEY=<secret> docker compose up --build
 ```
 
-This starts PostgreSQL, MinIO, Meilisearch, the migrations, the worker and the API (port 5080).
-Send the key in the header `X-Api-Key`. The dashboard is in `frontend/`.
+This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
+Send the key in the header `X-Api-Key`. The dashboard is in `src/frontend/`.
 
 Tests:
 
 ```bash
 dotnet build SamoBot.sln -warnaserror
-dotnet test tests/SamoBot.Tests --filter "Category!=Integration"
-dotnet test tests/SamoBot.Tests --filter "Category=Integration"   # needs Docker
+dotnet test src/SamoBot.Tests --filter "Category!=Integration"
+dotnet test src/SamoBot.Tests --filter "Category=Integration"   # needs Docker
 ```
 
 ## The claim pattern
