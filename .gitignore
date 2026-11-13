@@ -24,4 +24,7 @@ dist/
 *.tfstate
 *.tfstate.backup
 
+# Local environment files (may contain secrets)
 .env
+.env.*
+!.env.example
