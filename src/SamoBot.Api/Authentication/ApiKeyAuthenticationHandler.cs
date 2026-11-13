@@ -8,7 +8,7 @@ namespace SamoBot.Api.Authentication;
 public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string SchemeName = "ApiKey";
-    private const string HeaderName = "X-Api-Key";
+    public const string HeaderName = "X-Api-Key";
 
     private readonly IOptionsMonitor<ApiKeyOptions> _apiKeyOptions;
 
