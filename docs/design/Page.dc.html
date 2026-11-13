@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Page content and crawl metadata</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls<span class="cnt"><span class="led" aria-hidden="true"></span>1 live</span></a>
+<a href="Analytics.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="row between end">
+<div class="col">
+<p class="lbl"><a class="lnk" href="Main.dc.html" style="color: inherit">Sites</a> / <a class="lnk" href="Site.dc.html" style="color: inherit">docs.example.com</a> / Page</p>
+<div class="row">
+<h1 class="h1">Installation guide</h1>
+<x-import component-from-global-scope="Zabukovec.Badge" tone="success">200 OK</x-import>
+</div>
+<p class="ro mut">https://docs.example.com/guide/installation</p>
+</div>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Open original page</x-import>
+</div>
+<div class="split">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="1 842 words · 11 204 characters" title="Content" marked="{{yes}}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<nav class="tabs" aria-label="Content view">
+<a href="#text" class="on" aria-current="true">Text</a>
+<a href="#html">HTML source</a>
+<a href="#headings">Headings 14</a>
+<a href="#links">Links 42</a>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 68ch">
+<h2 class="h3">Installation guide</h2>
+<p>This guide shows how to install the service on one machine. You need Docker and a free port for the API. The installation takes about ten minutes.</p>
+<h3 class="h3" style="font-size: 15px; line-height: 22px">Before you start</h3>
+<p>Check that Docker is running. Copy the example environment file and set the dashboard key. The key protects the API, so do not use the example value.</p>
+<h3 class="h3" style="font-size: 15px; line-height: 22px">Start the services</h3>
+<p>Run the compose file from the project folder. The command starts the database, the object storage, the search index, the migrations, the worker and the API. The API listens on port 5080.</p>
+<h3 class="h3" style="font-size: 15px; line-height: 22px">Check the installation</h3>
+<p>Open the dashboard and sign in. Request a crawl of a small site. When the first pages show in the list, the installation works.</p>
+</div>
+<hr class="rule">
+<div class="col">
+<p class="lbl">HTML source · first lines</p>
+<pre class="well" style="max-height: 220px">&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;Installation guide&lt;/title&gt;
+  &lt;meta name="description" content="Install the service on one machine with Docker."&gt;
+  &lt;link rel="canonical" href="https://docs.example.com/guide/installation"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;main&gt;
+    &lt;h1&gt;Installation guide&lt;/h1&gt;</pre>
+</div>
+</div>
+</x-import>
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<x-import component-from-global-scope="Zabukovec.Card" title="Crawl metadata">
+<dl class="kv">
+<dt>Status</dt><dd>200 OK</dd>
+<dt>Fetched</dt><dd>13 Nov 2026, 23:41:07</dd>
+<dt>Response time</dt><dd>172 ms</dd>
+<dt>Content type</dt><dd>text/html; charset=utf-8</dd>
+<dt>Size</dt><dd>48.2 kB</dd>
+<dt>Depth</dt><dd>2</dd>
+<dt>Final URL</dt><dd>https://docs.example.com/guide/installation</dd>
+<dt>Rendering</dt><dd>HTTP, no JavaScript</dd>
+<dt>Crawl job</dt><dd>#42</dd>
+<dt>Next crawl</dt><dd>20 Nov 2026, 23:41</dd>
+<dt>Content</dt><dd>Stored, parsed, indexed</dd>
+</dl>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" title="Page metadata">
+<dl class="kv">
+<dt>Title</dt><dd>Installation guide</dd>
+<dt>Description</dt><dd>Install the service on one machine with Docker.</dd>
+<dt>Language</dt><dd>en</dd>
+<dt>Canonical</dt><dd>https://docs.example.com/guide/installation</dd>
+<dt>Robots</dt><dd>index, follow</dd>
+<dt>Links</dt><dd>42 (31 internal)</dd>
+<dt>Images</dt><dd>6</dd>
+<dt>Structured data</dt><dd>1 JSON-LD block</dd>
+</dl>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" title="Fetch history">
+<div class="scroll">
+<table class="tbl">
+<thead><tr><th scope="col">Fetched</th><th scope="col">Status</th><th scope="col" style="text-align: right">Response</th><th scope="col" style="text-align: right">Size</th></tr></thead>
+<tbody>
+<tr><td>13 Nov, 23:41</td><td class="ro">200</td><td class="n">172 ms</td><td class="n">48.2 kB</td></tr>
+<tr><td>6 Nov, 23:12</td><td class="ro">200</td><td class="n">190 ms</td><td class="n">47.9 kB</td></tr>
+<tr><td>2 Nov, 10:05</td><td class="ro">200</td><td class="n">214 ms</td><td class="n">47.9 kB</td></tr>
+</tbody>
+</table>
+</div>
+</x-import>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.dark ? 'dark' : 'light', yes: true };
+}
+}
+</script>
+</body>
+</html>

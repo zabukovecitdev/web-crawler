@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Site sitemap and robots.txt</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls</a>
+<a href="Analytics.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="row between end">
+<div class="col">
+<p class="lbl"><a class="lnk" href="Main.dc.html" style="color: inherit">Sites</a> / Site</p>
+<div class="row">
+<h1 class="h1">docs.example.com</h1>
+<x-import component-from-global-scope="Zabukovec.Badge" tone="neutral">Crawled</x-import>
+</div>
+<p class="sm mut">Crawl finished 14 Nov, 00:42. 4&thinsp;812 pages in 1 h 25 min.</p>
+</div>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Crawl again</x-import>
+</div>
+<nav class="tabs" aria-label="Site sections">
+<a href="Site.dc.html">Pages</a>
+<a href="Sitemap.dc.html" class="on" aria-current="page">Sitemap</a>
+<a href="#robots">Robots.txt</a>
+</nav>
+<div class="g2" style="align-items: start">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="3 files · 4 902 URLs" title="Sitemap" marked="{{yes}}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div class="col">
+<div class="row between sm"><span>Sitemap URLs that were crawled</span><span class="ro">4&thinsp;775 of 4&thinsp;902 · 97 %</span></div>
+<div class="trk" role="img" aria-label="4 775 of 4 902 sitemap URLs crawled, 97 percent"><div class="fill" style="width: 97.4%; border-radius: 4px"></div></div>
+<p class="sm mut">127 URLs are in the sitemap but were not crawled. 37 pages were crawled but are not in the sitemap.</p>
+</div>
+<ul class="tree">
+<li><div><span>/sitemap_index.xml</span><span class="mut">Index · 3 sitemaps</span></div>
+<ul>
+<li><div><span>/sitemap-docs.xml</span><span class="mut">3&thinsp;911 URLs</span></div></li>
+<li><div><span>/sitemap-blog.xml</span><span class="mut">884 URLs</span></div></li>
+<li><div><span>/sitemap-pages.xml</span><span class="mut">107 URLs</span></div></li>
+</ul>
+</li>
+</ul>
+<div class="scroll">
+<table class="tbl" style="min-width: 480px">
+<thead><tr><th scope="col">URL in sitemap</th><th scope="col">Last modified</th><th scope="col">Crawl</th></tr></thead>
+<tbody>
+<tr><td class="ro"><a class="lnk" href="Page.dc.html">/guide/installation</a></td><td class="mut">11 Nov 2026</td><td>Crawled, 200</td></tr>
+<tr><td class="ro"><a class="lnk" href="Page.dc.html">/guide/getting-started</a></td><td class="mut">9 Nov 2026</td><td>Crawled, 200</td></tr>
+<tr><td class="ro"><a class="lnk" href="Page.dc.html">/reference/configuration</a></td><td class="mut">4 Nov 2026</td><td>Crawled, 200</td></tr>
+<tr><td class="ro">/guide/legacy-setup</td><td class="mut">2 Mar 2025</td><td>Crawled, 404</td></tr>
+<tr><td class="ro">/internal/draft-roadmap</td><td class="mut">30 Oct 2026</td><td>Not crawled, blocked by robots.txt</td></tr>
+<tr><td class="ro">/reference/limits</td><td class="mut">1 Nov 2026</td><td>Not crawled, over the page limit</td></tr>
+</tbody>
+</table>
+</div>
+<p class="ro mut">1–6 of 4&thinsp;902</p>
+</div>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" id="robots" kicker="Fetched 13 Nov, 23:17 · expires 14 Nov, 23:17" title="Robots.txt">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<dl class="kv">
+<dt>Our user agent</dt><dd>SamoBot</dd>
+<dt>Matching group</dt><dd>User-agent: *</dd>
+<dt>Crawl delay</dt><dd>1&thinsp;000 ms</dd>
+<dt>Blocked paths</dt><dd>3</dd>
+<dt>Sitemaps named</dt><dd>1</dd>
+</dl>
+<pre class="well">User-agent: *
+Disallow: /internal/
+Disallow: /search
+Disallow: /api/playground/run
+Crawl-delay: 1
+
+User-agent: BadBot
+Disallow: /
+
+Sitemap: https://docs.example.com/sitemap_index.xml</pre>
+<hr class="rule">
+<div class="col" style="gap: 12px">
+<p class="lbl">Test a URL</p>
+<div class="row" style="align-items: flex-end">
+<x-import component-from-global-scope="Zabukovec.Input" type="url" default-value="https://docs.example.com/internal/draft-roadmap" aria-label="URL to test against robots.txt" class="grow"></x-import>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Test</x-import>
+</div>
+<p class="sm" role="status"><x-import component-from-global-scope="Zabukovec.Badge" tone="warning">Blocked</x-import> &nbsp;The rule <span class="ro">Disallow: /internal/</span> blocks this URL for SamoBot.</p>
+</div>
+</div>
+</x-import>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.dark ? 'dark' : 'light', yes: true };
+}
+}
+</script>
+</body>
+</html>

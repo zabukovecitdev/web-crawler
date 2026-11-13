@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}" style="align-items: stretch">
+<section style="flex: 1 1 420px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px; padding: 48px; background: var(--graphite); color: var(--on-graphite); border-right: 1px solid var(--line)">
+<div class="brand" style="padding: 0"><i aria-hidden="true"></i>SamoBot</div>
+<div style="display: flex; flex-direction: column; gap: 16px; max-width: 520px">
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.03em">A polite web crawler, with everything it found.</h1>
+<div class="zb-mark" aria-hidden="true" style="max-width: 320px"></div>
+<p style="opacity: 0.8">Request a crawl, watch it run, then read and search every page it stored.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px 32px">
+<p class="lbl" style="color: var(--on-graphite); opacity: 0.75">Sites · 6</p>
+<p class="lbl" style="color: var(--on-graphite); opacity: 0.75">Pages · 12&thinsp;482</p>
+<p class="lbl" style="color: var(--on-graphite); opacity: 0.75">User agent · SamoBot</p>
+</div>
+</section>
+<main style="flex: 1 1 420px; display: flex; align-items: center; justify-content: center; padding: 48px 24px">
+<div style="width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 24px">
+<div class="col">
+<p class="lbl">Dashboard</p>
+<h2 class="h1">Sign in</h2>
+<p class="mut">Use the Google account that was approved for this dashboard.</p>
+</div>
+<x-import component-from-global-scope="Zabukovec.Button" variant="primary" size="lg" style="width: 100%">Continue with Google</x-import>
+<hr class="rule">
+<p class="sm mut">Only approved accounts can sign in. If Google signs you in but the dashboard does not open, ask the owner to add your email address.</p>
+<p class="sm err" role="alert"><strong>Error:</strong> jana@example.com is not on the approved list.</p>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.dark ? 'dark' : 'light' };
+}
+}
+</script>
+</body>
+</html>

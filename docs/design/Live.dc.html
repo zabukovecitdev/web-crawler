@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live crawl</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls<span class="cnt"><span class="led" aria-hidden="true"></span>1 live</span></a>
+<a href="Analytics.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="row between end">
+<div class="col">
+<p class="lbl">Crawls / Job #42 · started 23:17:02</p>
+<div class="row">
+<h1 class="h1">docs.example.com</h1>
+<x-import component-from-global-scope="Zabukovec.Badge" tone="success" dot="{{yes}}">Crawling</x-import>
+</div>
+</div>
+<div class="row">
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Pause</x-import>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Cancel crawl</x-import>
+</div>
+</div>
+<div class="g4">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Pages crawled">
+<div class="ro-lg">1&thinsp;284</div>
+<div class="trk" role="img" aria-label="1 284 of 5 000 pages, 26 percent" style="margin: 10px 0 6px"><div class="fill sig" style="width: 25.7%; border-radius: 4px"></div></div>
+<p class="sm mut">26 % of the 5&thinsp;000 page limit</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="In queue">
+<div class="ro-lg">3&thinsp;528</div>
+<p class="sm mut" style="margin-top: 4px">Found, not fetched yet</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Failed">
+<div class="ro-lg">9</div>
+<p class="sm mut" style="margin-top: 4px">6 will be tried again</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Elapsed">
+<div class="ro-lg">24 min 12 s</div>
+<p class="sm mut" style="margin-top: 4px">About 59 min left at this rate</p>
+</x-import>
+</div>
+<div class="split">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Newest first" title="Requests" marked="{{yes}}">
+<div class="scroll">
+<table class="tbl" style="min-width: 700px">
+<thead><tr><th scope="col">Time</th><th scope="col">URL</th><th scope="col">Response</th><th scope="col" style="text-align: right">Request time</th><th scope="col" style="text-align: right">Size</th><th scope="col">Content</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+<tr>
+<td class="ro mut">{{r.t}}</td>
+<td class="ro">{{r.url}}</td>
+<td><x-import component-from-global-scope="Zabukovec.Badge" tone="{{r.tone}}">{{r.code}}</x-import></td>
+<td class="n">{{r.ms}}</td>
+<td class="n">{{r.size}}</td>
+<td>{{r.content}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</x-import>
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<x-import component-from-global-scope="Zabukovec.Card" tone="graphite" kicker="Current request">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p class="ro" style="font-size: 15px; line-height: 22px; overflow-wrap: anywhere">/reference/storage/object-names</p>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="col" style="gap: 4px"><p class="lbl" style="color: var(--on-graphite); opacity: 0.75">State</p><p class="ro">Waiting for response</p></div>
+<div class="col" style="gap: 4px"><p class="lbl" style="color: var(--on-graphite); opacity: 0.75">Sent</p><p class="ro">0.4 s ago</p></div>
+<div class="col" style="gap: 4px"><p class="lbl" style="color: var(--on-graphite); opacity: 0.75">Depth</p><p class="ro">3</p></div>
+<div class="col" style="gap: 4px"><p class="lbl" style="color: var(--on-graphite); opacity: 0.75">Found on</p><p class="ro">/reference/storage</p></div>
+</div>
+</div>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" title="Politeness">
+<dl class="kv">
+<dt>Delay between requests</dt><dd>1&thinsp;000 ms</dd>
+<dt>Delay source</dt><dd>robots.txt Crawl-delay</dd>
+<dt>Next request</dt><dd>in 0.6 s</dd>
+<dt>Median request time</dt><dd>184 ms</dd>
+<dt>Slowest request</dt><dd>5&thinsp;004 ms</dd>
+<dt>Rate</dt><dd>53 pages / min</dd>
+</dl>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" title="Responses so far">
+<div class="stack" role="img" aria-label="Responses: 1 213 OK, 62 redirects, 5 client errors, 4 server errors">
+<i class="c-ok" style="flex: 1213 1 0"></i><i class="c-re" style="flex: 62 1 0"></i><i class="c-wa" style="flex: 5 1 0"></i><i class="c-er" style="flex: 4 1 0"></i>
+</div>
+<dl class="kv" style="margin-top: 16px">
+<dt><span class="sw c-ok" aria-hidden="true"></span>2xx OK</dt><dd>1&thinsp;213</dd>
+<dt><span class="sw c-re" aria-hidden="true"></span>3xx Redirect</dt><dd>62</dd>
+<dt><span class="sw c-wa" aria-hidden="true"></span>4xx Client error</dt><dd>5</dd>
+<dt><span class="sw c-er" aria-hidden="true"></span>5xx Server error</dt><dd>4</dd>
+</dl>
+</x-import>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+theme: this.props.dark ? 'dark' : 'light',
+yes: true,
+rows: [
+{ t: '23:41:14', url: '/reference/storage', code: '200 OK', tone: 'success', ms: '166 ms', size: '41.7 kB', content: 'Stored' },
+{ t: '23:41:13', url: '/reference/search-index', code: '200 OK', tone: 'success', ms: '203 ms', size: '58.3 kB', content: 'Stored' },
+{ t: '23:41:12', url: '/downloads/manual.pdf', code: '200 OK', tone: 'success', ms: '912 ms', size: '2.4 MB', content: 'Skipped, not HTML' },
+{ t: '23:41:10', url: '/guide/installation', code: '200 OK', tone: 'success', ms: '172 ms', size: '48.2 kB', content: 'Stored' },
+{ t: '23:41:09', url: '/upgrade', code: '301 Moved', tone: 'neutral', ms: '61 ms', size: '0.3 kB', content: 'Redirect followed' },
+{ t: '23:41:08', url: '/guide/getting-started', code: '200 OK', tone: 'success', ms: '158 ms', size: '36.9 kB', content: 'Stored' },
+{ t: '23:41:07', url: '/guide/legacy-setup', code: '404 Not found', tone: 'warning', ms: '88 ms', size: '2.1 kB', content: 'Not stored' },
+{ t: '23:41:01', url: '/api/playground', code: '503 Error', tone: 'signal', ms: '5 004 ms', size: '0.9 kB', content: 'Failed, retry in 10 min' },
+{ t: '23:41:00', url: '/api/crawl-jobs', code: '200 OK', tone: 'success', ms: '201 ms', size: '74.0 kB', content: 'Stored' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

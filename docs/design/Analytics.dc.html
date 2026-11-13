@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Analytics</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls<span class="cnt"><span class="led" aria-hidden="true"></span>1 live</span></a>
+<a href="Analytics.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="row between end">
+<div class="col">
+<p class="lbl">All sites · 2 Nov to 13 Nov 2026</p>
+<h1 class="h1">Analytics</h1>
+</div>
+<nav class="tabs" aria-label="Time range">
+<a href="#24h">24 hours</a>
+<a href="#7d">7 days</a>
+<a href="#30d">30 days</a>
+<a href="#all" class="on" aria-current="true">All time</a>
+</nav>
+</div>
+<div class="g4">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Pages">
+<div class="ro-lg">12&thinsp;482</div>
+<p class="sm mut" style="margin-top: 4px">On 6 sites</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Requests">
+<div class="ro-lg">14&thinsp;906</div>
+<p class="sm mut" style="margin-top: 4px">1.2 requests for each page</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Median request time">
+<div class="ro-lg">184 ms</div>
+<p class="sm mut" style="margin-top: 4px">p95 612 ms, slowest 9&thinsp;870 ms</p>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Failed pages">
+<div class="ro-lg">1.4 %</div>
+<p class="sm mut" style="margin-top: 4px">170 of 12&thinsp;482</p>
+</x-import>
+</div>
+<div class="g2" style="align-items: start">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Bar: median · Tick: p95 · Scale: 0 to 2 400 ms" title="Request duration by host" marked="{{yes}}">
+<sc-for list="{{hosts}}" as="h" hint-placeholder-count="6">
+<div class="hb" title="{{h.tip}}">
+<a class="lnk" href="Site.dc.html">{{h.host}}</a>
+<div class="trk" role="img" aria-label="{{h.tip}}"><div class="fill" style="{{h.p50w}}"></div><span class="tick" style="{{h.p95x}}"></span></div>
+<span class="ro v">{{h.ms}}</span>
+</div>
+</sc-for>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Share of 12 482 pages" title="Pages by host">
+<sc-for list="{{hosts2}}" as="h" hint-placeholder-count="6">
+<div class="hb" title="{{h.tip}}">
+<a class="lnk" href="Site.dc.html">{{h.host}}</a>
+<div class="trk" role="img" aria-label="{{h.tip}}"><div class="fill" style="{{h.w}}"></div></div>
+<span class="ro v">{{h.val}}</span>
+</div>
+</sc-for>
+</x-import>
+</div>
+<div class="g3" style="align-items: start">
+<x-import component-from-global-scope="Zabukovec.Card" kicker="14 906 requests" title="Response status">
+<div class="stack" role="img" aria-label="13 912 OK, 786 redirects, 163 client errors, 45 server errors">
+<i class="c-ok" style="flex: 13912 1 0"></i><i class="c-re" style="flex: 786 1 0"></i><i class="c-wa" style="flex: 163 1 0"></i><i class="c-er" style="flex: 45 1 0"></i>
+</div>
+<dl class="kv" style="margin-top: 16px">
+<dt><span class="sw c-ok" aria-hidden="true"></span>2xx OK</dt><dd>13&thinsp;912 · 93.3 %</dd>
+<dt><span class="sw c-re" aria-hidden="true"></span>3xx Redirect</dt><dd>786 · 5.3 %</dd>
+<dt><span class="sw c-wa" aria-hidden="true"></span>4xx Client error</dt><dd>163 · 1.1 %</dd>
+<dt><span class="sw c-er" aria-hidden="true"></span>5xx Server error</dt><dd>45 · 0.3 %</dd>
+</dl>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="By requests" title="Content type">
+<div class="scroll">
+<table class="tbl">
+<thead><tr><th scope="col">Type</th><th scope="col" style="text-align: right">Requests</th><th scope="col">Content</th></tr></thead>
+<tbody>
+<tr><td class="ro">text/html</td><td class="n">12&thinsp;482</td><td>Stored</td></tr>
+<tr><td class="ro">application/pdf</td><td class="n">1&thinsp;204</td><td>Skipped</td></tr>
+<tr><td class="ro">image/*</td><td class="n">918</td><td>Skipped</td></tr>
+<tr><td class="ro">Other</td><td class="n">302</td><td>Skipped</td></tr>
+</tbody>
+</table>
+</div>
+</x-import>
+<x-import component-from-global-scope="Zabukovec.Card" kicker="Last 24 hours · peak 3 180 at 23:00" title="Requests per hour">
+<div class="cols" role="img" aria-label="Requests per hour for the last 24 hours. Quiet until 17:00, then a crawl of docs.example.com, peak 3 180 requests at 23:00.">
+<sc-for list="{{hours}}" as="c" hint-placeholder-count="24"><i class="{{c.cls}}" style="{{c.h}}" title="{{c.tip}}"></i></sc-for>
+</div>
+<div class="row between lbl" style="margin-top: 8px"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+</x-import>
+</div>
+<x-import component-from-global-scope="Zabukovec.Card" title="All hosts">
+<div class="scroll">
+<table class="tbl" style="min-width: 920px">
+<thead><tr><th scope="col">Host</th><th scope="col" style="text-align: right">Pages</th><th scope="col" style="text-align: right">Requests</th><th scope="col" style="text-align: right">Median</th><th scope="col" style="text-align: right">p95</th><th scope="col" style="text-align: right">Slowest</th><th scope="col" style="text-align: right">Stored</th><th scope="col" style="text-align: right">Failed</th><th scope="col" style="text-align: right">Delay</th></tr></thead>
+<tbody>
+<sc-for list="{{table}}" as="r" hint-placeholder-count="6">
+<tr><td><a class="lnk" href="Site.dc.html">{{r.host}}</a></td><td class="n">{{r.pages}}</td><td class="n">{{r.req}}</td><td class="n">{{r.p50}}</td><td class="n">{{r.p95}}</td><td class="n">{{r.max}}</td><td class="n">{{r.bytes}}</td><td class="n">{{r.fail}}</td><td class="n">{{r.delay}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</x-import>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1280}}'>
+class Component extends DCLogic {
+renderVals() {
+const T = ' ';
+const data = [
+{ host: 'wiki.example.edu', pages: 170, req: 214, p50: 612, p95: 2400, max: '9' + T + '870 ms', bytes: '31 MB', fail: '12.4 %', delay: '10' + T + '000 ms' },
+{ host: 'shop.example.com', pages: 1536, req: 1920, p50: 418, p95: 1310, max: '6' + T + '212 ms', bytes: '402 MB', fail: '6.3 %', delay: '5' + T + '000 ms' },
+{ host: 'blog.example.net', pages: 2118, req: 2390, p50: 231, p95: 640, max: '3' + T + '104 ms', bytes: '288 MB', fail: '0.2 %', delay: '2' + T + '000 ms' },
+{ host: 'docs.example.com', pages: 4812, req: 5904, p50: 184, p95: 520, max: '5' + T + '004 ms', bytes: '711 MB', fail: '0.8 %', delay: '1' + T + '000 ms' },
+{ host: 'example.org', pages: 3204, req: 3790, p50: 142, p95: 388, max: '1' + T + '940 ms', bytes: '436 MB', fail: '0.4 %', delay: '1' + T + '000 ms' },
+{ host: 'status.example.io', pages: 642, req: 688, p50: 96, p95: 210, max: '402 ms', bytes: '38 MB', fail: '0.0 %', delay: '1' + T + '000 ms' }
+];
+const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, T);
+const hosts = data.map((d) => ({
+host: d.host,
+ms: fmt(d.p50) + ' ms · ' + fmt(d.p95),
+tip: d.host + ': median ' + d.p50 + ' ms, p95 ' + d.p95 + ' ms',
+p50w: 'width: ' + (d.p50 / 24).toFixed(1) + '%',
+p95x: 'left: calc(' + (d.p95 / 24).toFixed(1) + '% - 2px)'
+}));
+const byPages = data.slice().sort((a, b) => b.pages - a.pages);
+const hosts2 = byPages.map((d) => ({
+host: d.host,
+val: fmt(d.pages) + ' · ' + (d.pages / 124.82).toFixed(1) + ' %',
+tip: d.host + ': ' + d.pages + ' pages',
+w: 'width: ' + (d.pages / 48.12).toFixed(1) + '%'
+}));
+const perHour = [0, 0, 0, 0, 0, 0, 12, 40, 36, 20, 0, 0, 180, 420, 96, 0, 0, 640, 1210, 1480, 1390, 1820, 2460, 3180];
+const hours = perHour.map((n, i) => ({
+cls: i === 23 ? 'sig' : '',
+h: 'height: ' + Math.max(n / 31.8, n ? 2 : 0).toFixed(1) + '%',
+tip: (i < 10 ? '0' : '') + i + ':00, ' + n + ' requests'
+}));
+const table = byPages.map((d) => ({ host: d.host, pages: fmt(d.pages), req: fmt(d.req), p50: d.p50 + ' ms', p95: fmt(d.p95) + ' ms', max: d.max, bytes: d.bytes, fail: d.fail, delay: d.delay }));
+return { theme: this.props.dark ? 'dark' : 'light', yes: true, hosts, hosts2, hours, table };
+}
+}
+</script>
+</body>
+</html>

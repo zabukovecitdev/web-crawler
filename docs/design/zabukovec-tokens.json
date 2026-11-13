@@ -1,0 +1,117 @@
+{
+  "name": "Zabukovec",
+  "version": 1,
+  "color": {
+    "themes": [
+      { "id": "light", "name": "Light" },
+      { "id": "dark", "name": "Dark" }
+    ],
+    "tokens": [
+      { "name": "surface-base", "value": { "light": "#eef0f2", "dark": "#121315" }, "usage": "Page background: the matte shell. Everything sits on it." },
+      { "name": "surface-raised", "value": { "light": "#fafbfc", "dark": "#1b1c1f" }, "usage": "Cards, popovers, inputs: one step lighter than the page (dark: one step lifted)." },
+      { "name": "surface-sunken", "value": { "light": "#e2e4e7", "dark": "#0b0c0d" }, "usage": "Wells and tracks: toggle track off, code blocks, segmented-control ground." },
+      { "name": "graphite", "value": { "light": "#26272a", "dark": "#303237" }, "usage": "The rubber thumb-pad: dark feature panels, strong buttons, tooltips. Text on it is `on-graphite`. In dark it is close to the page, so a graphite panel there also takes a `line` border." },
+      { "name": "on-graphite", "value": { "light": "#f2f3f5", "dark": "#f2f3f5" }, "usage": "Text and icons on `graphite` in both themes." },
+
+      { "name": "line", "value": { "light": "#d3d6da", "dark": "#2d2f34" }, "usage": "Hairline dividers and card edges (decorative, 1px). Never the only boundary of a control." },
+      { "name": "line-strong", "value": { "light": "#7c818a", "dark": "#6b7079" }, "usage": "Control borders (inputs, quiet buttons, toggle off): 3:1 on `surface-base` and `surface-raised` in both themes." },
+
+      { "name": "ink", "value": { "light": "#1a1b1e", "dark": "#eceef1" }, "usage": "Primary text and icons on `surface-base`, `surface-raised` and `surface-sunken`." },
+      { "name": "ink-muted", "value": { "light": "#565b63", "dark": "#a3a8b0" }, "usage": "Secondary text, captions, mono labels on `surface-base`, `surface-raised` and `surface-sunken` (≥4.5:1)." },
+      { "name": "ink-faint", "value": { "light": "#80858d", "dark": "#858a93" }, "usage": "Placeholder text and disabled labels only; on `surface-raised` (≥3:1 in light, ≥4.5:1 in dark; not for content)." },
+
+      { "name": "signal-500", "value": { "light": "#cc2b2b", "dark": "#f05a56" }, "usage": "THE accent: primary buttons, toggle on, focus ring, the red hairline markings. Text on it is `on-signal`. Once or twice per view." },
+      { "name": "signal-400", "value": { "light": "#dc4442", "dark": "#f47a76" }, "usage": "Hover state of `signal-500` fills; decorative marks." },
+      { "name": "signal-300", "value": { "light": "#e8817f", "dark": "#b8403d" }, "usage": "Ramp step: charts and decorative tints only, never text." },
+      { "name": "signal-200", "value": { "light": "#f3b9b8", "dark": "#66231f" }, "usage": "Ramp step: selection highlight, chart fills." },
+      { "name": "signal-100", "value": { "light": "#fae1e0", "dark": "#341615" }, "usage": "Softest tint: signal badge ground, selected-row ground. Text on it is `signal-ink`." },
+      { "name": "signal-ink", "value": { "light": "#a52323", "dark": "#f58f8b" }, "usage": "Red text and links on `surface-base`, `surface-raised` and `signal-100` (≥4.5:1 in both themes). Errors use it with an icon or word." },
+      { "name": "on-signal", "value": { "light": "#ffffff", "dark": "#1a0807" }, "usage": "Text and icons on `signal-500` (white in light, near-black in dark where the red is lighter)." },
+
+      { "name": "led-500", "value": { "light": "#0f9a47", "dark": "#2fd572" }, "usage": "The status LED: a small dot meaning on / live / connected. A mark, never text; always beside a word." },
+      { "name": "led-100", "value": { "light": "#dcf5e5", "dark": "#0f2a1a" }, "usage": "Ground of the success badge. Text on it is `led-ink`." },
+      { "name": "led-ink", "value": { "light": "#0d6a33", "dark": "#5fe598" }, "usage": "Success text on `surface-base`, `surface-raised` and `led-100` (≥4.5:1)." },
+
+      { "name": "amber-100", "value": { "light": "#fbefd6", "dark": "#2e2210" }, "usage": "Ground of the warning badge. Text on it is `amber-ink`." },
+      { "name": "amber-ink", "value": { "light": "#7a4b00", "dark": "#f2be5c" }, "usage": "Warning text on `surface-base`, `surface-raised` and `amber-100` (≥4.5:1)." },
+
+      { "name": "focus-ring", "value": { "light": "{signal-500}", "dark": "{signal-500}" }, "usage": "Keyboard focus: 2px solid ring, 2px offset in the page colour. ≥3:1 on every surface." }
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "sans": "\"Geist\", \"Helvetica Neue\", Arial, sans-serif",
+      "mono": "\"Geist Mono\", \"SFMono-Regular\", Menlo, Consolas, monospace"
+    },
+    "groups": [
+      {
+        "name": "Display",
+        "family": "sans",
+        "styles": [
+          { "name": "display-xl", "fontSize": "72px", "lineHeight": "72px", "fontWeight": 600, "letterSpacing": "-0.035em", "sample": "Built to be held", "usage": "One hero line per page." },
+          { "name": "display", "fontSize": "48px", "lineHeight": "52px", "fontWeight": 600, "letterSpacing": "-0.03em", "sample": "Quiet surfaces", "usage": "Section openers on marketing pages." }
+        ]
+      },
+      {
+        "name": "Text",
+        "family": "sans",
+        "styles": [
+          { "name": "heading-1", "fontSize": "32px", "lineHeight": "38px", "fontWeight": 600, "letterSpacing": "-0.02em", "sample": "Search activity", "usage": "Page title in apps." },
+          { "name": "heading-2", "fontSize": "24px", "lineHeight": "30px", "fontWeight": 600, "letterSpacing": "-0.015em", "sample": "Request volume", "usage": "Section title." },
+          { "name": "heading-3", "fontSize": "18px", "lineHeight": "24px", "fontWeight": 600, "letterSpacing": "-0.01em", "sample": "Last 24 hours", "usage": "Card title." },
+          { "name": "body", "fontSize": "15px", "lineHeight": "22px", "fontWeight": 400, "sample": "Every service reports to one collector.", "usage": "Default running text." },
+          { "name": "body-strong", "fontSize": "15px", "lineHeight": "22px", "fontWeight": 500, "sample": "Collector is online.", "usage": "Emphasis inside body; button labels." },
+          { "name": "body-sm", "fontSize": "13px", "lineHeight": "18px", "fontWeight": 400, "sample": "Updated 2 minutes ago", "usage": "Helper text, table cells, captions." }
+        ]
+      },
+      {
+        "name": "Technical",
+        "family": "mono",
+        "styles": [
+          { "name": "label", "fontSize": "11px", "lineHeight": "14px", "fontWeight": 500, "letterSpacing": "0.08em", "sample": "DPI · 1600", "usage": "The engraved marking: UPPERCASE eyebrow labels, axis labels, card kickers. Set in `ink-muted` or `signal-ink`." },
+          { "name": "readout", "fontSize": "13px", "lineHeight": "18px", "fontWeight": 500, "sample": "p95 142 ms", "usage": "Numbers, IDs, metrics, inline code." },
+          { "name": "readout-lg", "fontSize": "28px", "lineHeight": "32px", "fontWeight": 500, "letterSpacing": "-0.02em", "sample": "1 284 req/s", "usage": "Headline metric on a stat card." }
+        ]
+      }
+    ]
+  },
+  "spacing": {
+    "tokens": [
+      { "name": "space-1", "value": "4px", "usage": "Icon-to-label gap, tick-mark length." },
+      { "name": "space-2", "value": "8px", "usage": "Tight gaps inside controls; badge padding." },
+      { "name": "space-3", "value": "12px", "usage": "Gap between related controls." },
+      { "name": "space-4", "value": "16px", "usage": "Control horizontal padding; card padding on mobile." },
+      { "name": "space-5", "value": "24px", "usage": "Card padding; gap between cards." },
+      { "name": "space-6", "value": "32px", "usage": "Gap between page sections inside a view." },
+      { "name": "space-7", "value": "48px", "usage": "Page gutters on desktop; section spacing on marketing pages." },
+      { "name": "space-8", "value": "80px", "usage": "Hero and major section breaks." }
+    ]
+  },
+  "radius": {
+    "tokens": [
+      { "name": "radius-xs", "value": "4px", "usage": "Badges, checkboxes, tick-sized chips." },
+      { "name": "radius-sm", "value": "8px", "usage": "Buttons and inputs: the mouse's small key caps." },
+      { "name": "radius-md", "value": "14px", "usage": "Cards and popovers." },
+      { "name": "radius-lg", "value": "24px", "usage": "Large feature panels and the graphite thumb-pad block." },
+      { "name": "radius-pill", "value": "999px", "usage": "Toggles, status pills, the LED dot." }
+    ]
+  },
+  "shadow": {
+    "tokens": [
+      { "name": "shadow-1", "value": { "light": "0 1px 2px rgba(22, 24, 28, 0.06), 0 1px 1px rgba(22, 24, 28, 0.04)", "dark": "0 1px 2px rgba(0, 0, 0, 0.5)" }, "usage": "Resting cards and raised buttons." },
+      { "name": "shadow-2", "value": { "light": "0 10px 28px rgba(22, 24, 28, 0.08), 0 2px 6px rgba(22, 24, 28, 0.05)", "dark": "0 10px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4)" }, "usage": "Hovered cards, popovers, menus: the soft studio shadow." },
+      { "name": "shadow-3", "value": { "light": "0 32px 64px -16px rgba(22, 24, 28, 0.2)", "dark": "0 32px 64px -16px rgba(0, 0, 0, 0.7)" }, "usage": "Dialogs and hero objects only." },
+      { "name": "shadow-inset", "value": { "light": "inset 0 1px 2px rgba(22, 24, 28, 0.08)", "dark": "inset 0 1px 2px rgba(0, 0, 0, 0.6)" }, "usage": "Wells: input fields and toggle tracks." }
+    ]
+  },
+  "size": {
+    "note": "Control heights. Every interactive target is at least 36px tall on touch surfaces.",
+    "tokens": [
+      { "name": "control-sm", "value": "28px", "usage": "Dense toolbars and table actions (pointer only)." },
+      { "name": "control-md", "value": "36px", "usage": "Default buttons and inputs." },
+      { "name": "control-lg", "value": "44px", "usage": "Primary calls to action and touch layouts." },
+      { "name": "stroke-hairline", "value": "1px", "usage": "Dividers, card edges, the red marking lines." }
+    ]
+  }
+}
