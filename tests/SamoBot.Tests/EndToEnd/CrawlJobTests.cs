@@ -18,7 +18,7 @@ using SamoBot.Tests.Postgres;
 namespace SamoBot.Tests.EndToEnd;
 
 /// <summary>
-/// A whole crawl with real PostgreSQL, MinIO and Meilisearch and a real HTTP stub site.
+/// A whole crawl with real PostgreSQL, RustFS and Meilisearch and a real HTTP stub site.
 /// The clock is fake, so the retry backoff of the failing page costs no real time.
 /// </summary>
 [Collection(PostgresCollection.Name)]
@@ -38,10 +38,10 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Database:ConnectionString"] = postgres.ConnectionString,
-            ["MinIO:Endpoint"] = infrastructure.MinioHost,
-            ["MinIO:Port"] = infrastructure.MinioPort.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["MinIO:AccessKey"] = InfrastructureFixture.MinioUser,
-            ["MinIO:SecretKey"] = InfrastructureFixture.MinioUser,
+            ["MinIO:Endpoint"] = infrastructure.StorageHost,
+            ["MinIO:Port"] = infrastructure.StoragePort.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["MinIO:AccessKey"] = InfrastructureFixture.StorageUser,
+            ["MinIO:SecretKey"] = InfrastructureFixture.StorageUser,
             ["MinIO:BucketName"] = "e2e-content",
             ["Meilisearch:Host"] = infrastructure.MeilisearchUrl,
             ["Meilisearch:ApiKey"] = InfrastructureFixture.MeilisearchKey,

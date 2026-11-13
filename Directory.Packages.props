@@ -38,7 +38,6 @@
     <PackageVersion Include="RobotsTxtParser" Version="2025.9.4" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.0.0" />
     <PackageVersion Include="Testcontainers.Meilisearch" Version="4.3.0" />
-    <PackageVersion Include="Testcontainers.Minio" Version="4.3.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="xunit" Version="2.9.3" />

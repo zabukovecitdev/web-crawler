@@ -3,18 +3,18 @@ using DotNet.Testcontainers.Containers;
 
 namespace SamoBot.Tests.EndToEnd;
 
-/// <summary>MinIO and Meilisearch for the end-to-end test. PostgreSQL comes from the shared Postgres fixture.</summary>
+/// <summary>RustFS (S3 storage) and Meilisearch for the end-to-end test. PostgreSQL comes from the shared Postgres fixture.</summary>
 public sealed class InfrastructureFixture : IAsyncLifetime
 {
     public const string MeilisearchKey = "masterKey";
-    public const string MinioUser = "minioadmin";
+    public const string StorageUser = "minioadmin";
 
-    private readonly IContainer _minio = new ContainerBuilder()
-        .WithImage("bitnamilegacy/minio:latest")
+    private readonly IContainer _storage = new ContainerBuilder()
+        .WithImage("rustfs/rustfs:1.0.5")
         .WithPortBinding(9000, true)
-        .WithEnvironment("MINIO_ROOT_USER", MinioUser)
-        .WithEnvironment("MINIO_ROOT_PASSWORD", MinioUser)
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(9000).ForPath("/minio/health/live")))
+        .WithEnvironment("RUSTFS_ACCESS_KEY", StorageUser)
+        .WithEnvironment("RUSTFS_SECRET_KEY", StorageUser)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(9000).ForPath("/health")))
         .Build();
 
     private readonly IContainer _meilisearch = new ContainerBuilder()
@@ -25,17 +25,17 @@ public sealed class InfrastructureFixture : IAsyncLifetime
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(7700).ForPath("/health")))
         .Build();
 
-    public string MinioHost => _minio.Hostname;
+    public string StorageHost => _storage.Hostname;
 
-    public int MinioPort => _minio.GetMappedPublicPort(9000);
+    public int StoragePort => _storage.GetMappedPublicPort(9000);
 
     public string MeilisearchUrl => $"http://{_meilisearch.Hostname}:{_meilisearch.GetMappedPublicPort(7700)}";
 
-    public async Task InitializeAsync() => await Task.WhenAll(_minio.StartAsync(), _meilisearch.StartAsync());
+    public async Task InitializeAsync() => await Task.WhenAll(_storage.StartAsync(), _meilisearch.StartAsync());
 
     public async Task DisposeAsync()
     {
-        await _minio.DisposeAsync();
+        await _storage.DisposeAsync();
         await _meilisearch.DisposeAsync();
     }
 }
