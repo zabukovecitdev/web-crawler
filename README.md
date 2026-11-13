@@ -33,14 +33,14 @@ DASHBOARD_API_KEY=<secret> docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
-Send the key in the header `X-Api-Key`. The dashboard is in `frontend/`.
+Send the key in the header `X-Api-Key`. The dashboard is in `src/frontend/`.
 
 Tests:
 
 ```bash
 dotnet build SamoBot.sln -warnaserror
-dotnet test tests/SamoBot.Tests --filter "Category!=Integration"
-dotnet test tests/SamoBot.Tests --filter "Category=Integration"   # needs Docker
+dotnet test src/SamoBot.Tests --filter "Category!=Integration"
+dotnet test src/SamoBot.Tests --filter "Category=Integration"   # needs Docker
 ```
 
 ## The claim pattern

@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamoBot.Tests", "tests\SamoBot.Tests\SamoBot.Tests.csproj", "{CF4C2AD6-5D15-4E53-AFC1-F9A9B22D4B7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamoBot.Tests", "src\SamoBot.Tests\SamoBot.Tests.csproj", "{CF4C2AD6-5D15-4E53-AFC1-F9A9B22D4B7C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamoBot.Migrations", "src\SamoBot.Migrations\SamoBot.Migrations.csproj", "{7B0CCCF3-C94E-4572-925D-58DC79721CBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamoBot.Mcp", "SamoBot.Mcp\SamoBot.Mcp.csproj", "{B9F62D4E-3B8C-4B21-B9F4-888C8E946190}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamoBot.Mcp", "src\SamoBot.Mcp\SamoBot.Mcp.csproj", "{B9F62D4E-3B8C-4B21-B9F4-888C8E946190}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject

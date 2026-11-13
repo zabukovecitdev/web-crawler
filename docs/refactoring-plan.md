@@ -21,7 +21,7 @@ A small model can do this plan. Each task is small, has exact file names, and ha
 - PostgreSQL is the only queue. RabbitMQ, Redis, and Neo4j are removed.
 - Two processes stay: `SamoBot.Worker` and `SamoBot.Api`.
 - Each stage uses the same pattern: claim rows with a lease, do the work, record one result.
-- The HTTP routes and the JSON shapes of `SamoBot.Api` do not change. The `frontend/` folder does not change.
+- The HTTP routes and the JSON shapes of `SamoBot.Api` do not change. The `src/frontend/` folder does not change.
 
 ### 1.2 Projects
 
@@ -33,7 +33,7 @@ A small model can do this plan. Each task is small, has exact file names, and ha
 | `src/SamoBot.Api` | Dashboard API and SignalR | `Core`, `Adapters` |
 | `src/SamoBot.Migrations` | FluentMigrator migrations | none |
 | `SamoBot.Mcp` | MCP search server | `Core`, `Adapters` |
-| `tests/SamoBot.Tests` | Unit tests and integration tests | all |
+| `src/SamoBot.Tests` | Unit tests and integration tests | all |
 
 `SamoBot.Core` must not reference Npgsql, Dapper, Minio, Meilisearch, Playwright, or `Microsoft.Extensions.Hosting`.
 The compiler then enforces the Dependency Inversion Principle.
@@ -220,13 +220,13 @@ Run these after each task:
 
 ```bash
 dotnet build SamoBot.sln -warnaserror
-dotnet test tests/SamoBot.Tests --filter "Category!=Integration"
+dotnet test src/SamoBot.Tests --filter "Category!=Integration"
 ```
 
 Run this after each task in phases 4 to 8 (Docker is necessary):
 
 ```bash
-dotnet test tests/SamoBot.Tests --filter "Category=Integration"
+dotnet test src/SamoBot.Tests --filter "Category=Integration"
 ```
 
 ## Phase 0. Guardrails
@@ -267,12 +267,12 @@ Add `*.DotSettings.user` to `.gitignore`.
 
 ## Phase 1. Domain (`SamoBot.Core/Domain`)
 
-Each task in this phase includes unit tests in `tests/SamoBot.Tests/Domain`.
+Each task in this phase includes unit tests in `src/SamoBot.Tests/Domain`.
 
 **T1.1 Move `UrlNormalizer`.**
 Move `src/SamoBot.Infrastructure/Utilities/UrlNormalizer.cs` to `src/SamoBot.Core/Common/`. Change only the namespace.
 Move `UrlExtensions.cs` with it if `UrlNormalizer` uses it.
-Update `tests/SamoBot.Tests/UrlNormalizerTests.cs` to the new namespace. All 77 tests must pass.
+Update `src/SamoBot.Tests/UrlNormalizerTests.cs` to the new namespace. All 77 tests must pass.
 If `UrlNormalizer` breaks a limit, extract private methods. Do not change the behavior.
 
 **T1.2 Add the enums.** `UrlStatus` (`Idle`, `InFlight`, `Disabled`) and `CrawlJobStatus` (copy the values from the old enum).
@@ -296,7 +296,7 @@ Methods: `bool IsAllowed(string pathAndQuery, string userAgent)` and `static Rob
 
 ## Phase 2. Use cases (`SamoBot.Core`)
 
-Each task includes unit tests. Use hand-written fake classes for the ports in `tests/SamoBot.Tests/Fakes`.
+Each task includes unit tests. Use hand-written fake classes for the ports in `src/SamoBot.Tests/Fakes`.
 
 **T2.1 Add all interfaces from section 1.5** to `SamoBot.Core/Ports`. Add `IWorkHandler` and `JsonDefaults` to `Common`.
 
@@ -459,7 +459,7 @@ RETURNING u.*;
 
 **T7.1 Delete these projects** and remove them from `SamoBot.sln`:
 `src/SamoBot`, `src/SamoBot.Infrastructure`, `src/SamoBot.Workers`, `src/SamoBot.Crawler`, `src/SamoBot.Scheduler`, `src/SamoBot.Parser`, `src/SamoBot.Indexer`, `src/SamoBot.Seeder`, `src/SamoBot.Settings`.
-Delete `tests/SamoBot.Tests/PolitenessPolicyTests.cs` and `RedisCachePolitenessTests.cs`. Delete `terraform/` and `.run/`.
+Delete `src/SamoBot.Tests/PolitenessPolicyTests.cs` and `RedisCachePolitenessTests.cs`. Delete `terraform/` and `.run/`.
 
 **T7.2 Remove unused packages** from `Directory.Packages.props`: `RabbitMQ.Client`, `StackExchange.Redis`, `Neo4j.Driver`, `Confluent.Kafka`, `SqlKata`, `SqlKata.Execution`, `Riok.Mapperly`, `Polly`, `Polly.Contrib.WaitAndRetry`, `Polly.Extensions.Http`, `Microsoft.Extensions.Http.Polly`, `RobotsTxtCore`, `Bogus`.
 
@@ -471,7 +471,7 @@ Delete `tests/SamoBot.Tests/PolitenessPolicyTests.cs` and `RedisCachePolitenessT
 
 ## Phase 8. Proof
 
-**T8.1 Add the end-to-end test** `tests/SamoBot.Tests/EndToEnd/CrawlJobTests.cs` with category `Integration`.
+**T8.1 Add the end-to-end test** `src/SamoBot.Tests/EndToEnd/CrawlJobTests.cs` with category `Integration`.
 Start PostgreSQL, MinIO, and Meilisearch with Testcontainers.
 Start a stub site in the test with about 20 pages. It has a `robots.txt` with one `Disallow` path, one page that returns 500, one redirect, one root-relative link, and two pages that link to each other.
 Create and start a job. Run the four handlers in a loop until the job is `Completed`, with a 60 second timeout.

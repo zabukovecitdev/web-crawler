@@ -35,8 +35,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\src\SamoBot.Adapters\SamoBot.Adapters.csproj"/>
-        <ProjectReference Include="..\src\SamoBot.Core\SamoBot.Core.csproj"/>
+        <ProjectReference Include="..\SamoBot.Adapters\SamoBot.Adapters.csproj"/>
+        <ProjectReference Include="..\SamoBot.Core\SamoBot.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

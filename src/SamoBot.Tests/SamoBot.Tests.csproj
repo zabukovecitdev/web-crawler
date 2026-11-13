@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SamoBot.Api\SamoBot.Api.csproj" />
-    <ProjectReference Include="..\..\src\SamoBot.Adapters\SamoBot.Adapters.csproj" />
-    <ProjectReference Include="..\..\src\SamoBot.Core\SamoBot.Core.csproj" />
-    <ProjectReference Include="..\..\src\SamoBot.Migrations\SamoBot.Migrations.csproj" />
-    <ProjectReference Include="..\..\src\SamoBot.Worker\SamoBot.Worker.csproj" />
+    <ProjectReference Include="..\SamoBot.Api\SamoBot.Api.csproj" />
+    <ProjectReference Include="..\SamoBot.Adapters\SamoBot.Adapters.csproj" />
+    <ProjectReference Include="..\SamoBot.Core\SamoBot.Core.csproj" />
+    <ProjectReference Include="..\SamoBot.Migrations\SamoBot.Migrations.csproj" />
+    <ProjectReference Include="..\SamoBot.Worker\SamoBot.Worker.csproj" />
   </ItemGroup>
 
 </Project>
