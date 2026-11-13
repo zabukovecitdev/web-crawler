@@ -57,7 +57,7 @@ SamoBot.Core/
 
 ```
 SamoBot.Adapters/
-├── Postgres/      PostgresUrlFrontier, PostgresParseQueue, PostgresIndexQueue,
+├── Postgres/      PostgresUrlFrontier, PostgresParseBacklog, PostgresIndexBacklog,
 │                  PostgresCrawlJobRepository, PostgresJobPageReader, PostgresRobotsStore,
 │                  PostgresCrawlEventPublisher, TableNames
 ├── Http/          HttpFetcher, HttpRobotsSource
@@ -80,13 +80,13 @@ public interface IUrlFrontier
     Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct);
 }
 
-public interface IParseQueue
+public interface IParseBacklog
 {
     Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct);
     Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, CancellationToken ct);
 }
 
-public interface IIndexQueue
+public interface IIndexBacklog
 {
     Task<IReadOnlyList<PageToIndex>> Claim(int batchSize, CancellationToken ct);
     Task MarkIndexed(IReadOnlyList<int> pageIds, CancellationToken ct);
@@ -107,10 +107,10 @@ public interface IContentStore
 public interface IHtmlParser      { ParsedPage Parse(Stream html); }
 public interface ISearchIndex     { Task AddOrUpdate(IReadOnlyList<PageToIndex> pages, CancellationToken ct); }
 public interface ISearchQuery     { Task<IReadOnlyList<SearchHit>> Search(string text, int limit, CancellationToken ct); }
-public interface IRobotsStore     { Task<RobotsRules?> Get(string host, CancellationToken ct); Task Save(RobotsRules rules, CancellationToken ct); }
+public interface IRobotsStore     { Task<RobotsRules?> Find(string host, CancellationToken ct); Task Save(RobotsRules rules, CancellationToken ct); }
 public interface IRobotsSource    { Task<RobotsRules> Download(string host, CancellationToken ct); }
 public interface ICrawlEventPublisher { Task Publish(int crawlJobId, string eventType, object payload, CancellationToken ct); }
-public interface ICrawlJobRepository  { /* Get, ListRecent, Insert, Save, CompleteFinishedJobs */ }
+public interface ICrawlJobRepository  { /* Find, ListRecent, Insert, Save, CompleteFinishedJobs */ }
 public interface IJobPageReader       { /* ListPages, CountPages, ListEvents */ }
 ```
 
@@ -331,11 +331,11 @@ Tests: `/about` on `https://a.example/x` gives `https://a.example/about`. `mailt
 **T2.9 Add `JobScope`.** `IReadOnlyList<NewUrl> Filter(FetchToParse parent, IReadOnlyList<string> urls)`. It removes URLs whose host is not in `AllowedHosts`. It returns an empty list if `parent.Depth + 1 > MaxDepth`.
 
 **T2.10 Add `ParsePageHandler` and `ParseBatchHandler : IWorkHandler`.**
-Steps for one fetch: load the HTML with `IContentStore.Load`, parse with `IHtmlParser`, resolve links with `LinkResolver`, filter with `JobScope`, call `IParseQueue.Complete`.
+Steps for one fetch: load the HTML with `IContentStore.Load`, parse with `IHtmlParser`, resolve links with `LinkResolver`, filter with `JobScope`, call `IParseBacklog.Complete`.
 If the page has a `nofollow` directive, pass an empty link list.
 The batch handler claims 10 fetches with a 5 minute lease.
 
-**T2.11 Add `IndexBatchHandler : IWorkHandler`.** It claims 50 pages, calls `ISearchIndex.AddOrUpdate` one time, then calls `IIndexQueue.MarkIndexed`.
+**T2.11 Add `IndexBatchHandler : IWorkHandler`.** It claims 50 pages, calls `ISearchIndex.AddOrUpdate` one time, then calls `IIndexBacklog.MarkIndexed`.
 
 **T2.12 Add `CrawlJobService` and `JobCompletionHandler : IWorkHandler`.**
 `CrawlJobService` has `Create`, `Start`, `Pause`, `Cancel`. Each method loads the job, calls the `CrawlJob` method, saves, and publishes one event.
@@ -369,11 +369,11 @@ Add one shared test fixture that starts PostgreSQL and runs the migrations.
 - `Complete`: in one transaction, insert the `FetchRecord` (if not null), update the URL from `UrlUpdate`, and insert `UrlUpdate.NewUrl` (if not null) with `ON CONFLICT DO NOTHING`.
 - `AddSeeds`: insert with `ON CONFLICT DO NOTHING`. Insert each new host into `Hosts` with `ON CONFLICT DO NOTHING`.
 
-**T4.3 Add `PostgresParseQueue`.**
+**T4.3 Add `PostgresParseBacklog`.**
 - `Claim`: select `UrlFetches` rows where `ParsedAt` is null, `ObjectName` is not null, and the lease is null or expired. Use `FOR UPDATE SKIP LOCKED` in raw SQL.
 - `Complete`: in one transaction, upsert `ParsedDocuments` on `UrlFetchId`, insert the links and their hosts with `ON CONFLICT DO NOTHING`, and set `ParsedAt`. Apply `MaxUrls` in the insert.
 
-**T4.4 Add `PostgresIndexQueue`, `PostgresCrawlJobRepository`, `PostgresJobPageReader`, `PostgresRobotsStore`.**
+**T4.4 Add `PostgresIndexBacklog`, `PostgresCrawlJobRepository`, `PostgresJobPageReader`, `PostgresRobotsStore`.**
 `CompleteFinishedJobs` sets `Completed` for `Running` jobs that have no `InFlight` URL and no `Idle` URL with a null `LastCrawlAt`.
 `PostgresRobotsStore.Save` uses `INSERT ... ON CONFLICT ("Host") DO UPDATE`.
 
