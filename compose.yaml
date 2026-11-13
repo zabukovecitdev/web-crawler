@@ -1,143 +1,6 @@
+# SamoBot: PostgreSQL is the only queue. Run with:
+#   DASHBOARD_API_KEY=<secret> docker compose up --build
 services:
-  migrations:
-    image: samobot-migrations
-    build:
-      context: .
-      dockerfile: src/SamoBot.Migrations/Dockerfile
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - frontend
-    restart: "no"
-    profiles: ["setup"]
-
-  crawler:
-    image: samobot-crawler
-    build:
-      context: .
-      dockerfile: src/SamoBot.Crawler/Dockerfile
-    environment:
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - Redis__ConnectionString=redis:6379
-      - MinIO__Endpoint=minio
-      - MinIO__Port=9000
-      - MinIO__AccessKey=minioadmin
-      - MinIO__SecretKey=minioadmin
-      - RabbitMQ__Connection__HostName=rabbitmq
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - frontend
-    restart: unless-stopped
-
-  consumer:
-    image: samobot
-    build:
-      context: .
-      dockerfile: src/SamoBot/Dockerfile
-    environment:
-      - RabbitMQ__Connection__HostName=rabbitmq
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - Redis__ConnectionString=redis:6379
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - frontend
-    profiles: ["legacy"]
-
-  scheduler:
-    image: samobot-scheduler
-    build:
-      context: .
-      dockerfile: src/SamoBot.Scheduler/Dockerfile
-    environment:
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - RabbitMQ__Connection__HostName=rabbitmq
-      - Redis__ConnectionString=redis:6379
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-    networks:
-      - frontend
-    profiles: ["legacy"]
-
-  parser:
-    image: samobot-parser
-    build:
-      context: .
-      dockerfile: src/SamoBot.Parser/Dockerfile
-    environment:
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - RabbitMQ__Connection__HostName=rabbitmq
-      - Redis__ConnectionString=redis:6379
-      - MinIO__Endpoint=minio
-      - MinIO__Port=9000
-      - MinIO__AccessKey=minioadmin
-      - MinIO__SecretKey=minioadmin
-      - Neo4j__Uri=bolt://neo4j:7687
-      - Neo4j__Username=neo4j
-      - Neo4j__Password=password
-      - Neo4j__Enabled=true
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
-      neo4j:
-        condition: service_healthy
-    networks:
-      - frontend
-    profiles: ["legacy"]
-
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - frontend
-
   postgres:
     image: postgres:16-alpine
     ports:
@@ -154,43 +17,24 @@ services:
       start_period: 10s
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - frontend
 
-  minio:
-    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+  rustfs:
+    image: rustfs/rustfs:1.0.5
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
+      RUSTFS_ACCESS_KEY: minioadmin
+      RUSTFS_SECRET_KEY: minioadmin
+      RUSTFS_CONSOLE_ENABLE: "true"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-      start_period: 30s
-    volumes:
-      - minio_data:/data
-    networks:
-      - frontend
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 15s
+      timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 20s
     volumes:
-      - redis_data:/data
-    networks:
-      - frontend
+      - rustfs_data:/data
 
   meilisearch:
     image: getmeili/meilisearch:v1.11
@@ -207,57 +51,56 @@ services:
       start_period: 10s
     volumes:
       - meilisearch_data:/meili_data
-    networks:
-      - frontend
 
-  indexer:
-    image: samobot-indexer
+  migrations:
+    image: samobot-migrations
     build:
       context: .
-      dockerfile: src/SamoBot.Indexer/Dockerfile
+      dockerfile: src/SamoBot.Migrations/Dockerfile
     environment:
-      - Database__ConnectionString=Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      - Meilisearch__Host=http://meilisearch:7700
-      - Meilisearch__ApiKey=masterKey
-      - Meilisearch__IndexName=parsed_documents
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
     depends_on:
       postgres:
         condition: service_healthy
+    restart: "no"
+
+  worker:
+    image: samobot-worker
+    build:
+      context: .
+      dockerfile: src/SamoBot.Worker/Dockerfile
+    environment:
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
+      MinIO__Endpoint: rustfs
+      MinIO__AccessKey: minioadmin
+      MinIO__SecretKey: minioadmin
+      Meilisearch__Host: http://meilisearch:7700
+      Meilisearch__ApiKey: masterKey
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      rustfs:
+        condition: service_healthy
       meilisearch:
         condition: service_healthy
-    networks:
-      - frontend
     restart: unless-stopped
 
-  neo4j:
-    image: neo4j:5
+  api:
+    image: samobot-api
+    build:
+      context: .
+      dockerfile: src/SamoBot.Api/Dockerfile
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "5080:8080"
     environment:
-      NEO4J_AUTH: neo4j/password
-      NEO4J_PLUGINS: '["apoc"]'
-    healthcheck:
-      test: ["CMD", "wget", "-O", "-", "http://localhost:7474"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    volumes:
-      - neo4j_data:/data
-    networks:
-      - frontend
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
+      DashboardApi__Key: ${DASHBOARD_API_KEY:?Set DASHBOARD_API_KEY to the dashboard API key}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 volumes:
-  rabbitmq_data:
   postgres_data:
-  minio_data:
-  redis_data:
+  rustfs_data:
   meilisearch_data:
-  neo4j_data:
-
-networks:
-  frontend:
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"

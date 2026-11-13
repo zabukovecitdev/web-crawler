@@ -1,0 +1,11 @@
+root = true
+
+[*.cs]
+csharp_prefer_braces = true:error
+dotnet_diagnostic.IDE0011.severity = error
+dotnet_diagnostic.CA1502.severity = error
+dotnet_diagnostic.S3776.severity = error
+dotnet_diagnostic.S138.severity = error
+dotnet_diagnostic.S107.severity = error
+dotnet_diagnostic.S134.severity = error
+dotnet_diagnostic.S104.severity = error

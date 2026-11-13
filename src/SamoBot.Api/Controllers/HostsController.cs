@@ -1,66 +1,45 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SamoBot.Infrastructure.Services.Abstractions;
+using SamoBot.Api.Contracts;
+using SamoBot.Core.Crawling;
 
 namespace SamoBot.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/hosts")]
 [Authorize]
-public class HostsController : ControllerBase
+public sealed class HostsController(RobotsGate robots) : ControllerBase
 {
-    private readonly IRobotsTxtService _robotsTxtService;
-
-    public HostsController(IRobotsTxtService robotsTxtService)
-    {
-        _robotsTxtService = robotsTxtService;
-    }
-
     [HttpGet("{host}/robots")]
-    public async Task<IActionResult> GetRobots(string host, CancellationToken cancellationToken)
-    {
-        var result = await _robotsTxtService.GetRobotsTxt(host, cancellationToken);
-        return result.IsFailed ? BadRequest(result.Errors) : Ok(result.Value);
-    }
+    [ProducesResponseType<RobotsResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRobots(string host, CancellationToken ct) =>
+        Ok(RobotsResponse.From(await robots.RulesFor(host, ct)));
 
     [HttpGet("{host}/sitemaps")]
-    public IActionResult GetSitemaps(string host)
-    {
-        return Ok(new
-        {
-            host,
-            message = "Sitemap discovery and persistence are planned; no stored sitemaps yet.",
-            urls = Array.Empty<string>()
-        });
-    }
+    [ProducesResponseType<SitemapsResponse>(StatusCodes.Status200OK)]
+    public IActionResult GetSitemaps(string host) => Ok(new SitemapsResponse(
+        host,
+        "Sitemap discovery and persistence are planned; no stored sitemaps yet.",
+        []));
 
     [HttpPost("explain")]
-    public async Task<IActionResult> Explain([FromBody] ExplainRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType<ExplainResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Explain([FromBody] ExplainRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Url) || !Uri.TryCreate(request.Url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri))
         {
             return BadRequest("Invalid URL.");
         }
 
-        const string userAgent = "SamoBot";
-        var allowed = await _robotsTxtService.IsUrlAllowed(request.Url, userAgent, cancellationToken);
-        var crawlDelay = await _robotsTxtService.GetCrawlDelayMs(uri.Host, cancellationToken);
-        var robots = await _robotsTxtService.GetRobotsTxt(uri.Host, cancellationToken);
-
-        return Ok(new
-        {
-            url = request.Url,
-            host = uri.Host,
-            userAgent,
-            allowedByRobots = allowed.IsSuccess ? allowed.Value : (bool?)null,
-            robotsErrors = allowed.IsFailed ? string.Join("; ", allowed.Errors.Select(e => e.Message)) : null,
-            crawlDelayMs = crawlDelay.IsSuccess ? crawlDelay.Value : null,
-            robotsTxt = robots.IsSuccess ? robots.Value : null
-        });
+        var rules = await robots.RulesFor(uri.Authority, ct);
+        var description = RobotsResponse.From(rules);
+        return Ok(new ExplainResponse(
+            request.Url,
+            uri.Authority,
+            RobotsGate.UserAgent,
+            rules.IsAllowed(uri.PathAndQuery, RobotsGate.UserAgent),
+            description.CrawlDelayMs,
+            description));
     }
-}
-
-public class ExplainRequest
-{
-    public string Url { get; set; } = string.Empty;
 }

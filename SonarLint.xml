@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AnalysisInput>
+  <Settings />
+  <Rules>
+    <Rule><Key>S3776</Key><Parameters><Parameter><Key>threshold</Key><Value>10</Value></Parameter></Parameters></Rule>
+    <Rule><Key>S138</Key><Parameters><Parameter><Key>max</Key><Value>30</Value></Parameter></Parameters></Rule>
+    <Rule><Key>S107</Key><Parameters><Parameter><Key>max</Key><Value>6</Value></Parameter></Parameters></Rule>
+    <Rule><Key>S134</Key><Parameters><Parameter><Key>maximumNestingLevel</Key><Value>2</Value></Parameter></Parameters></Rule>
+    <Rule><Key>S104</Key><Parameters><Parameter><Key>maximumFileLocThreshold</Key><Value>300</Value></Parameter></Parameters></Rule>
+  </Rules>
+</AnalysisInput>

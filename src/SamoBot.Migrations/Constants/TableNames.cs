@@ -11,5 +11,6 @@ internal static class TableNames
         public const string IndexJobs = "IndexJobs";
         public const string CrawlJobs = "CrawlJobs";
         public const string CrawlJobEvents = "CrawlJobEvents";
+        public const string Hosts = "Hosts";
     }
 }

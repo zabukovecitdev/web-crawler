@@ -6,7 +6,7 @@ This document is the canonical spec for the crawl dashboard, API, real-time tele
 
 - **Backend**: `SamoBot.Api` (ASP.NET Core) exposes REST under `/api/v1`, Swagger at `/swagger`, and SignalR hub at `/hubs/crawl-job`. Authentication is a development-friendly **API key** (`X-Api-Key` header), configured as `DashboardApi:Key` in `appsettings` (see `src/SamoBot.Settings/appsettings.json`).
 - **Workers**: Existing services (`SamoBot`, `SamoBot.Crawler`, `SamoBot.Parser`) emit crawl telemetry via `ICrawlTelemetryService` (PostgreSQL `CrawlJobEvents` + optional Redis Pub/Sub channel `CrawlTelemetry:RedisChannel`, default `samo:crawl:telemetry`). The API subscribes to Redis and forwards payloads to SignalR groups `crawlJob:{id}`.
-- **Frontend**: `frontend/` — Vite + React + TypeScript, TanStack Query, React Router, Tailwind + Radix-style UI primitives (`src/components/ui/*`). Set `VITE_API_BASE` and `VITE_API_KEY` (see `frontend/.env.example`).
+- **Frontend**: `src/frontend/` — Vite + React + TypeScript, TanStack Query, React Router, Tailwind + Radix-style UI primitives (`src/components/ui/*`). Set `VITE_API_BASE` and `VITE_API_KEY` (see `src/frontend/.env.example`).
 - **Database**: FluentMigrator migration `013_CreateCrawlJobsAndEvents` adds `CrawlJobs`, `CrawlJobEvents`, and extends `DiscoveredUrls` with `CrawlJobId`, `Depth`, `UseJsRendering`, `RespectRobots`.
 
 ## REST API (v1)
@@ -28,7 +28,7 @@ This document is the canonical spec for the crawl dashboard, API, real-time tele
 
 - **Hub**: `CrawlJobHub` — methods `JoinJob(jobId)`, `LeaveJob(jobId)`.
 - **Client event**: `CrawlEvent` — JSON payload includes `crawlJobId`, `eventId`, `eventType`, and `payload` (from Redis envelope).
-- **Headers**: Send `X-Api-Key` on the SignalR connection (see `frontend/src/pages/JobDetailPage.tsx`).
+- **Headers**: Send `X-Api-Key` on the SignalR connection (see `src/frontend/src/pages/JobDetailPage.tsx`).
 
 ## Telemetry event types (emitted by workers)
 
@@ -58,7 +58,7 @@ This document is the canonical spec for the crawl dashboard, API, real-time tele
 | Crawl jobs / telemetry | `src/SamoBot.Infrastructure/Services/`, `Data/CrawlJob*.cs` |
 | JS render | `src/SamoBot.Infrastructure/Storage/Services/JsRenderService.cs` |
 | Migrations | `src/SamoBot.Migrations/Migrations/013_CreateCrawlJobsAndEvents.cs` |
-| Dashboard UI | `frontend/src/` |
+| Dashboard UI | `src/frontend/src/` |
 
 ## Production checklist (non-exhaustive)
 

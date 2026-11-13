@@ -15,6 +15,20 @@ public class CreateParsedDocumentsTable : Migration
         // Check if table already exists (from partial migration run)
         if (!Schema.Table(TableNames.Database.ParsedDocuments).Exists())
         {
+            CreateParsedDocuments();
+        }
+
+        // Create index if it doesn't exist (idempotent)
+        if (!Schema.Table(TableNames.Database.ParsedDocuments).Index("IX_ParsedDocuments_ParsedAt").Exists())
+        {
+            Create.Index("IX_ParsedDocuments_ParsedAt")
+                .OnTable(TableNames.Database.ParsedDocuments)
+                .OnColumn("ParsedAt");
+        }
+    }
+
+    private void CreateParsedDocuments()
+    {
             Create.Table(TableNames.Database.ParsedDocuments)
             .WithColumn("Id").AsInt32().PrimaryKey().Identity()
             .WithColumn("UrlFetchId").AsInt32().NotNullable().Unique()
@@ -39,15 +53,6 @@ public class CreateParsedDocumentsTable : Migration
                 .ToTable(TableNames.Database.UrlFetches)
                 .PrimaryColumn("Id")
                 .OnDelete(System.Data.Rule.Cascade);
-        }
-
-        // Create index if it doesn't exist (idempotent)
-        if (!Schema.Table(TableNames.Database.ParsedDocuments).Index("IX_ParsedDocuments_ParsedAt").Exists())
-        {
-            Create.Index("IX_ParsedDocuments_ParsedAt")
-                .OnTable(TableNames.Database.ParsedDocuments)
-                .OnColumn("ParsedAt");
-        }
     }
 
     public override void Down()
