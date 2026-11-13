@@ -7,8 +7,7 @@ using SamoBot.Migrations;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["Database:ConnectionString"]
+var connectionString = builder.Configuration["Database:ConnectionString"]
     ?? throw new InvalidOperationException("Database connection string is not configured");
 
 builder.Services
