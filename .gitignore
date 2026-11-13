@@ -23,3 +23,5 @@ dist/
 # Terraform state (sensitive)
 *.tfstate
 *.tfstate.backup
+
+.env

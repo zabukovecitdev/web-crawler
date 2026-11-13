@@ -29,7 +29,8 @@ The compiler enforces the dependency rule: `Core` references no project.
 ## How to run
 
 ```bash
-DASHBOARD_API_KEY=<secret> docker compose up --build
+cp .env.example .env   # then set DASHBOARD_API_KEY in .env
+docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
