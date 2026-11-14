@@ -66,6 +66,42 @@ public class ParseHandlerTests
     }
 
     [Fact]
+    public async Task HandleSkipsLinksMarkedRelNoFollowButStillStoresThem()
+    {
+        var page = new ParsedPage
+        {
+            Title = "T",
+            Links =
+            [
+                new ParsedLink { Url = "/about" },
+                new ParsedLink { Url = "/login", Rel = "nofollow", IsNoFollow = true },
+                new ParsedLink { Url = "/ads", Rel = "sponsored nofollow", IsNoFollow = true }
+            ]
+        };
+        var (queue, handler) = Build(page);
+
+        await handler.Handle(Fetch, default);
+
+        var completed = queue.Completed.Single();
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+        completed.PageLinks.Where(l => l.NoFollow).Select(l => l.ToUrl).Should().Equal("https://a.example/login", "https://a.example/ads");
+    }
+
+    [Fact]
+    public async Task HandleFollowsTargetLinkedBothWithAndWithoutNoFollow()
+    {
+        var page = new ParsedPage
+        {
+            Links = [new ParsedLink { Url = "/about", IsNoFollow = true }, new ParsedLink { Url = "/about" }]
+        };
+        var (queue, handler) = Build(page);
+
+        await handler.Handle(Fetch, default);
+
+        queue.Completed.Single().Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    }
+
+    [Fact]
     public async Task HandleBatchClaimsTenFetchesWithFiveMinuteLease()
     {
         var (queue, pageHandler) = Build(Page());

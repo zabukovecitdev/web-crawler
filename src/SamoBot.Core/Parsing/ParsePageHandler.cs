@@ -3,7 +3,10 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Parsing;
 
-/// <summary>Parses one stored fetch and hands the page and its in-scope links to the parse queue.</summary>
+/// <summary>
+/// Parses one stored fetch and hands the page and its in-scope links to the parse queue.
+/// A page-level robots nofollow drops every link; a link-level rel="nofollow" drops that link.
+/// </summary>
 public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser parser, IParseBacklog queue)
 {
     public async Task Handle(FetchToParse fetch, CancellationToken ct)
@@ -25,6 +28,8 @@ public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser par
             return [];
         }
 
-        return JobScope.Filter(fetch, LinkResolver.Resolve(new Uri(fetch.Url), page.Links));
+        // rel="nofollow" is always respected: such links are stored, never queued.
+        var followable = page.Links.Where(link => !link.IsNoFollow);
+        return JobScope.Filter(fetch, LinkResolver.Resolve(new Uri(fetch.Url), followable));
     }
 }
