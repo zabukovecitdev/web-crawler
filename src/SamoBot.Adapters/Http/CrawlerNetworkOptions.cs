@@ -29,6 +29,12 @@ public sealed class CrawlerNetworkOptions
     /// </summary>
     public int MaxAdaptiveDelaySeconds { get; set; } = 60;
 
+    /// <summary>
+    /// Added to the longest possible fetch (the larger of the request deadline and the browser total deadline) to get the
+    /// in-flight hold of a host. Default 5.
+    /// </summary>
+    public int InFlightMarginSeconds { get; set; } = 5;
+
     /// <summary>DNS resolution and connect together. Default 5. 0 turns it off.</summary>
     public int ConnectTimeoutSeconds { get; set; } = 5;
 

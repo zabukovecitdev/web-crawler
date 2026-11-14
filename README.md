@@ -150,7 +150,7 @@ The browser: `ChromeRendering:DefaultTimeoutMs` (default 30000) limits the navig
 
 Politeness is pacing, not only waiting. `Hosts.CrawlDelayMs` (robots.txt Crawl-delay or the default 1 s) is the base delay and
 is always the minimum. After each fetch `PolitenessPolicy` (pure, in `Core`) computes the next delay of the host, and the
-frontier stores it in the same transaction that records the fetch (`UrlUpdate.Pacing`, `Hosts.NextAllowedAt = GREATEST(current, now + delay)`):
+frontier stores it in the same transaction that records the fetch (`UrlUpdate.Pacing`, `Hosts.NextAllowedAt = now + delay`, see the in-flight hold below):
 
 - **Slow host:** `AvgResponseMs` is a moving average (alpha 0.3) of the response times of fetches where the host answered
   (200 to 499, not 429). The delay is `max(base, 5 x AvgResponseMs)`.
@@ -163,8 +163,17 @@ frontier stores it in the same transaction that records the fetch (`UrlUpdate.Pa
 - **Visibility:** `Hosts.LastDelayMs` keeps the delay that was applied. The job progress reports `max(CrawlDelayMs, LastDelayMs)` as `crawlDelayMs`,
   and the `FetchCompleted` event reports it as `delayMs`. `delaySource` still says `robots.txt` or `default`: it names the source of the base delay.
 
+**One request in flight per host.** A claim does not book only the base delay. It holds the host for the longest possible fetch:
+`max(Crawler:RequestTimeoutSeconds, ChromeRendering:TotalTimeoutMs / 1000) + Crawler:InFlightMarginSeconds` (default margin 5 s, at most the
+5 minute URL lease; `InFlightHold` computes it). A slow server therefore never gets a second concurrent request, even when the response takes
+longer than the delay. Completing the URL, with any outcome (success, failure, timeout, redirect, robots disallow, blocked address, retry later),
+releases the hold in the same transaction: `NextAllowedAt` becomes the completion time plus the delay that applies (the adaptive delay, a
+Retry-After, or the base delay when the pacing is unchanged). It replaces the hold, but it never lowers a later wait that was booked on purpose.
+If a worker dies, the hold expires by itself and the URL lease recovers the URL. While a URL is in flight, the job progress reports
+`nextRequestAt` as null instead of the hold.
+
 The URL itself keeps its retry rules (`OutcomeClassifier`, `BackoffPolicy`); the host pacing only decides when the host is claimed again.
-`Crawler:MaxAdaptiveDelaySeconds` is the only new setting.
+`Crawler:MaxAdaptiveDelaySeconds` and `Crawler:InFlightMarginSeconds` are the settings of this section.
 
 ## Design decisions
 

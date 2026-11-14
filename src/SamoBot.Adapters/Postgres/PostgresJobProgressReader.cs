@@ -9,6 +9,7 @@ namespace SamoBot.Adapters.Postgres;
 /// Reads the live counters of one job with one query. The counts come from the frontier and from the fetches of the job.
 /// A URL counts by its last fetch: crawled (2xx), failed (disabled with a reason other than redirect, robots or blocked-address; a blocked address counts as skipped, not failed),
 /// queued (idle and not yet fetched, or waiting for a retry), in flight (leased).
+/// While a URL is in flight, <c>NextAllowedAt</c> of its host is the in-flight hold, not a next request time, so it is reported as null.
 /// </summary>
 public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJobProgressReader
 {
@@ -55,7 +56,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
                inflight."Url" AS "CurrentUrl", inflight."Depth" AS "CurrentDepth",
                COALESCE(GREATEST(h."CrawlDelayMs", h."LastDelayMs"), 1000) AS "CrawlDelayMs",
                (r."CrawlDelayMs" IS NOT NULL) AS "DelayFromRobots",
-               h."NextAllowedAt",
+               CASE WHEN inflight."Url" IS NULL THEN h."NextAllowedAt" END AS "NextAllowedAt",
                fetches."Fetches", fetches."AvgResponseMs", fetches."MaxResponseMs",
                fetches."Ok", fetches."Redirect", fetches."ClientError", fetches."ServerError"
         FROM job

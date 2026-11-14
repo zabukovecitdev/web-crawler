@@ -47,6 +47,7 @@ public static class AdaptersServiceCollectionExtensions
         services.AddSafeNetwork(configuration);
         services.AddSingleton(provider => new PolitenessPolicy(
             TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.MaxAdaptiveDelaySeconds)));
+        services.AddSingleton(InFlightHoldFrom);
         services.AddSafeHttpClient<HttpFetcher>(followRedirects: false);
         services.AddSafeHttpClient<HttpRobotsSource>(followRedirects: true);
 
@@ -58,6 +59,17 @@ public static class AdaptersServiceCollectionExtensions
         services.AddTransient<IRobotsSource>(provider => provider.GetRequiredService<HttpRobotsSource>());
         services.AddSingleton<BrowserFetcher>();
         return services.AddSingleton<IFetcher>(provider => provider.GetRequiredService<BrowserFetcher>());
+    }
+
+    private static InFlightHold InFlightHoldFrom(IServiceProvider provider)
+    {
+        var network = provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value;
+        var browser = provider.GetRequiredService<IOptions<ChromeRenderingOptions>>().Value;
+        return InFlightHold.Calculate(
+            TimeSpan.FromSeconds(network.RequestTimeoutSeconds),
+            TimeSpan.FromMilliseconds(browser.TotalTimeoutMs),
+            TimeSpan.FromSeconds(network.InFlightMarginSeconds),
+            CrawlBatchHandler.Lease);
     }
 
     private static IServiceCollection AddStorage(this IServiceCollection services, IConfiguration configuration)

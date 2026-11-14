@@ -7,11 +7,11 @@ public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
 {
     public List<(ClaimedUrl Url, UrlUpdate Update, FetchRecord? Fetch)> Completed { get; } = [];
     public List<(int JobId, IReadOnlyList<NewUrl> Seeds)> AddedSeeds { get; } = [];
-    public (int BatchSize, TimeSpan Lease)? LastClaim { get; private set; }
+    public (int BatchSize, TimeSpan Lease, TimeSpan Hold)? LastClaim { get; private set; }
 
-    public Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
+    public Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct)
     {
-        LastClaim = (batchSize, lease);
+        LastClaim = (batchSize, lease, hold);
         return Task.FromResult<IReadOnlyList<ClaimedUrl>>(due);
     }
 
