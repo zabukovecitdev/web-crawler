@@ -79,6 +79,23 @@ Both lists empty means nobody can sign in (the API logs a warning at startup; th
 `http://localhost:5173` talking to `http://localhost:5080` is same-site (ports do not matter), so the Lax cookie works in dev over plain http.
 Frontend contract: `fetch(..., { credentials: 'include' })`; send `X-Requested-With: samobot` on every POST/PUT/PATCH/DELETE (cookie sessions only; `/auth/google` is exempt); SignalR uses the same cookie. Unauthenticated calls return 401, never a redirect.
 
+### Dashboard without Google sign-in (local development)
+
+Until a Google client ID is set, the Vite dev server can sign every request in with the API key. The key stays in
+the dev server (no `VITE_` prefix), so it is never sent to the browser or built into `dist/`. Do not use this outside
+your own machine: anyone who can open the dev server acts as the API key user.
+
+```bash
+docker compose up --build                 # API on http://localhost:5080
+cd src/frontend
+cp .env.example .env.local
+# in .env.local: VITE_API_BASE=   (empty)   DEV_API_TARGET=http://localhost:5080   DEV_API_KEY=<DASHBOARD_API_KEY from ../../.env>
+npm ci && npm run dev                     # http://localhost:5173
+```
+
+The dashboard then shows the user "Dashboard". Signing out only shows the sign-in page; reload to come back.
+Once `GOOGLE_CLIENT_ID` and an allowlist are set, remove `DEV_API_KEY` and set `VITE_API_BASE=http://localhost:5080`.
+
 Tests:
 
 ```bash
