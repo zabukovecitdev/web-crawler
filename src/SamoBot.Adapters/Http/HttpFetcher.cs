@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using SamoBot.Adapters.Browser;
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -23,6 +24,10 @@ public sealed class HttpFetcher(HttpClient httpClient, IOptions<ChromeRenderingO
         try
         {
             return await Send(url, started, ct);
+        }
+        catch (HttpRequestException ex) when (BlockedAddressException.IsCause(ex))
+        {
+            return FetchResponse.BlockedAddress((long)timeProvider.GetElapsedTime(started).TotalMilliseconds);
         }
         catch (HttpRequestException ex)
         {
