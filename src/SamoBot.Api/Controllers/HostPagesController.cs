@@ -23,9 +23,14 @@ public sealed class HostPagesController(IPageReader pages) : ControllerBase
         [FromQuery] int offset = 0,
         CancellationToken ct = default)
     {
+        if (!HostKey.TryNormalize(host, out var key))
+        {
+            return BadRequest("Invalid host.");
+        }
+
         var pageQuery = ListQueries.Pages(query, state, limit, offset);
-        return pageQuery is null
-            ? BadRequest("Unknown state.")
-            : Ok(await pages.ListHostPages(host.ToLowerInvariant(), pageQuery, ct));
+        return pageQuery.Query is null
+            ? BadRequest(pageQuery.Error)
+            : Ok(await pages.ListHostPages(key, pageQuery.Query, ct));
     }
 }
