@@ -56,6 +56,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
                inflight."Url" AS "CurrentUrl", inflight."Depth" AS "CurrentDepth",
                COALESCE(GREATEST(h."CrawlDelayMs", h."LastDelayMs"), 1000) AS "CrawlDelayMs",
                (r."CrawlDelayMs" IS NOT NULL) AS "DelayFromRobots",
+               (COALESCE(h."LastDelayMs", 0) > h."CrawlDelayMs") AS "DelayIsAdaptive",
                CASE WHEN inflight."Url" IS NULL THEN h."NextAllowedAt" END AS "NextAllowedAt",
                fetches."Fetches", fetches."AvgResponseMs", fetches."MaxResponseMs",
                fetches."Ok", fetches."Redirect", fetches."ClientError", fetches."ServerError"

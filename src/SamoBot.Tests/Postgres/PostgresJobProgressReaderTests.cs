@@ -101,7 +101,11 @@ public class PostgresJobProgressReaderTests(PostgresFixture postgres) : IAsyncLi
         var withRobots = (await Reader.Read(job, default))!;
 
         (withoutRobots.CrawlDelayMs, withoutRobots.DelayFromRobots).Should().Be((1000, false));
-        (withRobots.CrawlDelayMs, withRobots.DelayFromRobots).Should().Be((4000, true));
+        (withRobots.CrawlDelayMs, withRobots.DelayFromRobots, withRobots.DelayIsAdaptive).Should().Be((4000, true, false));
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource, """UPDATE "Hosts" SET "LastDelayMs" = 9000 WHERE "Host" = 'a.example' RETURNING 1""");
+        var adaptive = (await Reader.Read(job, default))!;
+        (adaptive.CrawlDelayMs, adaptive.DelayIsAdaptive).Should().Be((9000, true));
         withRobots.NextAllowedAt.Should().NotBeNull();
     }
 
