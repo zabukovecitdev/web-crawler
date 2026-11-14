@@ -9,7 +9,7 @@ namespace SamoBot.Tests.Http;
 public class HttpSitemapSourceTests
 {
     private static HttpSitemapSource Build(Func<HttpRequestMessage, HttpResponseMessage> respond) =>
-        new(new HttpClient(new StubHttpHandler(respond)));
+        new(new HttpClient(new StubHttpHandler(respond)), Microsoft.Extensions.Options.Options.Create(new CrawlerNetworkOptions()), TimeProvider.System);
 
     [Fact]
     public async Task DownloadReturnsTheBodyOfASuccessfulResponse()

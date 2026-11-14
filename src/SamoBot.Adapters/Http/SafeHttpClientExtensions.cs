@@ -20,15 +20,16 @@ public static class SafeHttpClientExtensions
     /// <summary>
     /// The one way to add an HTTP client that fetches from the open web (fetcher, robots, sitemaps).
     /// Every connection of the client, redirect hops included, goes through <see cref="SafeConnect"/>.
+    /// The client has no <see cref="HttpClient.Timeout"/>: every request must run under a <see cref="RequestDeadline"/>.
     /// Call <see cref="AddSafeNetwork"/> once before.
     /// </summary>
     public static IHttpClientBuilder AddSafeHttpClient<TClient>(
-        this IServiceCollection services, TimeSpan timeout, bool followRedirects, bool decompress = true)
+        this IServiceCollection services, bool followRedirects, bool decompress = true)
         where TClient : class =>
         services
             .AddHttpClient<TClient>(client =>
             {
-                client.Timeout = timeout;
+                client.Timeout = Timeout.InfiniteTimeSpan; // a RequestDeadline enforces the deadlines, the body read included
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(HttpFetcher.UserAgent);
             })
             .ConfigurePrimaryHttpMessageHandler(provider => Handler(provider, followRedirects, decompress));
@@ -38,6 +39,7 @@ public static class SafeHttpClientExtensions
         AllowAutoRedirect = followRedirects,
         MaxAutomaticRedirections = 5,
         AutomaticDecompression = decompress ? DecompressionMethods.All : DecompressionMethods.None,
+        ConnectTimeout = RequestDeadline.Seconds(provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.ConnectTimeoutSeconds),
         UseProxy = provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.UseProxy,
         ConnectCallback = provider.GetRequiredService<SafeConnect>().ConnectAsync
     };

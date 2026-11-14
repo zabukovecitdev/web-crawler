@@ -14,6 +14,9 @@ public sealed record FetchResponse
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
 
+    /// <summary>The wait that a Retry-After header asked for (delta seconds, or the date minus now). Null without the header.</summary>
+    public TimeSpan? RetryAfter { get; init; }
+
     /// <summary>True when the fetch did not run because the host resolves only to disallowed addresses.</summary>
     public bool IsBlocked { get; init; }
 

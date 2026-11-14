@@ -27,7 +27,8 @@ public class BlockedAddressTests
     private CrawlUrlHandler Handler(IFetcher fetcher, IRobotsSource robotsSource)
     {
         var gate = new RobotsGate(new MemoryCache(Options.Create(new MemoryCacheOptions())), new FakeRobotsStore(), robotsSource, _time);
-        return new CrawlUrlHandler(gate, new FetcherResolver([fetcher]), _store, _frontier, _events, _time);
+        return new CrawlUrlHandler(
+            gate, new FetcherResolver([fetcher]), new FetchRecorder(_store, _frontier, new PolitenessPolicy(TimeSpan.FromSeconds(60)), _time), _events);
     }
 
     private static FakeRobotsSource OpenRobots() =>
@@ -102,7 +103,7 @@ public class BlockedAddressTests
     public async Task HttpFetcherTurnsABlockedConnectIntoABlockedResponse()
     {
         var handler = new StubHttpHandler(_ => throw new HttpRequestException("connect", new BlockedAddressException("evil.example")));
-        var fetcher = new HttpFetcher(new HttpClient(handler), Options.Create(new ChromeRenderingOptions()), _time);
+        var fetcher = new HttpFetcher(new HttpClient(handler), Options.Create(new ChromeRenderingOptions()), Options.Create(new CrawlerNetworkOptions()), _time);
 
         var response = await fetcher.Fetch(TestData.Url(), default);
 
@@ -114,7 +115,7 @@ public class BlockedAddressTests
     public async Task HttpRobotsSourceRethrowsABlockedHostInsteadOfTryingHttp()
     {
         var handler = new StubHttpHandler(_ => throw new HttpRequestException("connect", new BlockedAddressException("evil.example")));
-        var source = new HttpRobotsSource(new HttpClient(handler), _time);
+        var source = new HttpRobotsSource(new HttpClient(handler), Options.Create(new CrawlerNetworkOptions()), _time);
 
         var act = () => source.Download("evil.example", default);
 

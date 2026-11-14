@@ -13,6 +13,7 @@ public class HttpFetcherTests
         new(
             new HttpClient(new StubHttpHandler(respond)),
             Options.Create(new ChromeRenderingOptions { Enabled = chromeEnabled, CdpEndpoint = chromeEnabled ? "http://chrome:9222" : null }),
+            Options.Create(new CrawlerNetworkOptions()),
             TimeProvider.System);
 
     private static HttpResponseMessage Html(HttpStatusCode status, string body = "<html></html>") => new(status)
@@ -104,5 +105,50 @@ public class HttpFetcherTests
         var fetcher = Fetcher(_ => Html(HttpStatusCode.OK), chromeEnabled);
 
         fetcher.Supports(TestData.Url(useJsRendering: useJs)).Should().Be(expected);
+    }
+
+    private static HttpFetcher FetcherAt(DateTimeOffset now, Func<HttpRequestMessage, HttpResponseMessage> respond) =>
+        new(
+            new HttpClient(new StubHttpHandler(respond)),
+            Options.Create(new ChromeRenderingOptions()),
+            Options.Create(new CrawlerNetworkOptions()),
+            new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now));
+
+    [Fact]
+    public async Task FetchReadsRetryAfterInSeconds()
+    {
+        var response = await Fetcher(_ =>
+        {
+            var limited = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            limited.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(120));
+            return limited;
+        }).Fetch(TestData.Url(), default);
+
+        response.RetryAfter.Should().Be(TimeSpan.FromSeconds(120));
+    }
+
+    [Theory]
+    [InlineData(90, 90)]
+    [InlineData(-30, 0)]
+    public async Task FetchReadsRetryAfterAsADateRelativeToNow(int secondsFromNow, int expectedSeconds)
+    {
+        var fetcher = FetcherAt(TestData.Now, _ =>
+        {
+            var limited = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+            limited.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TestData.Now.AddSeconds(secondsFromNow));
+            return limited;
+        });
+
+        var response = await fetcher.Fetch(TestData.Url(), default);
+
+        response.RetryAfter.Should().Be(TimeSpan.FromSeconds(expectedSeconds));
+    }
+
+    [Fact]
+    public async Task FetchWithoutRetryAfterHasNone()
+    {
+        var response = await Fetcher(_ => Html(HttpStatusCode.TooManyRequests, string.Empty)).Fetch(TestData.Url(), default);
+
+        response.RetryAfter.Should().BeNull();
     }
 }
