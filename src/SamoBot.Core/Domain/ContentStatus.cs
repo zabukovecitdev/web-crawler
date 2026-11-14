@@ -9,12 +9,17 @@ public static class ContentStatus
     public const string Failed = "Failed";
 
     /// <summary>
-    /// Failed: no response (status 0). Stored: the body is in the content store.
+    /// Skipped also covers a blocked address (the fetch never ran). Failed: no response (status 0). Stored: the body is in the content store.
     /// Skipped: a success with a body that the crawler does not keep (not HTML, or empty).
     /// NotStored: every other response (redirects and error statuses).
     /// </summary>
     public static string Of(FetchResponse response, string? objectName)
     {
+        if (response.IsBlocked)
+        {
+            return Skipped;
+        }
+
         if (response.StatusCode == 0)
         {
             return Failed;

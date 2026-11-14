@@ -1,4 +1,5 @@
 using System.Text;
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -8,6 +9,7 @@ namespace SamoBot.Adapters.Http;
 /// Downloads robots.txt. The host key can include a non-default port, so the source tries https first and then http.
 /// A found file gives its rules. A missing file (4xx, or a redirect that never ends) allows everything.
 /// A server error or a network error blocks the host for a short time.
+/// A host (or a redirect hop) with only disallowed addresses throws <see cref="BlockedAddressException"/>.
 /// </summary>
 public sealed class HttpRobotsSource(HttpClient httpClient, TimeProvider timeProvider) : IRobotsSource
 {
@@ -38,6 +40,10 @@ public sealed class HttpRobotsSource(HttpClient httpClient, TimeProvider timePro
         {
             using var response = await httpClient.GetAsync($"{scheme}://{host}/robots.txt", HttpCompletionOption.ResponseHeadersRead, ct);
             return await ToRules(host, response, now, ct);
+        }
+        catch (HttpRequestException ex) when (BlockedAddressException.IsCause(ex))
+        {
+            throw new BlockedAddressException(host);
         }
         catch (HttpRequestException)
         {

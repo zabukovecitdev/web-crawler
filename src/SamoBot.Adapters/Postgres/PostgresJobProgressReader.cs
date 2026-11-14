@@ -7,7 +7,7 @@ namespace SamoBot.Adapters.Postgres;
 
 /// <summary>
 /// Reads the live counters of one job with one query. The counts come from the frontier and from the fetches of the job.
-/// A URL counts by its last fetch: crawled (2xx), failed (disabled with a reason other than redirect or robots),
+/// A URL counts by its last fetch: crawled (2xx), failed (disabled with a reason other than redirect, robots or blocked-address; a blocked address counts as skipped, not failed),
 /// queued (idle and not yet fetched, or waiting for a retry), in flight (leased).
 /// </summary>
 public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJobProgressReader
@@ -23,7 +23,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
                 count(*) FILTER (WHERE d."Status" = 'Idle' AND (d."LastFetchId" IS NULL OR d."FailCount" > 0))::int AS "Queued",
                 count(*) FILTER (WHERE d."Status" = 'InFlight')::int AS "InFlight",
                 count(*) FILTER (WHERE d."Status" = 'Disabled' AND d."FailReason" IS NOT NULL
-                                   AND d."FailReason" NOT IN ('redirect', 'robots'))::int AS "Failed"
+                                   AND d."FailReason" NOT IN ('redirect', 'robots', 'blocked-address'))::int AS "Failed"
             FROM "{TableNames.DiscoveredUrls}" d
             LEFT JOIN "{TableNames.UrlFetches}" f ON f."Id" = d."LastFetchId"
             WHERE d."CrawlJobId" = @JobId
@@ -45,7 +45,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
                 count(*) FILTER (WHERE f."StatusCode" BETWEEN 500 AND 599)::int AS "ServerError"
             FROM "{TableNames.UrlFetches}" f
             JOIN "{TableNames.DiscoveredUrls}" d ON d."Id" = f."DiscoveredUrlId"
-            WHERE d."CrawlJobId" = @JobId
+            WHERE d."CrawlJobId" = @JobId AND d."FailReason" IS DISTINCT FROM 'blocked-address'
         ),
         target AS (
             SELECT COALESCE((SELECT "Host" FROM inflight), job."FirstHost") AS "Host" FROM job

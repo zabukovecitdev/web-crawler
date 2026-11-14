@@ -66,6 +66,23 @@ public class PostgresJobProgressReaderTests(PostgresFixture postgres) : IAsyncLi
         (data.Ok, data.Redirect, data.ClientError, data.ServerError).Should().Be((2, 1, 1, 1));
     }
 
+    // UNVERIFIED: written without Docker.
+    [Fact]
+    public async Task ReadCountsABlockedAddressAsSkippedNotFailedAndLeavesItOutOfTheFetchStatistics()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        await Fetched(job, "https://a.example/ok", 200, 100);
+        await Fetched(job, "https://a.example/blocked", 0, 0, "Disabled", "blocked-address");
+
+        var data = (await Reader.Read(job, default))!;
+
+        data.Failed.Should().Be(0);
+        data.Crawled.Should().Be(1);
+        data.Fetches.Should().Be(1);
+        data.AvgResponseMs.Should().BeApproximately(100, 0.001);
+        (data.Ok, data.Redirect, data.ClientError, data.ServerError).Should().Be((1, 0, 0, 0));
+    }
+
     [Fact]
     public async Task ReadTakesTheDelayOfTheHostAndNamesRobotsAsTheSource()
     {

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -12,6 +13,7 @@ public sealed class RobotsGate(
     TimeProvider timeProvider)
 {
     public const string UserAgent = "SamoBot";
+    private static readonly TimeSpan BlockedTtl = TimeSpan.FromHours(1);
 
     public async Task<bool> IsAllowed(ClaimedUrl url, CancellationToken ct)
     {
@@ -20,12 +22,25 @@ public sealed class RobotsGate(
             return true;
         }
 
-        var rules = await RulesFor(url.Host, ct);
+        var rules = await RulesOrThrow(url.Host, ct);
         return rules.IsAllowed(new Uri(url.Url).PathAndQuery, UserAgent);
     }
 
-    /// <summary>Returns the rules of a host. The dashboard uses this too.</summary>
+    /// <summary>Returns the rules of a host. The dashboard uses this too. A host with a blocked address disallows everything.</summary>
     public async Task<RobotsRules> RulesFor(string host, CancellationToken ct)
+    {
+        try
+        {
+            return await RulesOrThrow(host, ct);
+        }
+        catch (BlockedAddressException)
+        {
+            return RobotsRules.DisallowAll(host, timeProvider.GetUtcNow(), BlockedTtl);
+        }
+    }
+
+    /// <summary>Like <see cref="RulesFor"/>, but a host with a blocked address throws <see cref="BlockedAddressException"/>.</summary>
+    private async Task<RobotsRules> RulesOrThrow(string host, CancellationToken ct)
     {
         var key = $"robots:{host}";
         if (cache.TryGetValue(key, out RobotsRules? cached) && cached is not null)
