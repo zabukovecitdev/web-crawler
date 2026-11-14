@@ -144,7 +144,7 @@ export type CrawlProgress = {
   currentUrl: string | null
   currentDepth: number | null
   crawlDelayMs: number
-  delaySource: 'default' | 'robots.txt'
+  delaySource: 'default' | 'robots.txt' | 'adaptive'
   nextRequestAt: string | null
   avgResponseMs: number | null
   maxResponseMs: number | null
