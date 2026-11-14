@@ -12,16 +12,16 @@ public class ListQueriesTests
     [InlineData("Failed", SiteSort.Failed)]
     [InlineData("lastCrawl", SiteSort.LastCrawl)]
     public void SitesParseTheSortName(string? sort, SiteSort expected) =>
-        ListQueries.Sites(null, sort, 10, 0)!.Sort.Should().Be(expected);
+        ListQueries.Sites(null, sort, 10, 0).Query!.Sort.Should().Be(expected);
 
     [Fact]
     public void SitesRejectAnUnknownSortAndClampPaging()
     {
-        ListQueries.Sites(null, "bogus", 10, 0).Should().BeNull();
+        ListQueries.Sites(null, "bogus", 10, 0).Error.Should().Be("Unknown sort.");
 
-        var query = ListQueries.Sites("  a ", null, 5000, -3);
+        var query = ListQueries.Sites("  a ", null, 5000, 3);
 
-        query.Should().Be(new SiteQuery("a", SiteSort.Host, 200, 0));
+        query.Query.Should().Be(new SiteQuery("a", SiteSort.Host, 200, 3));
     }
 
     [Theory]
@@ -30,13 +30,32 @@ public class ListQueriesTests
     [InlineData("redirect", PageStateFilter.Redirect)]
     [InlineData("error", PageStateFilter.Error)]
     public void PagesParseTheState(string? state, PageStateFilter expected) =>
-        ListQueries.Pages(null, state, 10, 0)!.State.Should().Be(expected);
+        ListQueries.Pages(null, state, 10, 0).Query!.State.Should().Be(expected);
 
     [Fact]
     public void PagesRejectAnUnknownStateAndTurnBlankTextIntoNoFilter()
     {
-        ListQueries.Pages(null, "bogus", 10, 0).Should().BeNull();
-        ListQueries.Pages("   ", null, 0, 0).Should().Be(new PageQuery(null, PageStateFilter.All, 1, 0));
+        ListQueries.Pages(null, "bogus", 10, 0).Error.Should().Be("Unknown state.");
+        ListQueries.Pages("   ", null, 0, 0).Query.Should().Be(new PageQuery(null, PageStateFilter.All, 1, 0));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(ListLimits.MaxOffset + 1)]
+    public void ListsRejectAnOffsetOutsideTheCap(int offset)
+    {
+        ListQueries.Sites(null, null, 10, offset).Error.Should().Be("Offset must be between 0 and 100000.");
+        ListQueries.Pages(null, null, 10, offset).Error.Should().Be("Offset must be between 0 and 100000.");
+    }
+
+    [Fact]
+    public void ListsAcceptTheLargestOffsetAndQueryAndRejectALongerQuery()
+    {
+        ListQueries.Sites(new string('a', ListLimits.MaxQueryLength), null, 10, ListLimits.MaxOffset).Error.Should().BeNull();
+        ListQueries.Sites(new string('a', ListLimits.MaxQueryLength + 1), null, 10, 0).Error
+            .Should().Be("Query is longer than 200 characters.");
+        ListQueries.Pages(new string('a', ListLimits.MaxQueryLength + 1), null, 10, 0).Error
+            .Should().Be("Query is longer than 200 characters.");
     }
 
     [Fact]

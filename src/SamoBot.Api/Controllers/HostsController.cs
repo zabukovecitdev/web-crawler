@@ -23,15 +23,21 @@ public sealed class HostsController(ISiteReader sites) : ControllerBase
         CancellationToken ct = default)
     {
         var siteQuery = ListQueries.Sites(query, sort, limit, offset);
-        return siteQuery is null ? BadRequest("Unknown sort.") : Ok(await sites.ListSites(siteQuery, ct));
+        return siteQuery.Query is null ? BadRequest(siteQuery.Error) : Ok(await sites.ListSites(siteQuery.Query, ct));
     }
 
     [HttpGet("{host}")]
     [ProducesResponseType<SiteDetail>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(string host, CancellationToken ct)
     {
-        var site = await sites.FindSite(host.ToLowerInvariant(), ct);
+        if (!HostKey.TryNormalize(host, out var key))
+        {
+            return BadRequest("Invalid host.");
+        }
+
+        var site = await sites.FindSite(key, ct);
         return site is null ? NotFound() : Ok(site);
     }
 }
