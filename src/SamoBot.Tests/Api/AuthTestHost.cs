@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Contracts;
 using SamoBot.Api.Controllers;
+using SamoBot.Api.Hosting;
 
 namespace SamoBot.Tests.Api;
 
@@ -48,11 +49,18 @@ public sealed class AuthTestHost : IAsyncDisposable
     /// <summary>The host configuration; change a value and call <c>Reload()</c> to simulate a config change.</summary>
     public IConfigurationRoot Configuration { get; }
 
-    public static async Task<AuthTestHost> StartAsync(string[] emails, string[] domains, TimeProvider? time = null)
+    public static async Task<AuthTestHost> StartAsync(
+        string[] emails,
+        string[] domains,
+        TimeProvider? time = null,
+        string? environment = null,
+        Dictionary<string, string?>? extraSettings = null)
     {
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment ?? Environments.Development });
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(Settings(emails, domains));
+        builder.Configuration.AddInMemoryCollection(extraSettings ?? new Dictionary<string, string?>());
+        builder.Services.AddSamoBotRateLimiting(builder.Configuration);
         if (time is not null)
         {
             builder.Services.AddSingleton(time);
@@ -65,6 +73,7 @@ public sealed class AuthTestHost : IAsyncDisposable
 
         var app = builder.Build();
         app.UseSamoBotAuth();
+        app.UseSamoBotRateLimiting();
         app.MapControllers();
         app.MapPost("/api/v1/test/echo", () => Results.NoContent()).RequireAuthorization();
         app.MapGet("/hubs/test", () => Results.NoContent());

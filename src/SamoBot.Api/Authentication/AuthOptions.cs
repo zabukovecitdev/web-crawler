@@ -14,6 +14,12 @@ public sealed class AuthOptions
 
     /// <summary>Comma-separated alternative to <see cref="AllowedDomains"/>.</summary>
     public string AllowedDomainsCsv { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Allows the session cookie over plain http outside Development (compose on localhost).
+    /// Leave false behind HTTPS: the cookie is then <c>Secure</c>.
+    /// </summary>
+    public bool AllowInsecureCookie { get; set; }
 }
 
 public sealed class GoogleAuthOptions

@@ -28,7 +28,7 @@ public static class AuthServiceCollectionExtensions
                 options.ForwardDefaultSelector = SelectScheme)
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
                 ApiKeyAuthenticationHandler.SchemeName, _ => { })
-            .AddCookie(AuthSchemes.Cookie, options => ConfigureCookie(options, environment));
+            .AddCookie(AuthSchemes.Cookie, options => ConfigureCookie(options, SecurePolicy(configuration, environment)));
         services.AddAuthorization();
         return services;
     }
@@ -47,14 +47,21 @@ public static class AuthServiceCollectionExtensions
             ? ApiKeyAuthenticationHandler.SchemeName
             : AuthSchemes.Cookie;
 
-    private static void ConfigureCookie(CookieAuthenticationOptions options, IHostEnvironment environment)
+    /// <summary>Development, or an explicit <c>Auth:AllowInsecureCookie</c>, allows the cookie over plain http.</summary>
+    private static CookieSecurePolicy SecurePolicy(IConfiguration configuration, IHostEnvironment environment)
+    {
+        var allowInsecure = configuration.GetValue<bool>($"{AuthOptions.SectionName}:{nameof(AuthOptions.AllowInsecureCookie)}");
+        return environment.IsDevelopment() || allowInsecure
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+    }
+
+    private static void ConfigureCookie(CookieAuthenticationOptions options, CookieSecurePolicy securePolicy)
     {
         options.Cookie.Name = AuthSchemes.CookieName;
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = securePolicy;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Events.OnValidatePrincipal = SessionValidation.ValidateAsync;

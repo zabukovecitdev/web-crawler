@@ -12,6 +12,8 @@ builder.Services.AddSamoBotAdapters(builder.Configuration);
 
 builder.Services.AddSamoBotAuth(builder.Configuration, builder.Environment);
 
+builder.Services.AddSamoBotRateLimiting(builder.Configuration);
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -55,11 +57,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));
+}
 
 app.UseCors();
 app.UseSamoBotAuth();
+app.UseSamoBotRateLimiting();
 
 app.MapControllers();
 app.MapHub<CrawlJobHub>("/hubs/crawl-job");
