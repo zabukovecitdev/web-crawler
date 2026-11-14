@@ -1,15 +1,15 @@
 using FluentMigrator;
-using SamoBot.Migrations.Constants;
 
 namespace SamoBot.Migrations.Migrations;
 
-[Migration(20240101000018, "Mark every parsed document as not indexed so the index loop re-sends it with host, url and fetch time")]
+[Migration(20240101000018, "Superseded by 021: no change")]
 public class ReindexForDashboardSearch : Migration
 {
-    public override void Up() =>
-        Execute.Sql($@"UPDATE ""{TableNames.Database.ParsedDocuments}"" SET ""IndexedAt"" = NULL WHERE ""IndexedAt"" IS NOT NULL;");
+    // Superseded by 021. The full-table UPDATE that was here is replaced by a narrowed one that re-sends one document per URL.
+    public override void Up()
+    {
+    }
 
-    // Re-indexing is idempotent and has nothing to undo.
     public override void Down()
     {
     }

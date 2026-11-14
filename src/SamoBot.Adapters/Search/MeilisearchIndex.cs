@@ -19,7 +19,7 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
         }
 
         await settings.Ensure(ct);
-        var documents = pages.Select(ToDocument).ToList();
+        var documents = LatestPerUrl(pages).Select(ToDocument).ToList();
         var accepted = await Index.AddDocumentsAsync(documents, primaryKey: "id", cancellationToken: ct);
         var task = await client.WaitForTaskAsync(accepted.TaskUid, cancellationToken: ct);
         if (task.Status == TaskInfoStatus.Failed)
@@ -36,9 +36,13 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
         return result.Hits.ToList();
     }
 
-    private static SearchHit ToDocument(PageToIndex page) => new()
+    /// <summary>A recrawl parses the same URL again. Only the newest parsed document of each URL is sent, because the document id is the URL id.</summary>
+    internal static IReadOnlyList<PageToIndex> LatestPerUrl(IReadOnlyList<PageToIndex> pages) =>
+        pages.GroupBy(p => p.DiscoveredUrlId).Select(g => g.MaxBy(p => p.PageId)!).ToList();
+
+    internal static SearchHit ToDocument(PageToIndex page) => new()
     {
-        Id = page.PageId.ToString(CultureInfo.InvariantCulture),
+        Id = page.DiscoveredUrlId.ToString(CultureInfo.InvariantCulture),
         UrlFetchId = page.UrlFetchId,
         DiscoveredUrlId = page.DiscoveredUrlId,
         Host = page.Host,
