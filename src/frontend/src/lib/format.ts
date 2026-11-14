@@ -1,22 +1,26 @@
 const THIN_SPACE = ' '
 const DASH = '—'
 
+function isUsableNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
 /** 12482 -> "12 482" (thin space, as in the design). */
 export function formatNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
+  if (!isUsableNumber(value)) {
     return DASH
   }
   return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, THIN_SPACE)
 }
 
 export function formatMs(value: number | null | undefined): string {
-  return value === null || value === undefined ? DASH : `${formatNumber(value)} ms`
+  return isUsableNumber(value) ? `${formatNumber(value)} ms` : DASH
 }
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB']
 
 export function formatBytes(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
+  if (!isUsableNumber(value)) {
     return DASH
   }
   let size = value
@@ -30,6 +34,9 @@ export function formatBytes(value: number | null | undefined): string {
 }
 
 export function formatPercent(ratio: number): string {
+  if (!isUsableNumber(ratio)) {
+    return DASH
+  }
   return `${(ratio * 100).toFixed(ratio < 0.1 ? 1 : 0)} %`
 }
 
@@ -41,7 +48,11 @@ const dateTime = new Intl.DateTimeFormat('en-GB', {
 })
 
 export function formatDate(iso: string | null | undefined): string {
-  return iso ? dateTime.format(new Date(iso)) : DASH
+  if (!iso) {
+    return DASH
+  }
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? DASH : dateTime.format(date)
 }
 
 const MINUTE = 60_000
@@ -57,7 +68,11 @@ export function formatRelative(iso: string | null | undefined, now: number = Dat
   if (!iso) {
     return 'Never'
   }
-  const diff = now - new Date(iso).getTime()
+  const time = new Date(iso).getTime()
+  if (Number.isNaN(time)) {
+    return DASH
+  }
+  const diff = now - time
   if (diff < MINUTE) {
     return 'Now'
   }

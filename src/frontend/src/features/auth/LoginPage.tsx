@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Separator } from '@/components/ui/separator'
-import { ApiError } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import { useAuth } from './auth-context'
 import { signInWithGoogle } from './auth-api'
 import { GoogleButton } from './GoogleButton'
@@ -10,7 +10,10 @@ function messageFor(error: unknown): string {
   if (error instanceof ApiError && error.status === 403) {
     return 'This Google account is not on the approved list.'
   }
-  return error instanceof Error ? error.message : 'Sign-in failed.'
+  if (error instanceof ApiError && error.status === 401) {
+    return 'Google did not accept this sign-in. Try again.'
+  }
+  return errorMessage(error)
 }
 
 function Hero() {
