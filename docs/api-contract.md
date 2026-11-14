@@ -4,6 +4,13 @@ Source of truth for shapes: `src/frontend/src/types/api.ts`. The C# records in `
 
 Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keeps working for the MCP server and scripts. Every endpoint below needs either. Errors: `400` with `ProblemDetails`, `401` when not signed in, `404` when missing.
 
+Transport notes:
+- Sessions last at most 24 hours from sign-in and the account is checked against the allowlist on every request, so removing an account signs it out on the next call (`401`).
+- Rate limit: 300 requests per minute per signed-in user (per client address when anonymous), configurable with `RateLimiting:PermitsPerMinute`. Over the limit the answer is `429` with `Retry-After: 60`. The SignalR hub is not limited.
+- Every cookie-authenticated `POST`, `PUT`, `PATCH` and `DELETE` needs `X-Requested-With: samobot`. That includes the SignalR negotiate request: the client sends the header through the `headers` option of `withUrl`.
+- The hub (`/hubs/*`) and `POST /api/v1/auth/google` check the `Origin` header when a browser sends one. It must be the API's own origin or one of `Cors:Origins`, otherwise `403`. Calls without `Origin` (scripts, the MCP server) pass.
+- Cross-origin browsers can read the response header `X-Content-Truncated` (exposed by CORS).
+
 | Method and path | Request | Response |
 |---|---|---|
 | `POST /api/v1/auth/google` | `GoogleSignInRequest` | `204` and `Set-Cookie`; `403` if the account is not allowed |
@@ -18,7 +25,7 @@ Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keep
 | `GET /api/v1/pages/{id}` | | `PageDetail` |
 | `GET /api/v1/pages/{id}/links?direction=out\|in&limit&offset` | | `Page<PageLinkDto>` = `{ total, items: [{ url, text, internal, noFollow, pageId, statusCode }] }`; `direction` defaults to `out`; `limit` 1 to 200 (default 50), `offset` 0 to 100000; `400` for a bad direction or offset, `404` for an unknown page |
 | `GET /api/v1/pages/{id}/content` | | raw stored body, `text/plain`, size-capped, `404` if not stored; sent with `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and an inline `Content-Disposition` |
-| `GET /api/v1/search?q&host&limit&offset` | | `SearchResponse` |
+| `GET /api/v1/search?q&host&limit&offset` | | `SearchResponse` (one document per URL, in the Meilisearch index `pages`; the old `parsed_documents` index can be deleted with `curl -X DELETE -H "Authorization: Bearer $MEILI_MASTER_KEY" http://localhost:7700/indexes/parsed_documents`) |
 | `GET /api/v1/crawl-jobs?limit` | | `CrawlJobDto[]` |
 | `GET /api/v1/crawl-jobs/{id}` | | `CrawlJobDto` |
 | `POST /api/v1/crawl-jobs` | `CreateCrawlJobRequest` | `201 CrawlJobDto` |

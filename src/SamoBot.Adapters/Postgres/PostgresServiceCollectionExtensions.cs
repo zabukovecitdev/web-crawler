@@ -23,6 +23,7 @@ public static class PostgresServiceCollectionExtensions
         services.AddSingleton(sp => new SiteOverviewCache(sp.GetRequiredService<TimeProvider>(), SiteOverviewCache.DefaultTtl));
         services.AddSingleton<ISiteReader, PostgresSiteReader>();
         services.AddSingleton<IPageReader, PostgresPageReader>();
+        services.AddSingleton<IAnalyticsReader, PostgresAnalyticsReader>();
         return services;
     }
 }

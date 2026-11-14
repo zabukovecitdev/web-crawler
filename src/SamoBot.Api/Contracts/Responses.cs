@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-public sealed record MeResponse(string? UserId, string? Name);
 
 public sealed record PagesResponse(int Total, IReadOnlyList<JobPage> Items);
 

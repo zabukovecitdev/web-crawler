@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Hosting;
@@ -12,12 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSamoBotCore();
 builder.Services.AddSamoBotAdapters(builder.Configuration);
 
-builder.Services.Configure<ApiKeyOptions>(builder.Configuration.GetSection(ApiKeyOptions.SectionName));
-builder.Services.AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
-    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
-        ApiKeyAuthenticationHandler.SchemeName,
-        _ => { });
-builder.Services.AddAuthorization();
+builder.Services.AddSamoBotAuth(builder.Configuration, builder.Environment);
+
+builder.Services.AddSamoBotRateLimiting(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -46,27 +42,32 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<CrawlEventListener>();
 
-var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:5173"];
+var corsOptions = new DashboardCorsOptions();
+builder.Configuration.GetSection(DashboardCorsOptions.SectionName).Bind(corsOptions);
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(corsOrigins)
+        policy.WithOrigins(corsOptions.Origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("X-Content-Truncated");
     });
 });
 
 var app = builder.Build();
 app.Services.LogIfPrivateAddressesAllowed();
 
-app.UseSwagger();
-app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));
+}
 
 app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseSamoBotAuth();
+app.UseSamoBotRateLimiting();
 
 app.MapControllers();
 app.MapHub<CrawlJobHub>("/hubs/crawl-job");

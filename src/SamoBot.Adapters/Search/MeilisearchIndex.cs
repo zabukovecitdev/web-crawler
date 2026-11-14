@@ -7,7 +7,7 @@ using SamoBot.Core.Ports;
 namespace SamoBot.Adapters.Search;
 
 /// <summary>The Meilisearch index of parsed pages. It writes with <see cref="ISearchIndex"/> and reads with <see cref="ISearchQuery"/>.</summary>
-public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<MeilisearchOptions> options) : ISearchIndex, ISearchQuery
+public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<MeilisearchOptions> options, MeilisearchSettings settings) : ISearchIndex, ISearchQuery
 {
     private Meilisearch.Index Index => client.Index(options.Value.IndexName);
 
@@ -18,7 +18,8 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
             return;
         }
 
-        var documents = pages.Select(ToDocument).ToList();
+        await settings.Ensure(ct);
+        var documents = LatestPerUrl(pages).Select(ToDocument).ToList();
         var accepted = await Index.AddDocumentsAsync(documents, primaryKey: "id", cancellationToken: ct);
         var task = await client.WaitForTaskAsync(accepted.TaskUid, cancellationToken: ct);
         if (task.Status == TaskInfoStatus.Failed)
@@ -30,14 +31,23 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
 
     public async Task<IReadOnlyList<SearchHit>> Search(string text, int limit, CancellationToken ct)
     {
+        await settings.Ensure(ct);
         var result = await Index.SearchAsync<SearchHit>(text, new SearchQuery { Limit = limit }, ct);
         return result.Hits.ToList();
     }
 
-    private static SearchHit ToDocument(PageToIndex page) => new()
+    /// <summary>A recrawl parses the same URL again. Only the newest parsed document of each URL is sent, because the document id is the URL id.</summary>
+    internal static IReadOnlyList<PageToIndex> LatestPerUrl(IReadOnlyList<PageToIndex> pages) =>
+        pages.GroupBy(p => p.DiscoveredUrlId).Select(g => g.MaxBy(p => p.PageId)!).ToList();
+
+    internal static SearchHit ToDocument(PageToIndex page) => new()
     {
-        Id = page.PageId.ToString(CultureInfo.InvariantCulture),
+        Id = page.DiscoveredUrlId.ToString(CultureInfo.InvariantCulture),
         UrlFetchId = page.UrlFetchId,
+        DiscoveredUrlId = page.DiscoveredUrlId,
+        Host = page.Host,
+        Url = page.Url,
+        FetchedAt = page.FetchedAt,
         Title = page.Title,
         Description = page.Description,
         Keywords = page.Keywords,
