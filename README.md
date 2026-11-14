@@ -103,6 +103,26 @@ propagates. A value of 0 turns a limit off.
 The browser: `ChromeRendering:DefaultTimeoutMs` (default 30000) limits the navigation and every page call, and
 `ChromeRendering:TotalTimeoutMs` (default 45000) caps the whole render. A Playwright timeout also gives status 0, `timeout`.
 
+## Politeness (adaptive delay)
+
+Politeness is pacing, not only waiting. `Hosts.CrawlDelayMs` (robots.txt Crawl-delay or the default 1 s) is the base delay and
+is always the minimum. After each fetch `PolitenessPolicy` (pure, in `Core`) computes the next delay of the host, and the
+frontier stores it in the same transaction that records the fetch (`UrlUpdate.Pacing`, `Hosts.NextAllowedAt = GREATEST(current, now + delay)`):
+
+- **Slow host:** `AvgResponseMs` is a moving average (alpha 0.3) of the response times of fetches where the host answered
+  (200 to 499, not 429). The delay is `max(base, 5 x AvgResponseMs)`.
+- **Failures:** a timeout, network error, 5xx or 429 raises `ConsecutiveFailures` and doubles the delay for each failure in a row
+  (2^n, n at most 10). Any answer resets the count to 0. The average does not change on a failure.
+- **Cap:** the adaptive part is capped by `Crawler:MaxAdaptiveDelaySeconds` (default 60). The base delay stays the minimum, even when it is above the cap.
+- **429 and 503:** with `Retry-After` (seconds or an HTTP date) the host waits at least that long, at most 1 hour, and the cap above does not apply.
+  Without it the delay backs off from the base delay, 2^n, at most 10 minutes.
+- **No change:** a blocked address and a robots.txt disallow touch neither `AvgResponseMs` nor `ConsecutiveFailures`.
+- **Visibility:** `Hosts.LastDelayMs` keeps the delay that was applied. The job progress reports `max(CrawlDelayMs, LastDelayMs)` as `crawlDelayMs`,
+  and the `FetchCompleted` event reports it as `delayMs`. `delaySource` still says `robots.txt` or `default`: it names the source of the base delay.
+
+The URL itself keeps its retry rules (`OutcomeClassifier`, `BackoffPolicy`); the host pacing only decides when the host is claimed again.
+`Crawler:MaxAdaptiveDelaySeconds` is the only new setting.
+
 ## Design decisions
 
 - PostgreSQL replaces RabbitMQ, Redis and Neo4j. One system holds all state, and one transaction records each result.

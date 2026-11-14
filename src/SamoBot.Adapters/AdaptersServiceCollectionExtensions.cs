@@ -9,6 +9,7 @@ using SamoBot.Adapters.Http;
 using SamoBot.Adapters.Postgres;
 using SamoBot.Adapters.Search;
 using SamoBot.Adapters.Storage;
+using SamoBot.Core.Crawling;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters;
@@ -44,6 +45,8 @@ public static class AdaptersServiceCollectionExtensions
         // The fetcher does not follow redirects, because the frontier handles them. The robots source follows a few.
         // Both connect through SafeConnect, so every hop is checked against the address policy.
         services.AddSafeNetwork(configuration);
+        services.AddSingleton(provider => new PolitenessPolicy(
+            TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.MaxAdaptiveDelaySeconds)));
         services.AddSafeHttpClient<HttpFetcher>(followRedirects: false);
         services.AddSafeHttpClient<HttpRobotsSource>(followRedirects: true);
 

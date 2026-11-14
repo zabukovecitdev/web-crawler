@@ -53,7 +53,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
         SELECT job."Id" AS "JobId", job."Status", job."MaxUrls", job."StartedAt", job."CompletedAt",
                frontier."Crawled", frontier."Queued", frontier."InFlight", frontier."Failed",
                inflight."Url" AS "CurrentUrl", inflight."Depth" AS "CurrentDepth",
-               COALESCE(h."CrawlDelayMs", 1000) AS "CrawlDelayMs",
+               COALESCE(GREATEST(h."CrawlDelayMs", h."LastDelayMs"), 1000) AS "CrawlDelayMs",
                (r."CrawlDelayMs" IS NOT NULL) AS "DelayFromRobots",
                h."NextAllowedAt",
                fetches."Fetches", fetches."AvgResponseMs", fetches."MaxResponseMs",

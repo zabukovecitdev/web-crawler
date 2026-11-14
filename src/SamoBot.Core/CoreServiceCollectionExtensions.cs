@@ -27,6 +27,7 @@ public static class CoreServiceCollectionExtensions
     private static IServiceCollection AddCrawling(this IServiceCollection services) => services
         .AddScoped<RobotsGate>()
         .AddScoped<FetcherResolver>()
+        .AddScoped<FetchRecorder>()
         .AddScoped<CrawlUrlHandler>()
         .AddScoped<CrawlBatchHandler>();
 

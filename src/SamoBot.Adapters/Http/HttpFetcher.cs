@@ -75,8 +75,17 @@ public sealed class HttpFetcher(
             ContentType = response.Content.Headers.ContentType?.ToString(),
             Content = content,
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
-            RedirectLocation = response.Headers.Location?.OriginalString
+            RedirectLocation = response.Headers.Location?.OriginalString,
+            RetryAfter = RetryAfter(response)
         };
+    }
+
+    /// <summary>Retry-After is delta seconds or an HTTP date. A date in the past gives zero.</summary>
+    private TimeSpan? RetryAfter(HttpResponseMessage response)
+    {
+        var header = response.Headers.RetryAfter;
+        var wait = header?.Delta ?? (header?.Date - timeProvider.GetUtcNow());
+        return wait is { } value && value < TimeSpan.Zero ? TimeSpan.Zero : wait;
     }
 
     private FetchResponse Failure(string error, long started) => new()

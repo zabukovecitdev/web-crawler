@@ -23,6 +23,12 @@ public sealed class CrawlerNetworkOptions
     /// </summary>
     public int DnsCacheMinutes { get; set; } = 60;
 
+    /// <summary>
+    /// The cap of the adaptive part of the delay between requests to a host (slow host, failures). Default 60.
+    /// The delay of robots.txt is always the minimum, and a Retry-After is not capped by this.
+    /// </summary>
+    public int MaxAdaptiveDelaySeconds { get; set; } = 60;
+
     /// <summary>DNS resolution and connect together. Default 5. 0 turns it off.</summary>
     public int ConnectTimeoutSeconds { get; set; } = 5;
 

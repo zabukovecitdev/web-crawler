@@ -27,7 +27,8 @@ public class BlockedAddressTests
     private CrawlUrlHandler Handler(IFetcher fetcher, IRobotsSource robotsSource)
     {
         var gate = new RobotsGate(new MemoryCache(Options.Create(new MemoryCacheOptions())), new FakeRobotsStore(), robotsSource, _time);
-        return new CrawlUrlHandler(gate, new FetcherResolver([fetcher]), _store, _frontier, _events, _time);
+        return new CrawlUrlHandler(
+            gate, new FetcherResolver([fetcher]), new FetchRecorder(_store, _frontier, new PolitenessPolicy(TimeSpan.FromSeconds(60)), _time), _events);
     }
 
     private static FakeRobotsSource OpenRobots() =>
