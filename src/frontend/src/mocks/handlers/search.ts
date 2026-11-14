@@ -25,8 +25,42 @@ const HITS: SearchHitDto[] = [
     title: 'Robots exclusion standard', language: 'en', fetchedAt: ago(120 * HOUR),
     snippet: 'The Crawl-delay directive is not part of the standard, but many crawlers read it as the number of seconds to wait between requests.',
   },
+  {
+    pageId: pageId('docs.example.com', 4), host: 'docs.example.com', url: 'https://docs.example.com/archive/4',
+    title: 'Archive note 4', language: 'en', fetchedAt: ago(4 * HOUR),
+    snippet: 'Older note 4 about a <mark>crawl delay</mark> that was changed.',
+  },
+  {
+    pageId: pageId('docs.example.com', 5), host: 'docs.example.com', url: 'https://docs.example.com/archive/5',
+    title: 'Archive note 5', language: 'en', fetchedAt: ago(5 * HOUR),
+    snippet: 'Older note 5 about a <mark>crawl delay</mark> that was changed.',
+  },
+  {
+    pageId: pageId('docs.example.com', 6), host: 'docs.example.com', url: 'https://docs.example.com/archive/6',
+    title: 'Archive note 6', language: 'en', fetchedAt: ago(6 * HOUR),
+    snippet: 'Older note 6 about a <mark>crawl delay</mark> that was changed.',
+  },
+  {
+    pageId: pageId('docs.example.com', 7), host: 'docs.example.com', url: 'https://docs.example.com/archive/7',
+    title: 'Archive note 7', language: 'en', fetchedAt: ago(7 * HOUR),
+    snippet: 'Older note 7 about a <mark>crawl delay</mark> that was changed.',
+  },
+  {
+    pageId: pageId('docs.example.com', 8), host: 'docs.example.com', url: 'https://docs.example.com/archive/8',
+    title: 'Archive note 8', language: 'en', fetchedAt: ago(8 * HOUR),
+    snippet: 'Older note 8 about a <mark>crawl delay</mark> that was changed.',
+  },
+  {
+    pageId: pageId('docs.example.com', 1), host: 'docs.example.com', url: 'https://docs.example.com/guide/installation',
+    title: 'Installation guide', language: 'en', fetchedAt: ago(2 * HOUR),
+    snippet: 'Run the crawler &amp; set <mark>crawl delay</mark> in the config file. Never paste &lt;script&gt;alert(1)&lt;/script&gt; into a header value.',
+  },
+  {
+    pageId: pageId('docs.example.com', 2), host: 'docs.example.com', url: 'https://docs.example.com/guide/getting-started',
+    title: 'Getting started', language: 'en', fetchedAt: ago(3 * HOUR),
+    snippet: 'The first run uses a default <mark>crawl delay</mark> of one second per host. Escaped text such as &amp;lt; stays as written.',
+  },
 ]
-
 function facets(hits: SearchHitDto[]): SearchResponse['hosts'] {
   const counts = new Map<string, number>()
   for (const hit of hits) {
@@ -35,13 +69,17 @@ function facets(hits: SearchHitDto[]): SearchResponse['hosts'] {
   return [...counts].map(([host, count]) => ({ host, count }))
 }
 
+function matches(hit: SearchHitDto, words: string[]): boolean {
+  const text = `${hit.title} ${hit.snippet.replace(/<\/?mark>/g, '')}`.toLowerCase()
+  return words.some((word) => text.includes(word))
+}
+
 function search(url: URL): SearchResponse {
   const host = url.searchParams.get('host')
-  const q = (url.searchParams.get('q') ?? '').trim()
-  const found = q ? HITS : []
-  const facet = facets(found)
+  const words = (url.searchParams.get('q') ?? '').toLowerCase().split(/\s+/).filter(Boolean)
+  const found = words.length > 0 ? HITS.filter((hit) => matches(hit, words)) : []
   const shown = host ? found.filter((hit) => hit.host === host) : found
-  return { ...paginate(shown, url, 10), tookMs: 12, hosts: facet }
+  return { ...paginate(shown, url, 10), tookMs: 12, hosts: facets(found) }
 }
 
 export const searchHandlers = [http.get('*/api/v1/search', ({ request }) => json(search(new URL(request.url))))]
