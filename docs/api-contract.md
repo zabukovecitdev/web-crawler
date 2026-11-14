@@ -23,7 +23,7 @@ Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keep
 | `POST /api/v1/crawl-jobs` | `CreateCrawlJobRequest` | `201 CrawlJobDto` |
 | `POST /api/v1/crawl-jobs/{id}/actions` | `{ action: CrawlJobAction }` | `204` |
 | `GET /api/v1/crawl-jobs/{id}/progress` | | `CrawlProgress` |
-| `GET /api/v1/crawl-jobs/{id}/events?after&limit` | | recent `CrawlEvent[]` with `id` (poll fallback) |
+| `GET /api/v1/crawl-jobs/{id}/events?after&limit` | | `CrawlEvent[]` with `id`, ascending. `limit` defaults to 100 (1..500). Without `after`: the newest `limit` events. With `after` (negative counts as 0): events with `id > after`, at most `limit`; the next cursor is the largest `id` returned. |
 | `GET /api/v1/analytics/overview?range` | | `AnalyticsOverview` |
 | `GET /api/v1/analytics/hosts?range` | | `HostAnalytics[]` |
 | `GET /api/v1/analytics/status-codes?range&host` | | `StatusClassCounts` |
