@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
@@ -35,7 +37,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
             return Task.FromResult(AuthenticateResult.Fail("API key not configured on server."));
         }
 
-        if (keyHeader != expected)
+        if (keyHeader.Count != 1 || !KeysMatch(keyHeader[0], expected))
         {
             return Task.FromResult(AuthenticateResult.Fail("Invalid API key."));
         }
@@ -49,6 +51,14 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
         return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    /// <summary>Compares SHA-256 digests in fixed time, so neither content nor length leaks through timing.</summary>
+    private static bool KeysMatch(string? candidate, string expected)
+    {
+        var left = SHA256.HashData(Encoding.UTF8.GetBytes(candidate ?? string.Empty));
+        var right = SHA256.HashData(Encoding.UTF8.GetBytes(expected));
+        return CryptographicOperations.FixedTimeEquals(left, right);
     }
 }
 
