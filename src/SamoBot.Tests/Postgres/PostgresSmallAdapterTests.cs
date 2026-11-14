@@ -41,6 +41,10 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
         claimed.Select(p => p.PageId).Should().Equal(first, second);
         claimed[0].Title.Should().Be("one");
         claimed[0].Description.Should().BeEmpty();
+        claimed[0].Host.Should().Be("a.example");
+        claimed[0].Url.Should().Be("https://a.example/one");
+        claimed[0].DiscoveredUrlId.Should().BePositive();
+        claimed[0].FetchedAt.Should().NotBeNull();
         rest.Select(p => p.PageId).Should().Equal(second);
     }
 
