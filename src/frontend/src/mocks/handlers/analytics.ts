@@ -38,14 +38,39 @@ const CONTENT_TYPES: ContentTypeCount[] = [
 
 const PER_HOUR = [0, 0, 0, 0, 0, 0, 12, 40, 36, 20, 0, 0, 180, 420, 96, 0, 0, 640, 1210, 1480, 1390, 1820, 2460, 3180]
 
-function timeseries(): TimeseriesPoint[] {
-  return PER_HOUR.map((requests, i) => ({ bucket: ago((PER_HOUR.length - 1 - i) * HOUR), requests }))
+const DAY = 24 * HOUR
+
+/** Hour buckets for 24h, otherwise day buckets; scaled down for a single host. */
+function timeseries(url: URL): TimeseriesPoint[] {
+  const bucket = url.searchParams.get('bucket')
+  const share = hostShare(url.searchParams.get('host'))
+  if (bucket !== 'day') {
+    return PER_HOUR.map((n, i) => ({ bucket: ago((PER_HOUR.length - 1 - i) * HOUR), requests: Math.round(n * share) }))
+  }
+  const days = { '7d': 7, '30d': 30 }[url.searchParams.get('range') ?? ''] ?? 45
+  return Array.from({ length: days }, (_, i) => ({
+    bucket: ago((days - 1 - i) * DAY),
+    requests: Math.round((300 + ((i * 7919) % 900) + (i === days - 1 ? 3180 : 0)) * share),
+  }))
 }
+
+function hostShare(host: string | null): number {
+  const row = HOSTS.find((h) => h.host === host)
+  return row ? row.requests / OVERVIEW.requests : 1
+}
+
+function scaled<T extends Record<string, number>>(counts: T, share: number): T {
+  return Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, Math.round(v * share)])) as T
+}
+
+const hostParam = (req: Request) => hostShare(new URL(req.url).searchParams.get('host'))
 
 export const analyticsHandlers = [
   http.get('*/api/v1/analytics/overview', () => json(OVERVIEW)),
   http.get('*/api/v1/analytics/hosts', () => json(HOSTS)),
-  http.get('*/api/v1/analytics/status-codes', () => json(STATUS)),
-  http.get('*/api/v1/analytics/content-types', () => json(CONTENT_TYPES)),
-  http.get('*/api/v1/analytics/timeseries', () => json(timeseries())),
+  http.get('*/api/v1/analytics/status-codes', ({ request }) => json(scaled(STATUS, hostParam(request)))),
+  http.get('*/api/v1/analytics/content-types', ({ request }) =>
+    json(CONTENT_TYPES.map((c) => ({ ...c, requests: Math.round(c.requests * hostParam(request)) }))),
+  ),
+  http.get('*/api/v1/analytics/timeseries', ({ request }) => json(timeseries(new URL(request.url)))),
 ]
