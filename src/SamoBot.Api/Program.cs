@@ -4,6 +4,7 @@ using SamoBot.Api.Authentication;
 using SamoBot.Api.Hosting;
 using SamoBot.Api.Hubs;
 using SamoBot.Adapters;
+using SamoBot.Adapters.Http;
 using SamoBot.Core;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.Services.LogIfPrivateAddressesAllowed();
 
 app.UseSwagger();
 app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));

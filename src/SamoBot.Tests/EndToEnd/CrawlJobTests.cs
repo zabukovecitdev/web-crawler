@@ -38,6 +38,7 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Database:ConnectionString"] = postgres.ConnectionString,
+            ["Crawler:AllowPrivateAddresses"] = "true",
             ["MinIO:Endpoint"] = infrastructure.StorageHost,
             ["MinIO:Port"] = infrastructure.StoragePort.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["MinIO:AccessKey"] = InfrastructureFixture.StorageUser,

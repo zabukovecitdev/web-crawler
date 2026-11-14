@@ -1,3 +1,4 @@
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -14,14 +15,26 @@ public sealed class CrawlUrlHandler(
 {
     public async Task Handle(ClaimedUrl url, CancellationToken ct)
     {
-        if (!await robots.IsAllowed(url, ct))
+        try
         {
-            await CompleteBlocked(url, ct);
+            if (!await robots.IsAllowed(url, ct))
+            {
+                await CompleteBlocked(url, ct);
+                return;
+            }
+        }
+        catch (BlockedAddressException)
+        {
+            await Finish(url, FetchResponse.BlockedAddress(), ct);
             return;
         }
 
         await events.Publish(url.CrawlJobId, CrawlEventTypes.FetchStarted, new { url = url.Url, depth = url.Depth }, ct);
-        var response = await fetchers.For(url).Fetch(url, ct);
+        await Finish(url, await fetchers.For(url).Fetch(url, ct), ct);
+    }
+
+    private async Task Finish(ClaimedUrl url, FetchResponse response, CancellationToken ct)
+    {
         var objectName = await SaveContent(url, response, ct);
         var outcome = OutcomeClassifier.Classify(response, url.FailCount);
         await Complete(url, response, outcome, objectName, ct);
