@@ -13,7 +13,7 @@ export const CONTENT_LABELS: Record<ContentState, string> = {
 
 export const SITE_STATUS: Record<SiteStatus, { word: string; tone: Tone; live: boolean }> = {
   Crawling: { word: 'Crawling', tone: 'success', live: true },
-  Paused: { word: 'Paused', tone: 'warning', live: true },
+  Paused: { word: 'Paused', tone: 'warning', live: false },
   Crawled: { word: 'Crawled', tone: 'neutral', live: false },
   Never: { word: 'Never crawled', tone: 'neutral', live: false },
 }
