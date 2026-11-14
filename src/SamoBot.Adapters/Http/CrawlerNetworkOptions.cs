@@ -16,4 +16,10 @@ public sealed class CrawlerNetworkOptions
     /// see the proxy address instead of the target address, so the check would no longer protect the target.
     /// </summary>
     public bool UseProxy { get; set; }
+
+    /// <summary>
+    /// How long resolved addresses of a host are reused before DNS is asked again. Default 60. 0 turns the cache off.
+    /// Cached addresses are checked against the address policy on every use.
+    /// </summary>
+    public int DnsCacheMinutes { get; set; } = 60;
 }
