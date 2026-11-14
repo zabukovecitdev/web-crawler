@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-public sealed record MeResponse(string? UserId, string? Name);
 
 public sealed record SitemapsResponse(string Host, string Message, string[] Urls);
 
