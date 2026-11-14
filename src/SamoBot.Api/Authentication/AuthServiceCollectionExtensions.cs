@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
@@ -15,6 +16,7 @@ public static class AuthServiceCollectionExtensions
         services.AddSingleton<IValidateOptions<ApiKeyOptions>, ApiKeyOptionsValidator>();
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
+        services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<EmailAllowlist>();
         services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddHostedService<AllowlistStartupCheck>();
@@ -52,6 +54,7 @@ public static class AuthServiceCollectionExtensions
             : CookieSecurePolicy.Always;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+        options.Events.OnValidatePrincipal = SessionValidation.ValidateAsync;
         options.Events.OnRedirectToLogin = context => RespondWith(context, StatusCodes.Status401Unauthorized);
         options.Events.OnRedirectToAccessDenied = context => RespondWith(context, StatusCodes.Status403Forbidden);
     }

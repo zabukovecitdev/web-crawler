@@ -6,7 +6,21 @@ namespace SamoBot.Tests.Api;
 
 public class AuthAllowlistTests
 {
-    private static EmailAllowlist Build(AuthOptions options) => new(Options.Create(options));
+    private static EmailAllowlist Build(AuthOptions options) => new(new FixedOptionsMonitor(options));
+
+    private sealed class FixedOptionsMonitor : IOptionsMonitor<AuthOptions>
+    {
+        public FixedOptionsMonitor(AuthOptions value)
+        {
+            CurrentValue = value;
+        }
+
+        public AuthOptions CurrentValue { get; }
+
+        public AuthOptions Get(string? name) => CurrentValue;
+
+        public IDisposable? OnChange(Action<AuthOptions, string?> listener) => null;
+    }
 
     private static GoogleIdentity Id(string email, bool verified = true, string? hd = null) =>
         new("sub-1", email, verified, "Ann", null, hd);

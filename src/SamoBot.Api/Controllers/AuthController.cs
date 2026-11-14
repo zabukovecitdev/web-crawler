@@ -12,12 +12,15 @@ public partial class AuthController : ControllerBase
 {
     private readonly IGoogleTokenValidator _validator;
     private readonly EmailAllowlist _allowlist;
+    private readonly TimeProvider _time;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IGoogleTokenValidator validator, EmailAllowlist allowlist, ILogger<AuthController> logger)
+    public AuthController(
+        IGoogleTokenValidator validator, EmailAllowlist allowlist, TimeProvider time, ILogger<AuthController> logger)
     {
         _validator = validator;
         _allowlist = allowlist;
+        _time = time;
         _logger = logger;
     }
 
@@ -46,7 +49,7 @@ public partial class AuthController : ControllerBase
                 detail: "This Google account is not allowed to use this dashboard.");
         }
 
-        await HttpContext.SignInAsync(AuthSchemes.Cookie, SessionPrincipal.Create(identity));
+        await HttpContext.SignInAsync(AuthSchemes.Cookie, SessionPrincipal.Create(identity, _time.GetUtcNow()));
         return NoContent();
     }
 

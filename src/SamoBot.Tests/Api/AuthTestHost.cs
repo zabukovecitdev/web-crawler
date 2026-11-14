@@ -31,10 +31,11 @@ public sealed class AuthTestHost : IAsyncDisposable
 
     private readonly WebApplication _app;
 
-    private AuthTestHost(WebApplication app, FakeGoogleTokenValidator validator)
+    private AuthTestHost(WebApplication app, FakeGoogleTokenValidator validator, IConfigurationRoot configuration)
     {
         _app = app;
         Validator = validator;
+        Configuration = configuration;
         Client = app.GetTestClient();
     }
 
@@ -42,11 +43,19 @@ public sealed class AuthTestHost : IAsyncDisposable
 
     public HttpClient Client { get; }
 
-    public static async Task<AuthTestHost> StartAsync(string[] emails, string[] domains)
+    /// <summary>The host configuration; change a value and call <c>Reload()</c> to simulate a config change.</summary>
+    public IConfigurationRoot Configuration { get; }
+
+    public static async Task<AuthTestHost> StartAsync(string[] emails, string[] domains, TimeProvider? time = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = Environments.Development });
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(Settings(emails, domains));
+        if (time is not null)
+        {
+            builder.Services.AddSingleton(time);
+        }
+
         builder.Services.AddSamoBotAuth(builder.Configuration, builder.Environment);
         var validator = new FakeGoogleTokenValidator();
         builder.Services.AddSingleton<IGoogleTokenValidator>(validator);
@@ -57,7 +66,7 @@ public sealed class AuthTestHost : IAsyncDisposable
         app.MapControllers();
         app.MapPost("/api/v1/test/echo", () => Results.NoContent()).RequireAuthorization();
         await app.StartAsync();
-        return new AuthTestHost(app, validator);
+        return new AuthTestHost(app, validator, builder.Configuration);
     }
 
     public async Task<string> SignInAsync(string credential)

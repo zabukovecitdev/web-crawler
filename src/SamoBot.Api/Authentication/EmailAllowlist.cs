@@ -2,36 +2,42 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>Decides whether a verified Google identity may sign in. Empty lists deny everybody.</summary>
-public sealed class EmailAllowlist
+/// <summary>
+/// Decides whether a Google account may use the dashboard. Empty lists deny everybody. The lists follow
+/// configuration reloads, so removing an entry also affects sessions that are already signed in.
+/// </summary>
+public sealed class EmailAllowlist : IDisposable
 {
-    private static readonly char[] Separators = [',', ';', ' ', '\n', '\r', '\t'];
+    private readonly IDisposable? _changeRegistration;
+    private volatile Snapshot _snapshot;
 
-    private readonly HashSet<string> _emails;
-    private readonly HashSet<string> _domains;
-
-    public EmailAllowlist(IOptions<AuthOptions> options)
+    public EmailAllowlist(IOptionsMonitor<AuthOptions> options)
     {
-        var value = options.Value;
-        _emails = Normalize(value.AllowedEmails, value.AllowedEmailsCsv, false);
-        _domains = Normalize(value.AllowedDomains, value.AllowedDomainsCsv, true);
+        _snapshot = Snapshot.From(options.CurrentValue);
+        _changeRegistration = options.OnChange(value => _snapshot = Snapshot.From(value));
     }
 
-    public bool IsEmpty => _emails.Count == 0 && _domains.Count == 0;
+    public bool IsEmpty => _snapshot.Emails.Count == 0 && _snapshot.Domains.Count == 0;
 
-    public bool IsAllowed(GoogleIdentity identity)
+    public bool IsAllowed(GoogleIdentity identity) =>
+        identity.EmailVerified && IsAllowed(identity.Email, identity.HostedDomain);
+
+    public bool IsAllowed(string? email, string? hostedDomain)
     {
-        if (!identity.EmailVerified || string.IsNullOrWhiteSpace(identity.Email))
+        if (string.IsNullOrWhiteSpace(email))
         {
             return false;
         }
 
-        var email = identity.Email.Trim().ToLowerInvariant();
-        return _emails.Contains(email)
-               || _domains.Contains(DomainOf(email))
-               || (!string.IsNullOrWhiteSpace(identity.HostedDomain)
-                   && _domains.Contains(identity.HostedDomain.Trim().ToLowerInvariant()));
+        var current = _snapshot;
+        var normalized = email.Trim().ToLowerInvariant();
+        return current.Emails.Contains(normalized)
+               || current.Domains.Contains(DomainOf(normalized))
+               || (!string.IsNullOrWhiteSpace(hostedDomain)
+                   && current.Domains.Contains(hostedDomain.Trim().ToLowerInvariant()));
     }
+
+    public void Dispose() => _changeRegistration?.Dispose();
 
     private static string DomainOf(string email)
     {
@@ -39,13 +45,22 @@ public sealed class EmailAllowlist
         return at < 0 ? string.Empty : email[(at + 1)..];
     }
 
-    private static HashSet<string> Normalize(string[] values, string csv, bool domains)
+    private sealed record Snapshot(HashSet<string> Emails, HashSet<string> Domains)
     {
-        var all = values.Concat(csv.Split(Separators, StringSplitOptions.RemoveEmptyEntries));
-        var cleaned = all
-            .Select(v => v.Trim().ToLowerInvariant())
-            .Select(v => domains ? v.TrimStart('@') : v)
-            .Where(v => v.Length > 0);
-        return new HashSet<string>(cleaned);
+        private static readonly char[] Separators = [',', ';', ' ', '\n', '\r', '\t'];
+
+        public static Snapshot From(AuthOptions options) => new(
+            Normalize(options.AllowedEmails, options.AllowedEmailsCsv, false),
+            Normalize(options.AllowedDomains, options.AllowedDomainsCsv, true));
+
+        private static HashSet<string> Normalize(string[] values, string csv, bool domains)
+        {
+            var all = values.Concat(csv.Split(Separators, StringSplitOptions.RemoveEmptyEntries));
+            var cleaned = all
+                .Select(v => v.Trim().ToLowerInvariant())
+                .Select(v => domains ? v.TrimStart('@') : v)
+                .Where(v => v.Length > 0);
+            return new HashSet<string>(cleaned);
+        }
     }
 }
