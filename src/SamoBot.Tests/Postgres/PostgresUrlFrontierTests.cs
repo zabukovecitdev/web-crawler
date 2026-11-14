@@ -11,6 +11,7 @@ namespace SamoBot.Tests.Postgres;
 public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan Hold = TimeSpan.FromSeconds(30);
 
     private readonly FakeTimeProvider _time = new(TestData.Now);
 
@@ -29,7 +30,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
             await PostgresTestData.InsertUrl(postgres.DataSource, job, $"https://h{i}.example/");
         }
 
-        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Frontier().Claim(12, Lease, default)));
+        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Frontier().Claim(12, Lease, Hold, default)));
 
         var ids = results.SelectMany(r => r).Select(u => u.Id).ToList();
         ids.Should().OnlyHaveUniqueItems();
@@ -44,10 +45,11 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var first = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/", depth: 0);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/mid", depth: 1);
 
-        var claimed = await Frontier().Claim(10, Lease, default);
-        var immediately = await Frontier().Claim(10, Lease, default);
+        var claimed = await Frontier().Claim(10, Lease, Hold, default);
+        await Frontier().Complete(claimed[0], new Succeeded(TimeSpan.FromDays(1)).ToUpdate(claimed[0], TestData.Now), Fetch(), default);
+        var immediately = await Frontier().Claim(10, Lease, Hold, default);
         _time.Advance(TimeSpan.FromSeconds(2));
-        var afterDelay = await Frontier().Claim(10, Lease, default);
+        var afterDelay = await Frontier().Claim(10, Lease, Hold, default);
 
         claimed.Select(u => u.Id).Should().Equal(first);
         immediately.Should().BeEmpty();
@@ -60,7 +62,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var paused = await PostgresTestData.InsertJob(postgres.DataSource, status: "Paused");
         await PostgresTestData.InsertUrl(postgres.DataSource, paused, "https://a.example/");
 
-        (await Frontier().Claim(10, Lease, default)).Should().BeEmpty();
+        (await Frontier().Claim(10, Lease, Hold, default)).Should().BeEmpty();
     }
 
     [Fact]
@@ -69,11 +71,11 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var id = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
 
-        var first = await Frontier().Claim(10, Lease, default);
+        var first = await Frontier().Claim(10, Lease, Hold, default);
         _time.Advance(TimeSpan.FromSeconds(30));
-        var whileLeased = await Frontier().Claim(10, Lease, default);
+        var whileLeased = await Frontier().Claim(10, Lease, Hold, default);
         _time.Advance(TimeSpan.FromMinutes(2));
-        var afterExpiry = await Frontier().Claim(10, Lease, default);
+        var afterExpiry = await Frontier().Claim(10, Lease, Hold, default);
 
         first.Should().ContainSingle().Which.Id.Should().Be(id);
         whileLeased.Should().BeEmpty();
@@ -92,7 +94,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
 
         var due = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://due.example/");
 
-        var claimed = await Frontier().Claim(5, Lease, default);
+        var claimed = await Frontier().Claim(5, Lease, Hold, default);
 
         claimed.Should().ContainSingle().Which.Id.Should().Be(due);
     }
@@ -106,7 +108,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         await PostgresTestData.Scalar<int>(
             postgres.DataSource, """UPDATE "Hosts" SET "CrawlDelayMs" = 2500 WHERE "Host" = 'a.example' RETURNING 1""");
 
-        var claimed = await Frontier().Claim(1, Lease, default);
+        var claimed = await Frontier().Claim(1, Lease, Hold, default);
 
         claimed.Should().ContainSingle().Which.CrawlDelayMs.Should().Be(2500);
     }
@@ -115,7 +117,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, url, depth);
-        return (await Frontier().Claim(1, Lease, default)).Single();
+        return (await Frontier().Claim(1, Lease, Hold, default)).Single();
     }
 
     private static FetchRecord Fetch() => new()
@@ -178,7 +180,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var fetchStatus = await PostgresTestData.Scalar<int>(
             postgres.DataSource, """SELECT "StatusCode" FROM "UrlFetches" WHERE "DiscoveredUrlId" = @id""", new { id = url.Id });
         fetchStatus.Should().Be(0);
-        (await Frontier().Claim(10, Lease, default)).Should().BeEmpty();
+        (await Frontier().Claim(10, Lease, Hold, default)).Should().BeEmpty();
     }
 
     [Fact]

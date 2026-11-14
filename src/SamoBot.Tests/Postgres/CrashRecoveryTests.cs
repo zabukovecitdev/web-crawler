@@ -10,6 +10,7 @@ namespace SamoBot.Tests.Postgres;
 public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Hold = TimeSpan.FromSeconds(50);
 
     private readonly FakeTimeProvider _time = new(TestData.Now);
 
@@ -26,10 +27,10 @@ public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
             await PostgresTestData.InsertUrl(postgres.DataSource, job, $"https://h{i}.example/");
         }
 
-        var crashed = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, default);
+        var crashed = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
         // The worker dies here. Nothing completes the batch.
         _time.Advance(Lease + TimeSpan.FromSeconds(1));
-        var recovered = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, default);
+        var recovered = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
 
         crashed.Should().HaveCount(8);
         recovered.Select(url => url.Id).Should().BeEquivalentTo(crashed.Select(url => url.Id));

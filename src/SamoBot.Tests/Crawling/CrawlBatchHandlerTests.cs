@@ -27,10 +27,10 @@ public class CrawlBatchHandlerTests
             new FetchRecorder(new FakeContentStore(), frontier, new PolitenessPolicy(TimeSpan.FromSeconds(60)), time),
             new FakeEventPublisher());
 
-        var count = await new CrawlBatchHandler(frontier, urlHandler).HandleBatch(default);
+        var count = await new CrawlBatchHandler(frontier, urlHandler, new InFlightHold(TimeSpan.FromSeconds(50))).HandleBatch(default);
 
         count.Should().Be(2);
-        frontier.LastClaim.Should().Be((20, TimeSpan.FromMinutes(5)));
+        frontier.LastClaim.Should().Be((20, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(50)));
         frontier.Completed.Should().HaveCount(2);
     }
 }
