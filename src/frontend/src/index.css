@@ -2,21 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-border: hsl(240 6% 90%);
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(240 10% 4%);
-  --color-muted: hsl(240 5% 96%);
-  --color-muted-foreground: hsl(240 4% 46%);
-  --color-primary: hsl(240 6% 10%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-destructive: hsl(0 72% 51%);
-  --color-destructive-foreground: hsl(0 0% 98%);
+/* Zabukovec tokens (docs/design/zabukovec-tokens.json) mapped onto shadcn's variables.
+   Values are space-separated RGB channels so Tailwind can add alpha: rgb(var(--x) / <alpha-value>). */
+@layer base {
+  :root {
+    --background: 238 240 242;
+    --foreground: 26 27 30;
+    --card: 250 251 252;
+    --card-foreground: 26 27 30;
+    --popover: 250 251 252;
+    --popover-foreground: 26 27 30;
+    --primary: 204 43 43;
+    --primary-foreground: 255 255 255;
+    --secondary: 226 228 231;
+    --secondary-foreground: 26 27 30;
+    --muted: 226 228 231;
+    --muted-foreground: 86 91 99;
+    --accent: 226 228 231;
+    --accent-foreground: 26 27 30;
+    --destructive: 204 43 43;
+    --destructive-foreground: 255 255 255;
+    --border: 211 214 218;
+    --input: 124 129 138;
+    --ring: 204 43 43;
+    --chart-1: 86 91 99;
+    --chart-2: 204 43 43;
+    --chart-3: 15 154 71;
+    --chart-4: 122 75 0;
+    --chart-5: 128 133 141;
+    --sidebar-background: 38 39 42;
+    --sidebar-foreground: 242 243 245;
+    --sidebar-primary: 204 43 43;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 58 60 65;
+    --sidebar-accent-foreground: 242 243 245;
+    --sidebar-border: 58 60 65;
+    --sidebar-ring: 204 43 43;
+    --ink-faint: 128 133 141;
+    --line-strong: 124 129 138;
+    --graphite: 38 39 42;
+    --on-graphite: 242 243 245;
+    --signal-400: 220 68 66;
+    --signal-300: 232 129 127;
+    --signal-200: 243 185 184;
+    --signal-100: 250 225 224;
+    --signal-ink: 165 35 35;
+    --led: 15 154 71;
+    --led-100: 220 245 229;
+    --led-ink: 13 106 51;
+    --amber-100: 251 239 214;
+    --amber-ink: 122 75 0;
+    --radius: 0.5rem;
+    --shadow-1: 0 1px 2px rgba(22, 24, 28, 0.06), 0 1px 1px rgba(22, 24, 28, 0.04);
+    --shadow-2: 0 10px 28px rgba(22, 24, 28, 0.08), 0 2px 6px rgba(22, 24, 28, 0.05);
+    --shadow-inset: inset 0 1px 2px rgba(22, 24, 28, 0.08);
+  }
+
+  .dark {
+    --background: 18 19 21;
+    --foreground: 236 238 241;
+    --card: 27 28 31;
+    --card-foreground: 236 238 241;
+    --popover: 27 28 31;
+    --popover-foreground: 236 238 241;
+    --primary: 240 90 86;
+    --primary-foreground: 26 8 7;
+    --secondary: 11 12 13;
+    --secondary-foreground: 236 238 241;
+    --muted: 11 12 13;
+    --muted-foreground: 163 168 176;
+    --accent: 11 12 13;
+    --accent-foreground: 236 238 241;
+    --destructive: 240 90 86;
+    --destructive-foreground: 26 8 7;
+    --border: 45 47 52;
+    --input: 107 112 121;
+    --ring: 240 90 86;
+    --chart-1: 163 168 176;
+    --chart-2: 240 90 86;
+    --chart-3: 47 213 114;
+    --chart-4: 242 190 92;
+    --chart-5: 133 138 147;
+    --sidebar-background: 48 50 55;
+    --sidebar-foreground: 242 243 245;
+    --sidebar-primary: 240 90 86;
+    --sidebar-primary-foreground: 26 8 7;
+    --sidebar-accent: 69 72 78;
+    --sidebar-accent-foreground: 242 243 245;
+    --sidebar-border: 69 72 78;
+    --sidebar-ring: 240 90 86;
+    --ink-faint: 133 138 147;
+    --line-strong: 107 112 121;
+    --graphite: 48 50 55;
+    --on-graphite: 242 243 245;
+    --signal-400: 244 122 118;
+    --signal-300: 184 64 61;
+    --signal-200: 102 35 31;
+    --signal-100: 52 22 21;
+    --signal-ink: 245 143 139;
+    --led: 47 213 114;
+    --led-100: 15 42 26;
+    --led-ink: 95 229 152;
+    --amber-100: 46 34 16;
+    --amber-ink: 242 190 92;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0 10px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-[15px] leading-[22px] text-foreground antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+  }
+
+  mark {
+    @apply rounded-[2px] bg-signal-200 px-0.5 text-foreground;
+  }
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--color-background);
-  color: var(--color-foreground);
+/* Typography helpers: the engraved label and the numeric readout. */
+@layer components {
+  .label {
+    @apply m-0 font-mono text-[11px] font-medium uppercase leading-[14px] tracking-[0.08em] text-muted-foreground;
+  }
+  .label-signal {
+    @apply label text-signal-ink;
+  }
+  .readout {
+    @apply font-mono text-[13px] font-medium leading-[18px] tabular-nums;
+  }
+  .readout-lg {
+    @apply font-mono text-[28px] font-medium leading-8 tracking-[-0.02em] tabular-nums;
+  }
+  .well {
+    @apply rounded-lg bg-muted p-4 font-mono text-[13px] font-medium leading-5 whitespace-pre-wrap;
+    box-shadow: var(--shadow-inset);
+    overflow-wrap: anywhere;
+    overflow: auto;
+  }
 }
