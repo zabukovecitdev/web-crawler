@@ -34,7 +34,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         ),
         bump AS (
             UPDATE "{TableNames.Hosts}" h
-            SET "NextAllowedAt" = @Now + make_interval(secs => h."CrawlDelayMs" / 1000.0)
+            SET "NextAllowedAt" = @Now + make_interval(secs => @HoldSeconds)
             FROM picked p WHERE p."Host" = h."Host"
         )
         UPDATE "{TableNames.DiscoveredUrls}" u
@@ -53,13 +53,30 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         RETURNING "Id"
         """;
 
+    // Releasing the in-flight hold: the wait after a request is booked from the time of the completion, and it REPLACES the
+    // hold that the claim booked (GREATEST with the hold would keep the host closed for the whole hold).
+    // A value that is still within the hold (at most @HeldUntil, plus 1 ms for rounding) is the claim's own hold, or an older
+    // wait: it is replaced. A later value is a wait that someone booked on purpose while the request ran (a sitemap fetch that
+    // queued behind it, or the hold of a second claim after this one expired): it stays, so the release never moves a host
+    // backwards past a wait it must keep. The new wait already holds a Retry-After and the adaptive delay (computed by the caller).
+    // Without a known hold (@HeldUntil null) the later value always stays.
+    private const string ReleasedWait = """
+        CASE WHEN "NextAllowedAt" <= @HeldUntil::timestamptz + make_interval(secs => 0.001)
+             THEN @Now + make_interval(secs => @DelaySeconds)
+             ELSE GREATEST("NextAllowedAt", @Now + make_interval(secs => @DelaySeconds)) END
+        """;
+
     // The host row is updated first, like the claim locks the host before its URLs, so that the two never wait for each other.
-    // GREATEST keeps a longer wait that is already booked (the claim books the base delay, a Retry-After books more).
     private const string UpdateHostSql = $"""
         UPDATE "{TableNames.Hosts}"
-        SET "NextAllowedAt" = GREATEST("NextAllowedAt", @Now + make_interval(secs => @DelaySeconds)),
+        SET "NextAllowedAt" = {ReleasedWait},
             "AvgResponseMs" = @AvgResponseMs, "ConsecutiveFailures" = @ConsecutiveFailures, "LastDelayMs" = @DelayMs
         WHERE "Host" = @Host
+        """;
+
+    // An outcome with no pacing change (blocked address, robots disallow) still releases the hold, with the base delay.
+    private const string ReleaseHostSql = $"""
+        UPDATE "{TableNames.Hosts}" SET "NextAllowedAt" = {ReleasedWait} WHERE "Host" = @Host
         """;
 
     private const string UpdateUrlSql = $"""
@@ -71,12 +88,13 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE "Id" = @UrlId
         """;
 
-    public async Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
+    public async Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
-        var parameters = new { Now = timeProvider.GetUtcNow(), BatchSize = batchSize, LeaseSeconds = lease.TotalSeconds };
+        var now = timeProvider.GetUtcNow();
+        var parameters = new { Now = now, BatchSize = batchSize, LeaseSeconds = lease.TotalSeconds, HoldSeconds = hold.TotalSeconds };
         var urls = await connection.QueryAsync<ClaimedUrl>(new CommandDefinition(ClaimSql, parameters, cancellationToken: ct));
-        return urls.ToList();
+        return urls.Select(url => url with { HeldUntil = now + hold }).ToList();
     }
 
     public async Task Complete(ClaimedUrl url, UrlUpdate update, FetchRecord? fetch, CancellationToken ct)
@@ -85,11 +103,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await using var transaction = await connection.BeginTransactionAsync(ct);
         var now = timeProvider.GetUtcNow();
 
-        if (update.Pacing is not null)
-        {
-            await UpdateHost(connection, transaction, url.Host, update.Pacing, now, ct);
-        }
-
+        await ReleaseHost(connection, transaction, url, update.Pacing, now, ct);
         var fetchId = fetch is null ? (int?)null : await InsertFetch(connection, transaction, url, fetch, ct);
         await UpdateUrl(connection, transaction, UpdateParameters(url, update, fetchId, now), ct);
         if (update.NewUrl is not null)
@@ -108,19 +122,27 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await transaction.CommitAsync(ct);
     }
 
-    private static Task<int> UpdateHost(
-        NpgsqlConnection connection, NpgsqlTransaction transaction, string host, HostPacingUpdate pacing, DateTimeOffset now, CancellationToken ct)
+    /// <summary>
+    /// Every outcome releases the in-flight hold of the host, in the same transaction as the result. The new wait is
+    /// completion time + the delay of the pacing (base delay when the pacing is unchanged). It replaces the hold, and it
+    /// never lowers a later wait that was booked on purpose (see <see cref="ReleasedWait"/>).
+    /// </summary>
+    private static Task<int> ReleaseHost(
+        NpgsqlConnection connection, NpgsqlTransaction transaction, ClaimedUrl url, HostPacingUpdate? pacing, DateTimeOffset now, CancellationToken ct)
     {
+        var delay = pacing?.Delay ?? TimeSpan.FromMilliseconds(url.CrawlDelayMs);
         var parameters = new
         {
-            Host = host,
+            url.Host,
             Now = now,
-            DelaySeconds = pacing.Delay.TotalSeconds,
-            DelayMs = (int)pacing.Delay.TotalMilliseconds,
-            pacing.AvgResponseMs,
-            pacing.ConsecutiveFailures
+            url.HeldUntil,
+            DelaySeconds = delay.TotalSeconds,
+            DelayMs = (int)delay.TotalMilliseconds,
+            pacing?.AvgResponseMs,
+            ConsecutiveFailures = pacing?.ConsecutiveFailures ?? 0
         };
-        return connection.ExecuteAsync(new CommandDefinition(UpdateHostSql, parameters, transaction, cancellationToken: ct));
+        var sql = pacing is null ? ReleaseHostSql : UpdateHostSql;
+        return connection.ExecuteAsync(new CommandDefinition(sql, parameters, transaction, cancellationToken: ct));
     }
 
     private static Task<int> InsertFetch(
