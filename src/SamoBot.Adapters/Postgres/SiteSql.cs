@@ -9,7 +9,7 @@ internal static class SiteSql
         WITH stats AS (
             SELECT u."Host" AS "Host",
                    count(*) FILTER (WHERE u."LastFetchId" IS NOT NULL)::int AS "Pages",
-                   count(*) FILTER (WHERE f."StatusCode" >= 400 OR f."StatusCode" < 200 OR u."FailReason" IS NOT NULL)::int AS "Failed",
+                   count(*) FILTER (WHERE f."StatusCode" >= 400 OR f."StatusCode" < 200 OR (u."Status" = 'Disabled' AND u."FailReason" IS NOT NULL AND u."FailReason" NOT IN ('redirect', 'robots', 'blocked-address')))::int AS "Failed",
                    avg(f."ResponseTimeMs")::float8 AS "AvgResponseMs",
                    max(u."LastCrawlAt") AS "LastCrawlAt",
                    max(u."CrawlJobId") FILTER (WHERE j."Status" = 'Running') AS "ActiveJobId",

@@ -28,11 +28,14 @@ public sealed class PostgresSiteReader(NpgsqlDataSource dataSource) : ISiteReade
             return null;
         }
 
-        var firstCrawlAt = await connection.QuerySingleAsync<DateTimeOffset?>(new CommandDefinition(SiteSql.FirstCrawl, parameters, cancellationToken: ct));
+        var firstCrawl = await connection.QuerySingleAsync<DateTime?>(new CommandDefinition(SiteSql.FirstCrawl, parameters, cancellationToken: ct));
         var codes = await connection.QueryAsync<StatusCount>(new CommandDefinition(SiteSql.StatusCodes, parameters, cancellationToken: ct));
         var types = await connection.QueryAsync<ContentTypeCount>(new CommandDefinition(SiteSql.ContentTypes, parameters, cancellationToken: ct));
-        return WithBreakdown(summary, firstCrawlAt, codes.ToList(), types.ToList());
+        return WithBreakdown(summary, AsUtcOffset(firstCrawl), codes.ToList(), types.ToList());
     }
+
+    private static DateTimeOffset? AsUtcOffset(DateTime? value) =>
+        value is null ? null : new DateTimeOffset(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc));
 
     private static SiteDetail WithBreakdown(
         SiteSummary summary,
