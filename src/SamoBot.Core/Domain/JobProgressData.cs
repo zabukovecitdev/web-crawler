@@ -23,6 +23,9 @@ public sealed record JobProgressData
     /// <summary>True when the robots.txt of that host sets the delay.</summary>
     public bool DelayFromRobots { get; init; }
 
+    /// <summary>True when the delay applied after the last fetch is larger than the base delay of the host.</summary>
+    public bool DelayIsAdaptive { get; init; }
+
     public DateTimeOffset? NextAllowedAt { get; init; }
 
     public int Fetches { get; init; }

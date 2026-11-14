@@ -47,6 +47,7 @@ public class CrawlProgressTests
     {
         CrawlProgress.From(Data(), TestData.Now).DelaySource.Should().Be("default");
         CrawlProgress.From(Data() with { DelayFromRobots = true }, TestData.Now).DelaySource.Should().Be("robots.txt");
+        CrawlProgress.From(Data() with { DelayFromRobots = true, DelayIsAdaptive = true }, TestData.Now).DelaySource.Should().Be("adaptive");
     }
 
     [Fact]
