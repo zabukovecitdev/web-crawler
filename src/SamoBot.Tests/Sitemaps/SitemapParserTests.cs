@@ -61,6 +61,39 @@ public class SitemapParserTests
     }
 
     [Fact]
+    public void ParseRejectsAGzipUrlSetWithWhitespaceBeyondTheLimit()
+    {
+        var open = Encoding.UTF8.GetBytes("""<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">""");
+        var close = Encoding.UTF8.GetBytes("</urlset>");
+        var bomb = new byte[60 * 1024 * 1024];
+        Array.Fill(bomb, (byte)' ');
+        open.CopyTo(bomb, 0);
+        close.CopyTo(bomb, bomb.Length - close.Length);
+
+        SitemapParser.Parse(SitemapXml.Gzip(bomb), Host).Should().BeNull();
+    }
+
+    [Fact]
+    public void ParseReturnsNullForACorruptGzip()
+    {
+        var corrupt = SitemapXml.Gzip(Encoding.UTF8.GetBytes(SitemapXml.UrlSet("https://a.example/z")));
+        corrupt[corrupt.Length / 2] ^= 0xff;
+        Array.Resize(ref corrupt, corrupt.Length - 4);
+
+        SitemapParser.Parse(corrupt, Host).Should().BeNull();
+    }
+
+    [Fact]
+    public void ParseRejectsALocWhoseNormalizedFormIsOverTheByteLimit()
+    {
+        // Each "é" is 2 UTF-8 bytes raw but 6 bytes once percent-encoded, so the raw loc fits and the normalized form does not.
+        var loc = $"https://a.example/{new string('é', 600)}";
+
+        Encoding.UTF8.GetByteCount(loc).Should().BeLessThan(SitemapLimits.MaxLocBytes);
+        Parse(SitemapXml.UrlSet(loc))!.Entries.Should().BeEmpty();
+    }
+
+    [Fact]
     public void ParseRejectsAFileOverTheCompressedLimit()
     {
         SitemapParser.Parse(new byte[SitemapLimits.MaxCompressedBytes + 1], Host).Should().BeNull();

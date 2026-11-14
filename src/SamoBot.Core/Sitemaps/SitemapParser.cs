@@ -22,40 +22,17 @@ public static class SitemapParser
             return null;
         }
 
-        var xml = IsGzip(raw) ? Decompress(raw) : raw;
-        return xml is null ? null : ParseXml(xml, host);
+        return ParseXml(raw, host);
     }
 
     private static bool IsGzip(byte[] raw) => raw.Length > 2 && raw[0] == 0x1f && raw[1] == 0x8b;
 
-    /// <summary>Reads at most 50 MB. A larger stream (a gzip bomb) gives null.</summary>
-    private static byte[]? Decompress(byte[] raw)
-    {
-        try
-        {
-            using var gzip = new GZipStream(new MemoryStream(raw), CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            return CopyCapped(gzip, output) ? output.ToArray() : null;
-        }
-        catch (InvalidDataException)
-        {
-            return null;
-        }
-    }
+    /// <summary>A gzip is streamed into the XML reader, capped at 50 MB. A larger stream (a gzip bomb) gives null.</summary>
+    private static Stream Open(byte[] raw) => IsGzip(raw)
+        ? new CappedReadStream(new GZipStream(new MemoryStream(raw), CompressionMode.Decompress), SitemapLimits.MaxDecompressedBytes)
+        : new MemoryStream(raw);
 
-    private static bool CopyCapped(Stream source, MemoryStream output)
-    {
-        var chunk = new byte[81920];
-        int read;
-        while ((read = source.Read(chunk, 0, chunk.Length)) > 0 && output.Length <= SitemapLimits.MaxDecompressedBytes)
-        {
-            output.Write(chunk, 0, read);
-        }
-
-        return output.Length <= SitemapLimits.MaxDecompressedBytes;
-    }
-
-    private static SitemapParseResult? ParseXml(byte[] xml, string host)
+    private static SitemapParseResult? ParseXml(byte[] raw, string host)
     {
         var settings = new XmlReaderSettings
         {
@@ -68,10 +45,11 @@ public static class SitemapParser
 
         try
         {
-            using var reader = XmlReader.Create(new MemoryStream(xml), settings);
+            using var source = Open(raw);
+            using var reader = XmlReader.Create(source, settings);
             return ReadDocument(reader, host);
         }
-        catch (XmlException)
+        catch (Exception ex) when (ex is XmlException or InvalidDataException)
         {
             return null;
         }
