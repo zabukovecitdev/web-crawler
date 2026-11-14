@@ -145,7 +145,7 @@ public class DnsCacheTests
         _dns.Map["a.example"] = [Ip("9.9.9.9")];
         Cached("a.example", _time.GetUtcNow(), "8.8.8.8");
         var connector = new FlakyConnector("8.8.8.8");
-        var connect = new SafeConnect(Resolver(), connector);
+        var connect = new SafeConnect(Resolver(), connector, Options.Create(new CrawlerNetworkOptions()));
 
         await connect.Connect(new DnsEndPoint("a.example", 443), default);
 
@@ -160,7 +160,7 @@ public class DnsCacheTests
         _dns.Map["a.example"] = [Ip("9.9.9.9")];
         Cached("a.example", _time.GetUtcNow(), "8.8.8.8");
         var connector = new FlakyConnector("8.8.8.8", "9.9.9.9");
-        var connect = new SafeConnect(Resolver(), connector);
+        var connect = new SafeConnect(Resolver(), connector, Options.Create(new CrawlerNetworkOptions()));
 
         var act = async () => await connect.Connect(new DnsEndPoint("a.example", 443), default);
 
@@ -174,7 +174,7 @@ public class DnsCacheTests
     {
         _dns.Map["a.example"] = [Ip("192.168.0.7")];
         Cached("a.example", _time.GetUtcNow(), "8.8.8.8");
-        var connect = new SafeConnect(Resolver(), new FlakyConnector("8.8.8.8"));
+        var connect = new SafeConnect(Resolver(), new FlakyConnector("8.8.8.8"), Options.Create(new CrawlerNetworkOptions()));
 
         var act = async () => await connect.Connect(new DnsEndPoint("a.example", 443), default);
 

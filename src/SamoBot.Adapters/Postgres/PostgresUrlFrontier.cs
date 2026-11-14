@@ -13,7 +13,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
 {
     private const string ClaimSql = $"""
         WITH due AS (
-            SELECT DISTINCT ON (u."Host") u."Id", u."Host", h."CrawlDelayMs"
+            SELECT DISTINCT ON (u."Host") u."Id", u."Host", h."CrawlDelayMs", h."AvgResponseMs", h."ConsecutiveFailures"
             FROM "{TableNames.DiscoveredUrls}" u
             JOIN "{TableNames.Hosts}" h ON h."Host" = u."Host"
             JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId" AND j."Status" = 'Running'
@@ -30,7 +30,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             FOR UPDATE OF h SKIP LOCKED
         ),
         picked AS (
-            SELECT d."Id", d."Host", d."CrawlDelayMs" FROM due d JOIN locked l ON l."Host" = d."Host"
+            SELECT d."Id", d."Host", d."CrawlDelayMs", d."AvgResponseMs", d."ConsecutiveFailures" FROM due d JOIN locked l ON l."Host" = d."Host"
         ),
         bump AS (
             UPDATE "{TableNames.Hosts}" h
@@ -43,7 +43,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE p."Id" = u."Id"
           AND (u."Status" = 'Idle' OR (u."Status" = 'InFlight' AND u."LeaseUntil" < @Now))
         RETURNING u."Id", u."CrawlJobId", u."Host", u."Url", u."NormalizedUrl", u."Depth", u."FailCount",
-                  u."UseJsRendering", u."RespectRobots", p."CrawlDelayMs"
+                  u."UseJsRendering", u."RespectRobots", p."CrawlDelayMs", p."AvgResponseMs", p."ConsecutiveFailures"
         """;
 
     private const string InsertFetchSql = $"""
@@ -51,6 +51,15 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             ("DiscoveredUrlId", "FetchedAt", "StatusCode", "ContentType", "ContentLength", "ResponseTimeMs", "ObjectName", "FinalUrl")
         VALUES (@UrlId, @FetchedAt, @StatusCode, @ContentType, @ContentLength, @ResponseTimeMs, @ObjectName, @FinalUrl)
         RETURNING "Id"
+        """;
+
+    // The host row is updated first, like the claim locks the host before its URLs, so that the two never wait for each other.
+    // GREATEST keeps a longer wait that is already booked (the claim books the base delay, a Retry-After books more).
+    private const string UpdateHostSql = $"""
+        UPDATE "{TableNames.Hosts}"
+        SET "NextAllowedAt" = GREATEST("NextAllowedAt", @Now + make_interval(secs => @DelaySeconds)),
+            "AvgResponseMs" = @AvgResponseMs, "ConsecutiveFailures" = @ConsecutiveFailures, "LastDelayMs" = @DelayMs
+        WHERE "Host" = @Host
         """;
 
     private const string UpdateUrlSql = $"""
@@ -76,6 +85,11 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await using var transaction = await connection.BeginTransactionAsync(ct);
         var now = timeProvider.GetUtcNow();
 
+        if (update.Pacing is not null)
+        {
+            await UpdateHost(connection, transaction, url.Host, update.Pacing, now, ct);
+        }
+
         var fetchId = fetch is null ? (int?)null : await InsertFetch(connection, transaction, url, fetch, ct);
         await UpdateUrl(connection, transaction, UpdateParameters(url, update, fetchId, now), ct);
         if (update.NewUrl is not null)
@@ -92,6 +106,21 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await using var transaction = await connection.BeginTransactionAsync(ct);
         await NewUrlInserter.Insert(connection, transaction, crawlJobId, seeds, timeProvider.GetUtcNow(), ct);
         await transaction.CommitAsync(ct);
+    }
+
+    private static Task<int> UpdateHost(
+        NpgsqlConnection connection, NpgsqlTransaction transaction, string host, HostPacingUpdate pacing, DateTimeOffset now, CancellationToken ct)
+    {
+        var parameters = new
+        {
+            Host = host,
+            Now = now,
+            DelaySeconds = pacing.Delay.TotalSeconds,
+            DelayMs = (int)pacing.Delay.TotalMilliseconds,
+            pacing.AvgResponseMs,
+            pacing.ConsecutiveFailures
+        };
+        return connection.ExecuteAsync(new CommandDefinition(UpdateHostSql, parameters, transaction, cancellationToken: ct));
     }
 
     private static Task<int> InsertFetch(

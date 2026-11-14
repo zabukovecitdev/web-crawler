@@ -8,7 +8,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Browser;
 
-/// <summary>Renders a page in a Chrome browser that Playwright reaches over CDP. A render error gives status code 0.</summary>
+/// <summary>Renders a page in a Chrome browser that Playwright reaches over CDP. A render error or a timeout (navigation, or the total cap) gives status code 0.</summary>
 public sealed partial class BrowserFetcher(
     IOptions<ChromeRenderingOptions> options,
     SafeResolver resolver,
@@ -27,19 +27,28 @@ public sealed partial class BrowserFetcher(
         try
         {
             var browser = await EnsureBrowser(ct);
-            return await Render(browser, url, started, ct);
+            return await Render(browser, url, started, ct).WaitAsync(Total(), timeProvider, ct);
+        }
+        catch (TimeoutException)
+        {
+            return Failure("timeout", started);
         }
         catch (PlaywrightException ex)
         {
             LogRenderFailed(ex, url.Url);
-            return new FetchResponse
-            {
-                StatusCode = 0,
-                Error = ex.Message,
-                ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds
-            };
+            return Failure(ex.Message, started);
         }
     }
+
+    private TimeSpan Total() =>
+        options.Value.TotalTimeoutMs > 0 ? TimeSpan.FromMilliseconds(options.Value.TotalTimeoutMs) : Timeout.InfiniteTimeSpan;
+
+    private FetchResponse Failure(string error, long started) => new()
+    {
+        StatusCode = 0,
+        Error = error,
+        ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds
+    };
 
     public async ValueTask DisposeAsync()
     {
@@ -58,6 +67,7 @@ public sealed partial class BrowserFetcher(
     {
         var context = await browser.NewContextAsync(ContextOptions());
         var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(options.Value.DefaultTimeoutMs);
         var guard = new BrowserRequestGuard(resolver, context, page, ct);
         try
         {

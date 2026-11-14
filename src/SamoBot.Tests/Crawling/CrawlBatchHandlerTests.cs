@@ -24,10 +24,8 @@ public class CrawlBatchHandlerTests
         var urlHandler = new CrawlUrlHandler(
             gate,
             new FetcherResolver([new FakeFetcher()]),
-            new FakeContentStore(),
-            frontier,
-            new FakeEventPublisher(),
-            time);
+            new FetchRecorder(new FakeContentStore(), frontier, new PolitenessPolicy(TimeSpan.FromSeconds(60)), time),
+            new FakeEventPublisher());
 
         var count = await new CrawlBatchHandler(frontier, urlHandler).HandleBatch(default);
 

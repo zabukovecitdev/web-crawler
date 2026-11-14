@@ -15,4 +15,10 @@ public sealed record ClaimedUrl
 
     /// <summary>The delay of the host after this claim. The claim query fills it from the host row.</summary>
     public int CrawlDelayMs { get; init; } = 1000;
+
+    /// <summary>The moving average of the response time of the host, null before the first healthy fetch.</summary>
+    public double? AvgResponseMs { get; init; }
+
+    /// <summary>The timeouts, network errors, 5xx and 429 in a row at the host.</summary>
+    public int ConsecutiveFailures { get; init; }
 }

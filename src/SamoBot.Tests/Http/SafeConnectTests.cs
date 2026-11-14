@@ -33,7 +33,7 @@ public class SafeConnectTests
     }
 
     private static SafeConnect Build(IDnsResolver dns, ISocketConnector connector, bool allowPrivate = false) =>
-        new(new SafeResolver(dns, new FakeHostAddressCache(), Options.Create(new CrawlerNetworkOptions { AllowPrivateAddresses = allowPrivate }), TimeProvider.System), connector);
+        new(new SafeResolver(dns, new FakeHostAddressCache(), Options.Create(new CrawlerNetworkOptions { AllowPrivateAddresses = allowPrivate }), TimeProvider.System), connector, Options.Create(new CrawlerNetworkOptions()));
 
     private static DnsEndPoint Context(string host, int port = 443) => new(host, port);
 
