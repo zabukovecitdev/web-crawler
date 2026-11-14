@@ -86,11 +86,12 @@ export function completedEvent(jobId: number, i: number): CrawlEvent {
 }
 
 /** Past requests, oldest id first; the newest one finished 1.5 s ago. */
-export function recentEvents(jobId: number, after = 0): (CrawlEvent & { id: number })[] {
+export function recentEvents(jobId: number, after?: number, limit = 100): (CrawlEvent & { id: number })[] {
   const events = Array.from({ length: ROWS.length }, (_, i) => ({
     ...completedEvent(jobId, i),
     at: ago((ROWS.length - i) * 1500),
     id: i + 1,
   }))
-  return events.filter((event) => event.id > after)
+  // Same rule as the server: no `after` is the newest `limit`; otherwise the first `limit` after it.
+  return after === undefined ? events.slice(-limit) : events.filter((event) => event.id > after).slice(0, limit)
 }

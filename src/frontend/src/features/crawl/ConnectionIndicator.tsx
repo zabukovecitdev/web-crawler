@@ -2,8 +2,9 @@ import { Led } from '@/components/shared/Led'
 import type { ConnectionState } from './crawl-hub'
 
 const WORDS: Record<ConnectionState, string> = {
+  connecting: 'Connecting',
   live: 'Live',
-  reconnecting: 'Reconnecting',
+  reconnecting: 'Reconnecting, checking every 3 s',
   offline: 'Offline, checking every 3 s',
 }
 

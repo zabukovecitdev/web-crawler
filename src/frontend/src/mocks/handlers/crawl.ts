@@ -79,7 +79,9 @@ export const crawlHandlers = [
     return job ? json(progressOf(job)) : notFound()
   }),
   http.get('*/api/v1/crawl-jobs/:id/events', ({ params, request }) => {
-    const after = Number(new URL(request.url).searchParams.get('after') ?? 0)
-    return json(recentEvents(Number(params.id), after))
+    const query = new URL(request.url).searchParams
+    const after = query.get('after')
+    const limit = Math.min(Math.max(Number(query.get('limit') ?? 100), 1), 500)
+    return json(recentEvents(Number(params.id), after === null ? undefined : Math.max(Number(after), 0), limit))
   }),
 ]
