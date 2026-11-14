@@ -9,14 +9,16 @@ namespace SamoBot.Adapters.Postgres;
 public sealed class PostgresIndexBacklog(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IIndexBacklog
 {
     private const string ClaimSql = $"""
-        SELECT "Id" AS "PageId", "UrlFetchId",
-               COALESCE("Title", '') AS "Title", COALESCE("Description", '') AS "Description",
-               COALESCE("Keywords", '') AS "Keywords", COALESCE("Author", '') AS "Author",
-               COALESCE("Language", '') AS "Language", COALESCE("Canonical", '') AS "Canonical",
-               COALESCE("BodyText", '') AS "BodyText"
-        FROM "{TableNames.ParsedDocuments}"
-        WHERE "IndexedAt" IS NULL
-        ORDER BY "Id"
+        SELECT d."Id" AS "PageId", d."UrlFetchId", u."Id" AS "DiscoveredUrlId", u."Host", u."Url", f."FetchedAt",
+               COALESCE(d."Title", '') AS "Title", COALESCE(d."Description", '') AS "Description",
+               COALESCE(d."Keywords", '') AS "Keywords", COALESCE(d."Author", '') AS "Author",
+               COALESCE(d."Language", '') AS "Language", COALESCE(d."Canonical", '') AS "Canonical",
+               COALESCE(d."BodyText", '') AS "BodyText"
+        FROM "{TableNames.ParsedDocuments}" d
+        JOIN "{TableNames.UrlFetches}" f ON f."Id" = d."UrlFetchId"
+        JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = f."DiscoveredUrlId"
+        WHERE d."IndexedAt" IS NULL
+        ORDER BY d."Id"
         LIMIT @BatchSize
         """;
 
