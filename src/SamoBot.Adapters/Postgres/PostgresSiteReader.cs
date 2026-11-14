@@ -28,10 +28,10 @@ public sealed class PostgresSiteReader(NpgsqlDataSource dataSource) : ISiteReade
             return null;
         }
 
-        var first = await connection.QuerySingleAsync<FirstCrawlRow>(new CommandDefinition(SiteSql.FirstCrawl, parameters, cancellationToken: ct));
+        var firstCrawlAt = await connection.QuerySingleAsync<DateTimeOffset?>(new CommandDefinition(SiteSql.FirstCrawl, parameters, cancellationToken: ct));
         var codes = await connection.QueryAsync<StatusCount>(new CommandDefinition(SiteSql.StatusCodes, parameters, cancellationToken: ct));
         var types = await connection.QueryAsync<ContentTypeCount>(new CommandDefinition(SiteSql.ContentTypes, parameters, cancellationToken: ct));
-        return WithBreakdown(summary, first.FirstCrawlAt, codes.ToList(), types.ToList());
+        return WithBreakdown(summary, firstCrawlAt, codes.ToList(), types.ToList());
     }
 
     private static SiteDetail WithBreakdown(
@@ -52,9 +52,4 @@ public sealed class PostgresSiteReader(NpgsqlDataSource dataSource) : ISiteReade
         StatusCodes = codes,
         ContentTypes = types
     };
-
-    private sealed class FirstCrawlRow
-    {
-        public DateTimeOffset? FirstCrawlAt { get; init; }
-    }
 }

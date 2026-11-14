@@ -28,7 +28,7 @@ internal static class ParsedPageMapper
     private static int WordCount(string? text) =>
         string.IsNullOrWhiteSpace(text) ? 0 : text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
 
-    private static IReadOnlyList<PageHeading> Headings(string? json) =>
+    private static List<PageHeading> Headings(string? json) =>
         (Read<List<ParsedHeading>>(json) ?? []).Select(h => new PageHeading(h.Level, h.Text)).ToList();
 
     private static string RobotsContent(string? json) => Read<RobotsDirectives>(json)?.Content ?? string.Empty;
