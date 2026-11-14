@@ -56,8 +56,9 @@ public sealed partial class BrowserFetcher(
 
     private async Task<FetchResponse> Render(IBrowser browser, ClaimedUrl url, long started, CancellationToken ct)
     {
-        var page = await browser.NewPageAsync();
-        var guard = new BrowserRequestGuard(resolver, page, ct);
+        var context = await browser.NewContextAsync(ContextOptions());
+        var page = await context.NewPageAsync();
+        var guard = new BrowserRequestGuard(resolver, context, page, ct);
         try
         {
             await guard.Attach();
@@ -69,9 +70,16 @@ public sealed partial class BrowserFetcher(
         }
         finally
         {
-            await page.CloseAsync();
+            await context.CloseAsync();
         }
     }
+
+    /// <summary>Service workers would answer requests the guard never sees, and a crawler has no use for downloads.</summary>
+    public static BrowserNewContextOptions ContextOptions() => new()
+    {
+        ServiceWorkers = ServiceWorkerPolicy.Block,
+        AcceptDownloads = false
+    };
 
     private async Task<FetchResponse> Navigate(IPage page, BrowserRequestGuard guard, ClaimedUrl url, long started)
     {

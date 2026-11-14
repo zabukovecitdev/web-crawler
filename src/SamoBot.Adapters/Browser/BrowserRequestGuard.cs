@@ -5,15 +5,23 @@ using SamoBot.Adapters.Http;
 namespace SamoBot.Adapters.Browser;
 
 /// <summary>
-/// Validates the host of every request that one page makes (navigation, redirect hops, sub-requests) with the address policy.
-/// A blocked request is aborted. Chrome resolves the name again when it connects, so a short rebinding window remains.
+/// Validates the host of every request that a browser context makes (navigation, redirect hops, sub-requests, popups)
+/// with the address policy. A blocked request is aborted and every WebSocket is refused. Chrome resolves the name again
+/// when it connects, so a short rebinding window remains, and a worker may still open a socket the route does not see:
+/// the network policy of the Chrome container (no route to private ranges) is the control for both.
 /// </summary>
-internal sealed class BrowserRequestGuard(SafeResolver resolver, IPage page, CancellationToken ct)
+internal sealed class BrowserRequestGuard(SafeResolver resolver, IBrowserContext context, IPage page, CancellationToken ct)
 {
     /// <summary>True when the page itself (not only a sub-resource) was refused.</summary>
     public bool PageBlocked { get; private set; }
 
-    public Task Attach() => page.RouteAsync("**/*", Handle);
+    public async Task Attach()
+    {
+        await context.RouteAsync("**/*", Handle);
+        await context.RouteWebSocketAsync("**/*", socket => socket.CloseAsync(new WebSocketRouteCloseOptions { Code = 1008, Reason = "blocked" }));
+    }
+
+    internal static bool IsLocalScheme(Uri uri) => uri.Scheme is "data" or "blob" or "about";
 
     private async Task Handle(IRoute route)
     {
@@ -42,7 +50,7 @@ internal sealed class BrowserRequestGuard(SafeResolver resolver, IPage page, Can
 
     // data: and blob: need no network. Every other scheme (file:, ftp:, ws: ...) is refused.
     private static Task Allow(IRoute route, Uri uri) =>
-        uri.Scheme is "data" or "blob" or "about" ? route.ContinueAsync() : route.AbortAsync();
+        IsLocalScheme(uri) ? route.ContinueAsync() : route.AbortAsync();
 
     private async Task<bool> IsHostAllowed(string host)
     {
