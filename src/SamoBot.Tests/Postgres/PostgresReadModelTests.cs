@@ -13,7 +13,7 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private PostgresSiteReader Sites => new(postgres.DataSource);
+    private PostgresSiteReader Sites => new(postgres.DataSource, SiteOverviewCache.Disabled);
 
     private PostgresPageReader Pages => new(postgres.DataSource);
 
@@ -89,6 +89,28 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
             .Excluding(x => x.MedianResponseMs).Excluding(x => x.P95ResponseMs));
         page.Overview.MedianResponseMs.Should().BeApproximately(250, 0.001);
         page.Overview.P95ResponseMs.Should().BeApproximately(385, 0.001);
+    }
+
+    private Task<int> Disable(int urlId, string failReason) =>
+        PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """UPDATE "DiscoveredUrls" SET "Status" = 'Disabled', "FailReason" = @failReason WHERE "Id" = @urlId RETURNING "Id" """,
+            new { urlId, failReason });
+
+    [Fact]
+    public async Task FailedCountsOnlyFailuresThatAreTheSitesFault()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource, "Running", """["d.example"]""");
+        await Fetched(job, "https://d.example/ok", 200, 10);
+        await Disable((await Fetched(job, "https://d.example/moved", 301, 10, objectName: null)).UrlId, "redirect");
+        await Disable(await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://d.example/private"), "robots");
+        await Disable((await Fetched(job, "https://d.example/internal", 0, 0, objectName: null)).UrlId, "blocked-address");
+        await Fetched(job, "https://d.example/boom", 500, 10);
+
+        var page = await Sites.ListSites(AllSites(), default);
+
+        page.Items.Should().ContainSingle().Which.Failed.Should().Be(1);
+        page.Overview.Failed.Should().Be(1);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ using SamoBot.Core.Ports;
 namespace SamoBot.Adapters.Postgres;
 
 /// <summary>Read-only queries about sites. A site is a host.</summary>
-public sealed class PostgresSiteReader(NpgsqlDataSource dataSource) : ISiteReader
+public sealed class PostgresSiteReader(NpgsqlDataSource dataSource, SiteOverviewCache overviewCache) : ISiteReader
 {
     public async Task<SitesPage> ListSites(SiteQuery query, CancellationToken ct)
     {
@@ -14,8 +14,14 @@ public sealed class PostgresSiteReader(NpgsqlDataSource dataSource) : ISiteReade
         var filter = new { Pattern = LikePattern.Contains(query.Query), query.Limit, query.Offset };
         var items = await connection.QueryAsync<SiteSummary>(new CommandDefinition(SiteSql.List(query.Sort), filter, cancellationToken: ct));
         var total = await connection.ExecuteScalarAsync<int>(new CommandDefinition(SiteSql.Count, filter, cancellationToken: ct));
-        var overview = await connection.QuerySingleAsync<SitesOverview>(new CommandDefinition(SiteSql.Overview, cancellationToken: ct));
+        var overview = await overviewCache.GetOrLoad(() => LoadOverview(ct));
         return new SitesPage(total, items.ToList(), overview);
+    }
+
+    private async Task<SitesOverview> LoadOverview(CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        return await connection.QuerySingleAsync<SitesOverview>(new CommandDefinition(SiteSql.Overview, cancellationToken: ct));
     }
 
     public async Task<SiteDetail?> FindSite(string host, CancellationToken ct)
