@@ -14,6 +14,17 @@ public sealed record FetchResponse
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
 
+    /// <summary>True when the fetch did not run because the host resolves only to disallowed addresses.</summary>
+    public bool IsBlocked { get; init; }
+
+    public static FetchResponse BlockedAddress(long responseTimeMs = 0) => new()
+    {
+        StatusCode = 0,
+        Error = Blocked.Reason,
+        IsBlocked = true,
+        ResponseTimeMs = responseTimeMs
+    };
+
     public bool IsSuccess => StatusCode is >= 200 and <= 299;
 
     public bool HasContent => Content is { Length: > 0 };

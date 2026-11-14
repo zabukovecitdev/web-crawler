@@ -12,5 +12,8 @@ internal static class TableNames
         public const string CrawlJobs = "CrawlJobs";
         public const string CrawlJobEvents = "CrawlJobEvents";
         public const string Hosts = "Hosts";
+        public const string SitemapFiles = "SitemapFiles";
+        public const string SitemapUrls = "SitemapUrls";
+        public const string SitemapRequests = "SitemapRequests";
     }
 }

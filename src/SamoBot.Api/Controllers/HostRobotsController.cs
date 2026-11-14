@@ -17,13 +17,6 @@ public sealed class HostRobotsController(RobotsGate robots) : ControllerBase
     public async Task<IActionResult> GetRobots(string host, CancellationToken ct) =>
         Ok(RobotsResponse.From(await robots.RulesFor(host, ct)));
 
-    [HttpGet("{host}/sitemaps")]
-    [ProducesResponseType<SitemapsResponse>(StatusCodes.Status200OK)]
-    public IActionResult GetSitemaps(string host) => Ok(new SitemapsResponse(
-        host,
-        "Sitemap discovery and persistence are planned; no stored sitemaps yet.",
-        []));
-
     [HttpPost("explain")]
     [ProducesResponseType<ExplainResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

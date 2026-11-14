@@ -97,6 +97,20 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         claimed.Should().ContainSingle().Which.Id.Should().Be(due);
     }
 
+    /// <summary>UNVERIFIED: written without Docker.</summary>
+    [Fact]
+    public async Task ClaimReturnsTheCrawlDelayOfTheHost()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource, """UPDATE "Hosts" SET "CrawlDelayMs" = 2500 WHERE "Host" = 'a.example' RETURNING 1""");
+
+        var claimed = await Frontier().Claim(1, Lease, default);
+
+        claimed.Should().ContainSingle().Which.CrawlDelayMs.Should().Be(2500);
+    }
+
     private async Task<ClaimedUrl> ClaimOne(string url, int depth = 0)
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
@@ -145,6 +159,26 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         ((string)row.FailReason).Should().Be("robots");
         ((object?)row.NextCrawlAt).Should().BeNull();
         ((object?)row.LastCrawlAt).Should().BeNull();
+    }
+
+    // UNVERIFIED: written without Docker.
+    [Fact]
+    public async Task CompleteOfABlockedUrlDisablesItRecordsStatusZeroAndNeverClaimsItAgain()
+    {
+        var url = await ClaimOne("https://a.example/");
+        var fetch = new FetchRecord { FetchedAt = TestData.Now, StatusCode = 0, ResponseTimeMs = 0, FinalUrl = url.Url };
+
+        await Frontier().Complete(url, new Blocked().ToUpdate(url, TestData.Now), fetch, default);
+        _time.Advance(TimeSpan.FromDays(30));
+
+        var row = await PostgresTestData.Row(postgres.DataSource, """SELECT * FROM "DiscoveredUrls" WHERE "Id" = @id""", new { id = url.Id });
+        ((string)row.Status).Should().Be("Disabled");
+        ((string)row.FailReason).Should().Be("blocked-address");
+        ((object?)row.NextCrawlAt).Should().BeNull();
+        var fetchStatus = await PostgresTestData.Scalar<int>(
+            postgres.DataSource, """SELECT "StatusCode" FROM "UrlFetches" WHERE "DiscoveredUrlId" = @id""", new { id = url.Id });
+        fetchStatus.Should().Be(0);
+        (await Frontier().Claim(10, Lease, default)).Should().BeEmpty();
     }
 
     [Fact]

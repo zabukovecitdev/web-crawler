@@ -1,7 +1,9 @@
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using SamoBot.Core.Common;
 using SamoBot.Core.Crawling;
 using SamoBot.Core.Domain;
 using SamoBot.Tests.Fakes;
@@ -90,4 +92,56 @@ public class CrawlUrlHandlerTests
 
         _store.SavedUrls.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task HandlePublishesFetchStartedBeforeFetchCompletedWithAllFields()
+    {
+        var response = new FetchResponse
+        {
+            StatusCode = 200, ContentType = "text/html", Content = "<html></html>"u8.ToArray(), ResponseTimeMs = 87
+        };
+        var url = TestData.Url() with { Depth = 3, CrawlDelayMs = 2500 };
+        var handler = Handler(new FakeFetcher(response: response));
+
+        await handler.Handle(url, default);
+
+        _events.Published.Select(e => e.EventType).Should().Equal(CrawlEventTypes.FetchStarted, CrawlEventTypes.FetchCompleted);
+        Json(_events.Published[0].Payload).Should().Be("""{"url":"https://a.example/x","depth":3}""");
+        var completed = JsonSerializer.SerializeToElement(_events.Published[1].Payload, JsonDefaults.Options);
+        completed.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
+            "url", "depth", "statusCode", "responseTimeMs", "contentType", "contentLength", "contentStatus", "delayMs", "outcome");
+        completed.GetProperty("statusCode").GetInt32().Should().Be(200);
+        completed.GetProperty("responseTimeMs").GetInt64().Should().Be(87);
+        completed.GetProperty("contentLength").GetInt32().Should().Be(13);
+        completed.GetProperty("contentStatus").GetString().Should().Be("Stored");
+        completed.GetProperty("delayMs").GetInt32().Should().Be(2500);
+        completed.GetProperty("outcome").GetString().Should().Be("Succeeded");
+    }
+
+    [Fact]
+    public async Task HandleReportsAFailedFetchWithNullContentFields()
+    {
+        var failure = new FetchResponse { StatusCode = 0, Error = "timeout" };
+        var handler = Handler(new FakeFetcher(response: failure));
+
+        await handler.Handle(TestData.Url(), default);
+
+        var completed = JsonSerializer.SerializeToElement(_events.Published[1].Payload, JsonDefaults.Options);
+        completed.GetProperty("contentStatus").GetString().Should().Be("Failed");
+        completed.GetProperty("contentType").ValueKind.Should().Be(JsonValueKind.Null);
+        completed.GetProperty("contentLength").ValueKind.Should().Be(JsonValueKind.Null);
+        completed.GetProperty("outcome").GetString().Should().Be("RetryLater");
+    }
+
+    [Fact]
+    public async Task HandlePublishesNoEventWhenRobotsBlockTheUrl()
+    {
+        var handler = Handler(new FakeFetcher(), "User-agent: *\nDisallow: /\n");
+
+        await handler.Handle(TestData.Url(), default);
+
+        _events.Published.Should().BeEmpty();
+    }
+
+    private static string Json(object payload) => JsonSerializer.Serialize(payload, JsonDefaults.Options);
 }
