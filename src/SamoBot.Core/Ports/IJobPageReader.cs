@@ -9,4 +9,7 @@ public interface IJobPageReader
     Task<int> CountPages(int crawlJobId, CancellationToken ct);
 
     Task<IReadOnlyList<JobEvent>> ListEvents(int crawlJobId, long afterId, int limit, CancellationToken ct);
+
+    /// <summary>The newest <paramref name="limit"/> events of the job, in ascending id order.</summary>
+    Task<IReadOnlyList<JobEvent>> ListRecentEvents(int crawlJobId, int limit, CancellationToken ct);
 }
