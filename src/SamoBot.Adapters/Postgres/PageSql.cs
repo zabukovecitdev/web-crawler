@@ -104,7 +104,7 @@ internal static class PageSql
 
     public const string CountOutgoingLinks = $"""SELECT count(*)::int FROM "{TableNames.Links}" WHERE "FromUrlId" = @Id""";
 
-    public const string ContentObjectName =$"""
+    public const string ContentObjectName = $"""
         SELECT "ObjectName"
         FROM "{TableNames.UrlFetches}"
         WHERE "DiscoveredUrlId" = @Id AND "ObjectName" IS NOT NULL
