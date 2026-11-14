@@ -85,7 +85,7 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         var page = new ParsedPage { Title = "Hello", BodyText = "Body", Links = [new ParsedLink { Url = "/x" }] };
         var links = new[] { new NewUrl(job, "https://a.example/x", "https://a.example/x", "a.example", 1) };
 
-        await Queue().Complete(fetch, page, links, default);
+        await Queue().Complete(fetch, page, links, [], default);
 
         var doc = await PostgresTestData.Row(postgres.DataSource, """SELECT * FROM "ParsedDocuments" WHERE "UrlFetchId" = @id""", new { id = fetch.FetchId });
         ((string)doc.Title).Should().Be("Hello");
@@ -106,8 +106,8 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         var fetch = (await Queue().Claim(10, Lease, default)).Single();
         var page = new ParsedPage { Title = new string('t', 900), Language = "en-US-x-very-long" };
 
-        await Queue().Complete(fetch, page, [], default);
-        await Queue().Complete(fetch, page, [], default);
+        await Queue().Complete(fetch, page, [], [], default);
+        await Queue().Complete(fetch, page, [], [], default);
 
         var count = await PostgresTestData.Scalar<long>(postgres.DataSource, """SELECT count(*) FROM "ParsedDocuments" """);
         var title = await PostgresTestData.Scalar<string>(postgres.DataSource, """SELECT "Title" FROM "ParsedDocuments" """);

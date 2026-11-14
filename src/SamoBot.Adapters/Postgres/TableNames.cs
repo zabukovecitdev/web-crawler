@@ -13,4 +13,5 @@ internal static class TableNames
     public const string SitemapFiles = "SitemapFiles";
     public const string SitemapUrls = "SitemapUrls";
     public const string SitemapRequests = "SitemapRequests";
+    public const string Links = "Links";
 }
