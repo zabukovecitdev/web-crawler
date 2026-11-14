@@ -51,6 +51,59 @@ internal static class PageSql
         LIMIT 100
         """;
 
+    public const string PageExists = $"""SELECT EXISTS (SELECT 1 FROM "{TableNames.DiscoveredUrls}" WHERE "Id" = @Id)""";
+
+    public const string LinkCounts = $"""
+        SELECT count(*)::int AS "LinkCount", (count(*) FILTER (WHERE "IsInternal"))::int AS "InternalLinkCount"
+        FROM "{TableNames.Links}"
+        WHERE "FromUrlId" = @Id
+        """;
+
+    // Incoming links of a page: the md5 equality uses the index, the text equality rules out a collision.
+    // Only pages of the same job count: the same normalized URL can exist in several jobs.
+    private const string IncomingJoins = $"""
+        FROM "{TableNames.DiscoveredUrls}" t
+        JOIN "{TableNames.Links}" l ON md5(l."ToUrl") = md5(t."NormalizedUrl") AND l."ToUrl" = t."NormalizedUrl"
+        JOIN "{TableNames.DiscoveredUrls}" s ON s."Id" = l."FromUrlId" AND s."CrawlJobId" IS NOT DISTINCT FROM t."CrawlJobId"
+        """;
+
+    private const string IncomingWhere = """WHERE t."Id" = @Id AND l."FromUrlId" <> t."Id" """;
+
+    public const string FoundOn = $"""
+        SELECT s."Id" AS "PageId", s."Url"
+        {IncomingJoins}
+        {IncomingWhere}
+        ORDER BY l."FirstSeenAt", l."Id"
+        LIMIT 1
+        """;
+
+    public const string IncomingLinks = $"""
+        SELECT s."Url", l."AnchorText" AS "Text", l."IsInternal" AS "Internal", l."NoFollow", s."Id" AS "PageId",
+               f."StatusCode"::int AS "StatusCode"
+        {IncomingJoins}
+        LEFT JOIN "{TableNames.UrlFetches}" f ON f."Id" = s."LastFetchId"
+        {IncomingWhere}
+        ORDER BY l."FirstSeenAt", l."Id"
+        LIMIT @Limit OFFSET @Offset
+        """;
+
+    public const string CountIncomingLinks = $"""SELECT count(*)::int {IncomingJoins} {IncomingWhere}""";
+
+    public const string OutgoingLinks = $"""
+        SELECT l."ToUrl" AS "Url", l."AnchorText" AS "Text", l."IsInternal" AS "Internal", l."NoFollow", t."Id" AS "PageId",
+               f."StatusCode"::int AS "StatusCode"
+        FROM "{TableNames.Links}" l
+        JOIN "{TableNames.DiscoveredUrls}" s ON s."Id" = l."FromUrlId"
+        LEFT JOIN "{TableNames.DiscoveredUrls}" t
+               ON t."CrawlJobId" IS NOT DISTINCT FROM s."CrawlJobId" AND t."NormalizedUrl" = l."ToUrl"
+        LEFT JOIN "{TableNames.UrlFetches}" f ON f."Id" = t."LastFetchId"
+        WHERE l."FromUrlId" = @Id
+        ORDER BY l."Id"
+        LIMIT @Limit OFFSET @Offset
+        """;
+
+    public const string CountOutgoingLinks = $"""SELECT count(*)::int FROM "{TableNames.Links}" WHERE "FromUrlId" = @Id""";
+
     public const string ContentObjectName = $"""
         SELECT "ObjectName"
         FROM "{TableNames.UrlFetches}"

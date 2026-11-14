@@ -13,7 +13,8 @@ public static class LinkResolver
             .Distinct()
             .ToList();
 
-    private static string? ResolveOne(Uri pageUrl, string href)
+    /// <summary>The absolute, normalized http or https URL of a link, or null when it is not one.</summary>
+    public static string? ResolveOne(Uri pageUrl, string href)
     {
         // The base-URI overload is the safe form of new Uri(pageUrl, href).
         // Uri.TryCreate(href, UriKind.Absolute) would turn "/path" into a file:// URI on Linux.

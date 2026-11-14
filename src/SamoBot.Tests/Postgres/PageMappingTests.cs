@@ -39,7 +39,7 @@ public class PageMappingTests
             RobotsDirectives = """{"content":"noindex"}"""
         };
 
-        var parsed = ParsedPageMapper.Map(row);
+        var parsed = ParsedPageMapper.Map(row, new LinkCounts(4, 3));
 
         parsed.WordCount.Should().Be(3);
         parsed.Headings.Should().Equal(new PageHeading(1, "H"));
@@ -47,6 +47,6 @@ public class PageMappingTests
         parsed.JsonLdBlocks.Should().Be(1);
         parsed.OpenGraph.Should().ContainKey("og:title");
         parsed.RobotsDirectives.Should().Be("noindex");
-        ParsedPageMapper.Map(new PageRow { Headings = "not json" }).Headings.Should().BeEmpty();
+        ParsedPageMapper.Map(new PageRow { Headings = "not json" }, new LinkCounts(0, 0)).Headings.Should().BeEmpty();
     }
 }

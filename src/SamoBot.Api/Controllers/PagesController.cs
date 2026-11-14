@@ -21,6 +21,28 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return page is null ? NotFound() : Ok(page);
     }
 
+    /// <summary>The links on a page (direction=out, the default) or the pages that link to it (direction=in).</summary>
+    [HttpGet("{id:int}/links")]
+    [ProducesResponseType<PagedResult<PageLinkItem>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLinks(
+        int id,
+        [FromQuery] string? direction = "out",
+        [FromQuery] int limit = 50,
+        [FromQuery] int offset = 0,
+        CancellationToken ct = default)
+    {
+        var parsed = LinkListQueries.Parse(direction, limit, offset);
+        if (parsed.Query is null)
+        {
+            return BadRequest(parsed.Error);
+        }
+
+        var links = await pages.ListLinks(id, parsed.Query, ct);
+        return links is null ? NotFound() : Ok(links);
+    }
+
     [HttpGet("{id:int}/content")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

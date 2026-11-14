@@ -5,7 +5,7 @@ namespace SamoBot.Tests.Fakes;
 
 public sealed class FakeParseBacklog(params FetchToParse[] due) : IParseBacklog
 {
-    public List<(FetchToParse Fetch, ParsedPage Page, IReadOnlyList<NewUrl> Links)> Completed { get; } = [];
+    public List<(FetchToParse Fetch, ParsedPage Page, IReadOnlyList<NewUrl> Links, IReadOnlyList<PageLink> PageLinks)> Completed { get; } = [];
     public (int BatchSize, TimeSpan Lease)? LastClaim { get; private set; }
 
     public Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
@@ -14,9 +14,9 @@ public sealed class FakeParseBacklog(params FetchToParse[] due) : IParseBacklog
         return Task.FromResult<IReadOnlyList<FetchToParse>>(due);
     }
 
-    public Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, CancellationToken ct)
+    public Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, IReadOnlyList<PageLink> pageLinks, CancellationToken ct)
     {
-        Completed.Add((fetch, page, links));
+        Completed.Add((fetch, page, links, pageLinks));
         return Task.CompletedTask;
     }
 }

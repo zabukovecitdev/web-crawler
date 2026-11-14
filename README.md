@@ -93,7 +93,7 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 
 - **Crawl:** a claim takes at most one due URL for each host and locks the host row. The host row also holds the
   delay until the next request, so politeness needs no extra service.
-- **Parse:** a claim leases stored fetches with `FOR UPDATE SKIP LOCKED`. One transaction stores the page,
+- **Parse:** a claim leases stored fetches with `FOR UPDATE SKIP LOCKED`. One transaction stores the page, replaces the links of the page in `Links` (all of them, for the link lists of the dashboard),
   adds the in-scope links and marks the fetch parsed.
 - **Index:** pages with no `IndexedAt` go to Meilisearch in one batch. Indexing is idempotent.
 

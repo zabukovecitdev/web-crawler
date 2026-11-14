@@ -5,12 +5,12 @@ using SamoBot.Core.Domain;
 namespace SamoBot.Adapters.Postgres;
 
 /// <summary>
-/// Maps the JSON text columns of a parsed document. Links are not stored, so the link counts are 0.
+/// Maps the JSON text columns of a parsed document. The link counts come from the Links table (0 for pages parsed before it existed).
 /// A column that is missing or not valid JSON reads as empty.
 /// </summary>
 internal static class ParsedPageMapper
 {
-    public static PageParsed Map(PageRow row) => new()
+    public static PageParsed Map(PageRow row, LinkCounts counts) => new()
     {
         Title = row.Title ?? string.Empty,
         Description = row.Description ?? string.Empty,
@@ -20,6 +20,8 @@ internal static class ParsedPageMapper
         BodyText = row.BodyText ?? string.Empty,
         WordCount = WordCount(row.BodyText),
         Headings = Headings(row.Headings),
+        LinkCount = counts.LinkCount,
+        InternalLinkCount = counts.InternalLinkCount,
         ImageCount = ArrayLength(row.Images),
         JsonLdBlocks = ArrayLength(row.JsonLdData),
         OpenGraph = Read<Dictionary<string, string>>(row.OpenGraphData) ?? []
