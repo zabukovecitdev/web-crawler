@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Hosting;
 using SamoBot.Api.Hubs;
 using SamoBot.Adapters;
+using SamoBot.Adapters.Http;
 using SamoBot.Core;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,12 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSamoBotCore();
 builder.Services.AddSamoBotAdapters(builder.Configuration);
 
-builder.Services.Configure<ApiKeyOptions>(builder.Configuration.GetSection(ApiKeyOptions.SectionName));
-builder.Services.AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
-    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
-        ApiKeyAuthenticationHandler.SchemeName,
-        _ => { });
-builder.Services.AddAuthorization();
+builder.Services.AddSamoBotAuth(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -58,13 +53,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.Services.LogIfPrivateAddressesAllowed();
 
 app.UseSwagger();
 app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "SamoBot v1"));
 
 app.UseCors();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseSamoBotAuth();
 
 app.MapControllers();
 app.MapHub<CrawlJobHub>("/hubs/crawl-job");

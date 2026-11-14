@@ -34,7 +34,23 @@ docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
-Send the key in the header `X-Api-Key`. The dashboard is in `src/frontend/`.
+Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`.
+
+### Dashboard sign-in (Google)
+
+The dashboard signs in with Google and the API issues a cookie session (`samobot.session`: HttpOnly, SameSite=Lax, 8 hours sliding, Secure outside Development).
+Set these in `.env`:
+
+| Variable | Meaning |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | OAuth client ID (Web application). The dashboard origin must be an authorised JavaScript origin. |
+| `AUTH_ALLOWED_EMAILS` | Comma-separated emails that may sign in. |
+| `AUTH_ALLOWED_DOMAINS` | Comma-separated domains (matched against the verified `hd` claim or the email domain). |
+| `CORS_ORIGIN` | Dashboard origin, default `http://localhost:5173`. |
+
+Both lists empty means nobody can sign in (the API logs a warning at startup; the API key still works). Config keys: `Google:ClientId`, `Auth:AllowedEmails`, `Auth:AllowedDomains`.
+`http://localhost:5173` talking to `http://localhost:5080` is same-site (ports do not matter), so the Lax cookie works in dev over plain http.
+Frontend contract: `fetch(..., { credentials: 'include' })`; send `X-Requested-With: samobot` on every POST/PUT/PATCH/DELETE (cookie sessions only; `/auth/google` is exempt); SignalR uses the same cookie. Unauthenticated calls return 401, never a redirect.
 
 Tests:
 
@@ -56,6 +72,33 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 
 A worker that dies leaves a lease. When the lease ends, the next claim takes the row again.
 A job is complete when no URL is in flight, no URL waits for its first fetch or a retry, and no page waits for the parser.
+
+## Network safety (SSRF)
+
+Seed URLs are checked as text (`SeedUrlValidator`). The real defence runs at connect time, because a public name can
+resolve to a private address (DNS rebinding) and a redirect can point at one.
+
+- **Connect check:** the clients of the fetcher and of robots.txt use `SafeConnect`, a `SocketsHttpHandler.ConnectCallback`.
+  It resolves all addresses, drops those that `IpAddressPolicy` denies (private, loopback, link-local and metadata,
+  CGNAT, multicast, reserved, documentation, and IPv6 forms that embed such an IPv4 address) and connects to the first
+  allowed one. No allowed address gives `BlockedAddressException`. Every redirect hop opens its own connection, so every
+  hop is checked. A new HTTP client for the open web must be added with `AddSafeHttpClient`.
+- **Blocked URLs** end as `Disabled` with the reason `blocked-address`: no retry, no recrawl. The job progress counts them
+  as skipped, not failed.
+- **Address cache:** a successful lookup stores the allowed addresses in `Hosts.ResolvedAddresses` and `ResolvedAt`
+  (`IHostAddressCache`, with an in-memory layer in front). While `ResolvedAt` is younger than `Crawler:DnsCacheMinutes`
+  (default 60, 0 turns it off) a connect uses the cached addresses and asks no DNS. Every cached address is checked with
+  `IpAddressPolicy` again on every use. When no cached address connects, the host is resolved once more, the cache is
+  updated and the connect is retried. When DNS gives only denied addresses, the cache is cleared and the connect is
+  blocked. The connection is made by IP, but the request URL is never rewritten, so the Host header and the TLS server
+  name stay the host name. The cache key is the DNS name; a name with no `Hosts` row is cached in memory only.
+- **Browser rendering:** Chrome connects over CDP and cannot use the callback. Every request of the page (navigation,
+  redirects, sub-resources) is routed through Playwright, and its host must resolve only to allowed addresses. Chrome
+  resolves the name again itself, so a short rebinding window remains. Run Chrome in a network that cannot reach
+  private ranges.
+- **Configuration:** `Crawler:AllowPrivateAddresses` (default false; development and tests only, logs a startup warning),
+  `Crawler:UseProxy` (default false; a proxy would hide the target from the connect check),
+  `Crawler:DnsCacheMinutes` (default 60).
 
 ## Design decisions
 

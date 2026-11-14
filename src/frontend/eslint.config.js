@@ -19,7 +19,11 @@ const limits = {
 }
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'public/mockServiceWorker.js'] },
+  {
+    // The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
   {
     // The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
     linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },

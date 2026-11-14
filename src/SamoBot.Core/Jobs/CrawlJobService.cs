@@ -13,18 +13,46 @@ public sealed class CrawlJobService(
 {
     public async Task<Result<CrawlJob>> Create(NewCrawlJob request, CancellationToken ct)
     {
+        var inserted = await Insert(request, ct);
+        return inserted.IsFailed ? inserted.ToResult<CrawlJob>() : Result.Ok(await Saved(inserted.Value, ct));
+    }
+
+    /// <summary>Creates the job and starts it. The result holds the job as it is after the start.</summary>
+    public async Task<Result<CrawlJob>> CreateAndStart(NewCrawlJob request, CancellationToken ct)
+    {
+        var inserted = await Insert(request, ct);
+        if (inserted.IsFailed)
+        {
+            return inserted.ToResult<CrawlJob>();
+        }
+
+        var started = await Start(inserted.Value.Id, ct);
+        return started.IsFailed ? started.ToResult<CrawlJob>() : Result.Ok(await Saved(inserted.Value, ct));
+    }
+
+    private sealed record Inserted(int Id, CrawlJob Job);
+
+    private async Task<Result<Inserted>> Insert(NewCrawlJob request, CancellationToken ct)
+    {
+        var problems = SeedUrlValidator.Validate(request.SeedUrls);
+        if (problems.Count > 0)
+        {
+            return Result.Fail<Inserted>(problems.Select(problem => new Error(problem)));
+        }
+
         var created = CrawlJob.Create(request, timeProvider.GetUtcNow());
         if (created.IsFailed)
         {
-            return created;
+            return created.ToResult<Inserted>();
         }
 
-        var job = created.Value;
-        var id = await jobs.Insert(job, ct);
-        var saved = await jobs.Find(id, ct) ?? job;
-        await events.Publish(id, CrawlEventTypes.JobCreated, new { seedCount = job.SeedUrls.Count }, ct);
-        return Result.Ok(saved);
+        var id = await jobs.Insert(created.Value, ct);
+        await events.Publish(id, CrawlEventTypes.JobCreated, new { seedCount = created.Value.SeedUrls.Count }, ct);
+        return Result.Ok(new Inserted(id, created.Value));
     }
+
+    private async Task<CrawlJob> Saved(Inserted inserted, CancellationToken ct) =>
+        await jobs.Find(inserted.Id, ct) ?? inserted.Job;
 
     public async Task<Result> Start(int id, CancellationToken ct)
     {
@@ -44,7 +72,7 @@ public sealed class CrawlJobService(
         // The seeds go in before the job turns Running. A failed insert leaves a Pending job that can start again.
         await frontier.AddSeeds(job.Id, job.ToSeedUrls(), ct);
         await jobs.Save(job, ct);
-        await events.Publish(id, CrawlEventTypes.JobStarted, new { at = job.StartedAt }, ct);
+        await events.Publish(id, CrawlEventTypes.JobStarted, new { }, ct);
         return Result.Ok();
     }
 
@@ -80,6 +108,6 @@ public sealed class CrawlJobService(
     private async Task<Result<CrawlJob>> Load(int id, CancellationToken ct)
     {
         var job = await jobs.Find(id, ct);
-        return job is null ? Result.Fail<CrawlJob>($"Job {id} was not found.") : Result.Ok(job);
+        return job is null ? Result.Fail<CrawlJob>(new JobNotFoundError(id)) : Result.Ok(job);
     }
 }

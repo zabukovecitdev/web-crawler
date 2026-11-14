@@ -1,3 +1,4 @@
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -14,17 +15,30 @@ public sealed class CrawlUrlHandler(
 {
     public async Task Handle(ClaimedUrl url, CancellationToken ct)
     {
-        if (!await robots.IsAllowed(url, ct))
+        try
         {
-            await CompleteBlocked(url, ct);
+            if (!await robots.IsAllowed(url, ct))
+            {
+                await CompleteBlocked(url, ct);
+                return;
+            }
+        }
+        catch (BlockedAddressException)
+        {
+            await Finish(url, FetchResponse.BlockedAddress(), ct);
             return;
         }
 
-        var response = await fetchers.For(url).Fetch(url, ct);
+        await events.Publish(url.CrawlJobId, CrawlEventTypes.FetchStarted, new { url = url.Url, depth = url.Depth }, ct);
+        await Finish(url, await fetchers.For(url).Fetch(url, ct), ct);
+    }
+
+    private async Task Finish(ClaimedUrl url, FetchResponse response, CancellationToken ct)
+    {
         var objectName = await SaveContent(url, response, ct);
         var outcome = OutcomeClassifier.Classify(response, url.FailCount);
         await Complete(url, response, outcome, objectName, ct);
-        await PublishFetchCompleted(url, response, outcome, ct);
+        await PublishFetchCompleted(url, response, outcome, ContentStatus.Of(response, objectName), ct);
     }
 
     private Task CompleteBlocked(ClaimedUrl url, CancellationToken ct)
@@ -60,9 +74,21 @@ public sealed class CrawlUrlHandler(
         return frontier.Complete(url, outcome.ToUpdate(url, now), record, ct);
     }
 
-    private Task PublishFetchCompleted(ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, CancellationToken ct)
+    private Task PublishFetchCompleted(
+        ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, string contentStatus, CancellationToken ct)
     {
-        var payload = new { url = url.Url, statusCode = response.StatusCode, outcome = outcome.GetType().Name };
+        var payload = new
+        {
+            url = url.Url,
+            depth = url.Depth,
+            statusCode = response.StatusCode,
+            responseTimeMs = response.ResponseTimeMs,
+            contentType = response.ContentType,
+            contentLength = response.Content?.Length,
+            contentStatus,
+            delayMs = url.CrawlDelayMs,
+            outcome = outcome.GetType().Name
+        };
         return events.Publish(url.CrawlJobId, CrawlEventTypes.FetchCompleted, payload, ct);
     }
 }

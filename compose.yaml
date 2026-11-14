@@ -95,6 +95,10 @@ services:
     environment:
       Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
       DashboardApi__Key: ${DASHBOARD_API_KEY:?Set DASHBOARD_API_KEY to the dashboard API key}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Auth__AllowedEmailsCsv: ${AUTH_ALLOWED_EMAILS:-}
+      Auth__AllowedDomainsCsv: ${AUTH_ALLOWED_DOMAINS:-}
+      Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:5173}
     depends_on:
       migrations:
         condition: service_completed_successfully

@@ -29,6 +29,15 @@ public sealed record Disabled(string Reason) : CrawlOutcome
         Disable(url, Reason);
 }
 
+/// <summary>The host resolves only to addresses that the crawler may not connect to. The URL is skipped for good.</summary>
+public sealed record Blocked : CrawlOutcome
+{
+    public const string Reason = "blocked-address";
+
+    public override UrlUpdate ToUpdate(ClaimedUrl url, DateTimeOffset now) =>
+        Disable(url, Reason);
+}
+
 public sealed record Redirected(string TargetUrl) : CrawlOutcome
 {
     public const string Reason = "redirect";

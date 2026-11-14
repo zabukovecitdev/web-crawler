@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
@@ -17,6 +18,9 @@ public static class PostgresServiceCollectionExtensions
 
         DapperTypeHandlers.Register();
         services.AddSingleton(NpgsqlDataSource.Create(options.ConnectionString));
+        services.AddSingleton<ISiteReader, PostgresSiteReader>();
+        services.AddSingleton<IPageReader, PostgresPageReader>();
+        services.AddSingleton<IAnalyticsReader, PostgresAnalyticsReader>();
         return services;
     }
 }
