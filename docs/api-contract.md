@@ -43,3 +43,4 @@ Notes
 - A site's `status`: `Crawling` if a Running job has its host; `Paused` if its newest job is Paused; `Crawled` if it has fetches; else `Never`.
 - Seed URL rules for `POST /crawl-jobs`: absolute `http` or `https` only; reject loopback, private, link-local and metadata addresses (SSRF).
 - `snippet` is plain text plus `<mark>`/`</mark>`; the client must not use `dangerouslySetInnerHTML`.
+- `CrawlProgress.delaySource` is `adaptive` when the delay applied after the last fetch is larger than the host's base delay, else `robots.txt` or `default`.
