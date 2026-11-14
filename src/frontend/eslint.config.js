@@ -25,6 +25,10 @@ export default tseslint.config(
     linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
   },
   {
+    // The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
+  {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiFetch } from '@/lib/api'
-import type { CrawlJobDto } from '@/types/api'
+import { crawlJobsKey, fetchCrawlJobs } from '@/lib/crawl-jobs'
 
-/** Number of Running crawl jobs, for the sidebar. Polled; the crawl feature has the live stream. */
+/** Number of Running crawl jobs, for the sidebar. Polled; shares the crawl screens' jobs query. */
 export function useLiveCrawls(): number {
   const query = useQuery({
-    queryKey: ['shell', 'live-crawls'],
-    queryFn: () => apiFetch<CrawlJobDto[]>('/api/v1/crawl-jobs?limit=50'),
+    queryKey: crawlJobsKey,
+    queryFn: fetchCrawlJobs,
     refetchInterval: 10_000,
   })
   return query.data?.filter((job) => job.status === 'Running').length ?? 0

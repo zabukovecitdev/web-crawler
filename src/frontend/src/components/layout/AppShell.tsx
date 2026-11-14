@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Led } from '@/components/shared/Led'
+import { LoadingRows } from '@/components/shared/States'
 import {
   Sidebar,
   SidebarContent,
@@ -68,7 +70,9 @@ export function AppShell() {
         </SidebarFooter>
       </Sidebar>
       <main className="flex min-w-0 flex-[999_1_560px] flex-col gap-6 px-4 pb-12 pt-6 md:px-10 md:pt-8">
-        <Outlet />
+        <Suspense fallback={<LoadingRows rows={6} />}>
+          <Outlet />
+        </Suspense>
       </main>
     </SidebarProvider>
   )
