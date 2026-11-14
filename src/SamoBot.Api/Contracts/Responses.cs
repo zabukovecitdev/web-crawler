@@ -4,8 +4,6 @@ namespace SamoBot.Api.Contracts;
 
 public sealed record MeResponse(string? UserId, string? Name);
 
-public sealed record SitemapsResponse(string Host, string Message, string[] Urls);
-
 public sealed record PagesResponse(int Total, IReadOnlyList<JobPage> Items);
 
 public sealed record RobotsResponse(string Host, string Content, int? CrawlDelayMs, DateTimeOffset FetchedAt, DateTimeOffset ExpiresAt)

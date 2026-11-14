@@ -32,6 +32,8 @@ public static class AdaptersServiceCollectionExtensions
         .AddSingleton<IJobPageReader, PostgresJobPageReader>()
         .AddSingleton<IJobProgressReader, PostgresJobProgressReader>()
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()
+        .AddSingleton<ISitemapStore, PostgresSitemapStore>()
+        .AddSingleton<ISitemapReader, PostgresSitemapReader>()
         .AddSingleton<IHostAddressCache>(provider => new MemoryHostAddressCache(ActivatorUtilities.CreateInstance<PostgresHostAddressCache>(provider)))
         .AddSingleton<ICrawlEventPublisher, PostgresCrawlEventPublisher>();
 
@@ -45,7 +47,11 @@ public static class AdaptersServiceCollectionExtensions
         services.AddSafeHttpClient<HttpFetcher>(HttpFetcher.Timeout, followRedirects: false);
         services.AddSafeHttpClient<HttpRobotsSource>(HttpRobotsSource.Timeout, followRedirects: true);
 
+        // The sitemap source gets the raw bytes: no redirects and no decompression, so that the parser caps the decompressed size.
+        services.AddSafeHttpClient<HttpSitemapSource>(HttpSitemapSource.Timeout, followRedirects: false, decompress: false);
+
         services.AddTransient<IFetcher>(provider => provider.GetRequiredService<HttpFetcher>());
+        services.AddTransient<ISitemapSource>(provider => provider.GetRequiredService<HttpSitemapSource>());
         services.AddTransient<IRobotsSource>(provider => provider.GetRequiredService<HttpRobotsSource>());
         services.AddSingleton<BrowserFetcher>();
         return services.AddSingleton<IFetcher>(provider => provider.GetRequiredService<BrowserFetcher>());

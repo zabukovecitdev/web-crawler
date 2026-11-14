@@ -22,7 +22,8 @@ public static class SafeHttpClientExtensions
     /// Every connection of the client, redirect hops included, goes through <see cref="SafeConnect"/>.
     /// Call <see cref="AddSafeNetwork"/> once before.
     /// </summary>
-    public static IHttpClientBuilder AddSafeHttpClient<TClient>(this IServiceCollection services, TimeSpan timeout, bool followRedirects)
+    public static IHttpClientBuilder AddSafeHttpClient<TClient>(
+        this IServiceCollection services, TimeSpan timeout, bool followRedirects, bool decompress = true)
         where TClient : class =>
         services
             .AddHttpClient<TClient>(client =>
@@ -30,13 +31,13 @@ public static class SafeHttpClientExtensions
                 client.Timeout = timeout;
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(HttpFetcher.UserAgent);
             })
-            .ConfigurePrimaryHttpMessageHandler(provider => Handler(provider, followRedirects));
+            .ConfigurePrimaryHttpMessageHandler(provider => Handler(provider, followRedirects, decompress));
 
-    private static SocketsHttpHandler Handler(IServiceProvider provider, bool followRedirects) => new()
+    private static SocketsHttpHandler Handler(IServiceProvider provider, bool followRedirects, bool decompress) => new()
     {
         AllowAutoRedirect = followRedirects,
         MaxAutomaticRedirections = 5,
-        AutomaticDecompression = DecompressionMethods.All,
+        AutomaticDecompression = decompress ? DecompressionMethods.All : DecompressionMethods.None,
         UseProxy = provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.UseProxy,
         ConnectCallback = provider.GetRequiredService<SafeConnect>().ConnectAsync
     };
