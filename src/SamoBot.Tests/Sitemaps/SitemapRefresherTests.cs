@@ -106,6 +106,17 @@ public class SitemapRefresherTests
     }
 
     [Fact]
+    public async Task RefreshStopsAfterFiftyDownloadsWhenTheChildrenFail()
+    {
+        var children = Enumerable.Range(0, 80).Select(i => $"https://a.example/missing{i}.xml").ToArray();
+        _source.Serve("https://a.example/sitemap.xml", SitemapXml.Index(children));
+
+        await Build().Refresh(Claim, default);
+
+        _source.Downloaded.Should().HaveCount(SitemapLimits.MaxFilesPerHost);
+    }
+
+    [Fact]
     public async Task RefreshStoresAUrlOnlyOnceWhenTwoFilesListIt()
     {
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.Index("https://a.example/a.xml", "https://a.example/b.xml"))
