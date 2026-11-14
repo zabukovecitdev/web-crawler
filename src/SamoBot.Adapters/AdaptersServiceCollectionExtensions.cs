@@ -32,6 +32,7 @@ public static class AdaptersServiceCollectionExtensions
         .AddSingleton<IJobPageReader, PostgresJobPageReader>()
         .AddSingleton<IJobProgressReader, PostgresJobProgressReader>()
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()
+        .AddSingleton<IHostAddressCache>(provider => new MemoryHostAddressCache(ActivatorUtilities.CreateInstance<PostgresHostAddressCache>(provider)))
         .AddSingleton<ICrawlEventPublisher, PostgresCrawlEventPublisher>();
 
     private static IServiceCollection AddFetchers(this IServiceCollection services, IConfiguration configuration)
