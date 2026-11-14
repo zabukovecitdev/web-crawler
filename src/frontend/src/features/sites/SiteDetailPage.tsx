@@ -1,12 +1,18 @@
-import { PageHeader } from '@/components/shared/PageHeader'
-import { EmptyState } from '@/components/shared/States'
+import { useParams } from 'react-router-dom'
+import { PagesPanel } from './PagesPanel'
+import { SiteFrame } from './SiteFrame'
+import { useSite } from './sites-api'
 
-// Placeholder: the feature agent replaces this file's body and keeps the export name.
+function PagesTab({ host }: { host: string }) {
+  const site = useSite(host)
+  return site.data ? <PagesPanel host={host} site={site.data} /> : null
+}
+
 export function SiteDetailPage() {
+  const host = useParams().host ?? ''
   return (
-    <>
-      <PageHeader kicker="Site" title="Site" />
-      <EmptyState title="Not built yet">This screen is filled in by its feature module.</EmptyState>
-    </>
+    <SiteFrame host={host}>
+      <PagesTab host={host} />
+    </SiteFrame>
   )
 }
