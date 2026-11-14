@@ -35,7 +35,26 @@ public sealed class PostgresPageReader(NpgsqlDataSource dataSource) : IPageReade
         }
 
         var fetches = await connection.QueryAsync<PageFetch>(new CommandDefinition(PageSql.Fetches, parameters, cancellationToken: ct));
-        return row.ToDetail(fetches.ToList());
+        var counts = await connection.QuerySingleAsync<LinkCounts>(new CommandDefinition(PageSql.LinkCounts, parameters, cancellationToken: ct));
+        var foundOn = await connection.QuerySingleOrDefaultAsync<FoundOn>(new CommandDefinition(PageSql.FoundOn, parameters, cancellationToken: ct));
+        return row.ToDetail(fetches.ToList(), counts, foundOn);
+    }
+
+    public async Task<PagedResult<PageLinkItem>?> ListLinks(int id, LinkQuery query, CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        var parameters = new { Id = id, query.Limit, query.Offset };
+        if (!await connection.ExecuteScalarAsync<bool>(new CommandDefinition(PageSql.PageExists, parameters, cancellationToken: ct)))
+        {
+            return null;
+        }
+
+        var outgoing = query.Direction == LinkDirection.Out;
+        var rows = await connection.QueryAsync<PageLinkItem>(
+            new CommandDefinition(outgoing ? PageSql.OutgoingLinks : PageSql.IncomingLinks, parameters, cancellationToken: ct));
+        var total = await connection.ExecuteScalarAsync<int>(
+            new CommandDefinition(outgoing ? PageSql.CountOutgoingLinks : PageSql.CountIncomingLinks, parameters, cancellationToken: ct));
+        return new PagedResult<PageLinkItem>(total, rows.ToList());
     }
 
     public async Task<string?> FindContentObjectName(int id, CancellationToken ct)

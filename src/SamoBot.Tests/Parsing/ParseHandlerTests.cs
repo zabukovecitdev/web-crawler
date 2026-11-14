@@ -46,6 +46,16 @@ public class ParseHandlerTests
     }
 
     [Fact]
+    public async Task HandlePassesEveryLinkOfThePageToStoreEvenWhenTheJobFollowsNone()
+    {
+        var (queue, handler) = Build(Page(noFollow: true));
+
+        await handler.Handle(Fetch, default);
+
+        queue.Completed.Single().PageLinks.Select(l => l.ToUrl).Should().Equal("https://a.example/about", "https://other.example/");
+    }
+
+    [Fact]
     public async Task HandleWithNoFollowDirectivePassesEmptyLinkList()
     {
         var (queue, handler) = Build(Page(noFollow: true));

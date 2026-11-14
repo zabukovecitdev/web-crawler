@@ -2,6 +2,9 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
+/// <summary>The stored link counts of a page.</summary>
+internal sealed record LinkCounts(int LinkCount, int InternalLinkCount);
+
 /// <summary>One page query row. The parsed columns are only set by the detail query.</summary>
 internal sealed class PageRow
 {
@@ -47,7 +50,7 @@ internal sealed class PageRow
         ContentState = ContentStates.Derive(Facts())
     };
 
-    public PageDetail ToDetail(IReadOnlyList<PageFetch> fetches) => new()
+    public PageDetail ToDetail(IReadOnlyList<PageFetch> fetches, LinkCounts counts, FoundOn? foundOn) => new()
     {
         Id = Id,
         Url = Url,
@@ -66,7 +69,8 @@ internal sealed class PageRow
         FailReason = FailReason,
         UsedJsRendering = UseJsRendering,
         Fetches = fetches,
-        Parsed = HasParsedDocument ? ParsedPageMapper.Map(this) : null
+        Parsed = HasParsedDocument ? ParsedPageMapper.Map(this, counts) : null,
+        FoundOn = foundOn
     };
 
     private PageStateFacts Facts() => new()
