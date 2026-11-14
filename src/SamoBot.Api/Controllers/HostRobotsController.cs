@@ -20,13 +20,6 @@ public sealed class HostRobotsController(RobotsGate robots) : ControllerBase
             ? Ok(RobotsResponse.From(await robots.RulesFor(key, ct)))
             : BadRequest("Invalid host.");
 
-    [HttpGet("{host}/sitemaps")]
-    [ProducesResponseType<SitemapsResponse>(StatusCodes.Status200OK)]
-    public IActionResult GetSitemaps(string host) => Ok(new SitemapsResponse(
-        host,
-        "Sitemap discovery and persistence are planned; no stored sitemaps yet.",
-        []));
-
     [HttpPost("explain")]
     [ProducesResponseType<ExplainResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

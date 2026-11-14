@@ -9,6 +9,7 @@ using SamoBot.Core.Crawling;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
+using SamoBot.Core.Sitemaps;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Tests.Composition;
@@ -36,6 +37,7 @@ public class ServiceRegistrationTests
     [InlineData(typeof(ParseBatchHandler))]
     [InlineData(typeof(IndexBatchHandler))]
     [InlineData(typeof(JobCompletionHandler))]
+    [InlineData(typeof(SitemapBatchHandler))]
     [InlineData(typeof(CrawlJobService))]
     public async Task ResolveBuildsEachHandlerAndServiceWithAllItsDependencies(Type type)
     {
