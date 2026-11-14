@@ -32,6 +32,8 @@ public static class AdaptersServiceCollectionExtensions
         .AddSingleton<ICrawlJobRepository, PostgresCrawlJobRepository>()
         .AddSingleton<IJobPageReader, PostgresJobPageReader>()
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()
+        .AddSingleton<ISitemapStore, PostgresSitemapStore>()
+        .AddSingleton<ISitemapReader, PostgresSitemapReader>()
         .AddSingleton<ICrawlEventPublisher, PostgresCrawlEventPublisher>();
 
     private static IServiceCollection AddFetchers(this IServiceCollection services, IConfiguration configuration)
@@ -44,7 +46,12 @@ public static class AdaptersServiceCollectionExtensions
         services.AddHttpClient<HttpRobotsSource>(client => ConfigureClient(client, HttpRobotsSource.Timeout))
             .ConfigurePrimaryHttpMessageHandler(() => Handler(allowRedirects: true));
 
+        // The sitemap source gets the raw bytes: no redirects and no decompression, so that the parser caps the decompressed size.
+        services.AddHttpClient<HttpSitemapSource>(client => ConfigureClient(client, HttpSitemapSource.Timeout))
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, AutomaticDecompression = DecompressionMethods.None });
+
         services.AddTransient<IFetcher>(provider => provider.GetRequiredService<HttpFetcher>());
+        services.AddTransient<ISitemapSource>(provider => provider.GetRequiredService<HttpSitemapSource>());
         services.AddTransient<IRobotsSource>(provider => provider.GetRequiredService<HttpRobotsSource>());
         services.AddSingleton<BrowserFetcher>();
         return services.AddSingleton<IFetcher>(provider => provider.GetRequiredService<BrowserFetcher>());

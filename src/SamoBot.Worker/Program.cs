@@ -6,6 +6,7 @@ using SamoBot.Core.Crawling;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
+using SamoBot.Core.Sitemaps;
 using SamoBot.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -17,5 +18,6 @@ builder.Services.AddHostedService<PollingWorker<CrawlBatchHandler>>();
 builder.Services.AddHostedService<PollingWorker<ParseBatchHandler>>();
 builder.Services.AddHostedService<PollingWorker<IndexBatchHandler>>();
 builder.Services.AddHostedService<PollingWorker<JobCompletionHandler>>();
+builder.Services.AddHostedService<PollingWorker<SitemapBatchHandler>>();
 
 await builder.Build().RunAsync();
