@@ -97,6 +97,20 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         claimed.Should().ContainSingle().Which.Id.Should().Be(due);
     }
 
+    /// <summary>UNVERIFIED: written without Docker.</summary>
+    [Fact]
+    public async Task ClaimReturnsTheCrawlDelayOfTheHost()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource, """UPDATE "Hosts" SET "CrawlDelayMs" = 2500 WHERE "Host" = 'a.example' RETURNING 1""");
+
+        var claimed = await Frontier().Claim(1, Lease, default);
+
+        claimed.Should().ContainSingle().Which.CrawlDelayMs.Should().Be(2500);
+    }
+
     private async Task<ClaimedUrl> ClaimOne(string url, int depth = 0)
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);

@@ -96,8 +96,9 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         await using var site = await StubSite.Start();
         await using var provider = Build();
         var service = provider.GetRequiredService<CrawlJobService>();
-        var created = await service.Create(new NewCrawlJob(null, [$"{site.BaseUrl}/"], null, null, false, true), default);
-        var jobId = created.Value.Id;
+        // The stub site is on a loopback address, which the seed validator rejects. The job goes straight into the repository.
+        var job = CrawlJob.Create(new NewCrawlJob(null, [$"{site.BaseUrl}/"], null, null, false, true), _time.GetUtcNow()).Value;
+        var jobId = await provider.GetRequiredService<ICrawlJobRepository>().Insert(job, default);
         (await service.Start(jobId, default)).IsSuccess.Should().BeTrue();
 
         await RunUntilCompleted(provider, jobId);
