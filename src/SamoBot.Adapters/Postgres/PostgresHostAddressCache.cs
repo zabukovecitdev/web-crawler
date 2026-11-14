@@ -14,18 +14,18 @@ public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHos
 {
     private const string FindSql = $"""
         SELECT "ResolvedAddresses", "ResolvedAt" FROM "{TableNames.Hosts}"
-        WHERE ("Host" = @Host OR "Host" LIKE @Prefix) AND "ResolvedAt" IS NOT NULL
+        WHERE ("Host" = @Host OR starts_with("Host", @Prefix)) AND "ResolvedAt" IS NOT NULL
         ORDER BY "ResolvedAt" DESC LIMIT 1
         """;
 
     private const string SaveSql = $"""
         UPDATE "{TableNames.Hosts}" SET "ResolvedAddresses" = @Addresses, "ResolvedAt" = @ResolvedAt
-        WHERE "Host" = @Host OR "Host" LIKE @Prefix
+        WHERE "Host" = @Host OR starts_with("Host", @Prefix)
         """;
 
     private const string ClearSql = $"""
         UPDATE "{TableNames.Hosts}" SET "ResolvedAddresses" = NULL, "ResolvedAt" = NULL
-        WHERE "Host" = @Host OR "Host" LIKE @Prefix
+        WHERE "Host" = @Host OR starts_with("Host", @Prefix)
         """;
 
     public async Task<ResolvedHost?> Find(string host, CancellationToken ct)
@@ -41,7 +41,7 @@ public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHos
         var addresses = string.Join(',', resolved.Addresses.Select(a => a.ToString()));
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await connection.ExecuteAsync(new CommandDefinition(
-            SaveSql, new { resolved.Host, Prefix = $"{resolved.Host}:%", Addresses = addresses, resolved.ResolvedAt }, cancellationToken: ct));
+            SaveSql, new { resolved.Host, Prefix = $"{resolved.Host}:", Addresses = addresses, resolved.ResolvedAt }, cancellationToken: ct));
     }
 
     public async Task Clear(string host, CancellationToken ct)
@@ -50,7 +50,7 @@ public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHos
         await connection.ExecuteAsync(new CommandDefinition(ClearSql, Keys(host), cancellationToken: ct));
     }
 
-    private static object Keys(string host) => new { Host = host, Prefix = $"{host}:%" };
+    private static object Keys(string host) => new { Host = host, Prefix = $"{host}:" };
 
     /// <summary>An address that does not parse is dropped. The caller then resolves again.</summary>
     internal static IReadOnlyList<IPAddress> Parse(string? text) =>

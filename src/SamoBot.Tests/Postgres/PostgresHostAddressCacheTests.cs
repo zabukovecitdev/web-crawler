@@ -61,6 +61,27 @@ public class PostgresHostAddressCacheTests(PostgresFixture postgres) : IAsyncLif
     }
 
     [Fact]
+    public async Task AnUnderscoreInAHostNameIsNotAWildcard()
+    {
+        foreach (var host in new[] { "a_b.example", "axb.example:8080" })
+        {
+            await PostgresTestData.Scalar<int>(
+                postgres.DataSource,
+                """INSERT INTO "Hosts" ("Host", "NextAllowedAt") VALUES (@host, @due) RETURNING 1""",
+                new { host, due = TestData.Now });
+        }
+
+        await Cache.Save(Resolved("a_b.example", "8.8.8.8"), default);
+
+        (await Cache.Find("a_b.example", default))!.Addresses.Should().ContainSingle();
+        var other = await PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """SELECT count(*)::int FROM "Hosts" WHERE "Host" = 'axb.example:8080' AND "ResolvedAt" IS NOT NULL""");
+        other.Should().Be(0);
+        (await Cache.Find("axb.example", default)).Should().BeNull();
+    }
+
+    [Fact]
     public async Task SaveForAHostWithoutARowStoresNothingAndDoesNotThrow()
     {
         await Cache.Save(Resolved("ghost.example", "8.8.8.8"), default);
