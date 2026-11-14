@@ -17,7 +17,11 @@ export async function fetchMe(): Promise<Me | null> {
 
 export function signInWithGoogle(credential: string): Promise<void> {
   const body: GoogleSignInRequest = { credential }
-  return apiFetch<void>('/api/v1/auth/google', { method: 'POST', body: JSON.stringify(body) })
+  return apiFetch<void>('/api/v1/auth/google', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    ignoreUnauthorized: true,
+  })
 }
 
 export function signOutRequest(): Promise<void> {
