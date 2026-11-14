@@ -111,9 +111,9 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
-        var current = await connection.QuerySingleOrDefaultAsync<DateTimeOffset?>(
+        var leaseUntil = await connection.QuerySingleOrDefaultAsync<DateTime?>(
             new CommandDefinition(LockRequestSql, new { claim.Host }, transaction, cancellationToken: ct));
-        if (current != claim.LeaseUntil)
+        if (AsUtcOffset(leaseUntil) != claim.LeaseUntil)
         {
             await transaction.RollbackAsync(ct);
             return false;
@@ -129,6 +129,9 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
         await transaction.CommitAsync(ct);
         return true;
     }
+
+    private static DateTimeOffset? AsUtcOffset(DateTime? value) =>
+        value is null ? null : new DateTimeOffset(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc));
 
     private static async Task Replace(
         NpgsqlConnection connection,
