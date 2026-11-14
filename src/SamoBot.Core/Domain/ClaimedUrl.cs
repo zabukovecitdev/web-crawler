@@ -12,4 +12,7 @@ public sealed record ClaimedUrl
     public required int FailCount { get; init; }
     public required bool UseJsRendering { get; init; }
     public required bool RespectRobots { get; init; }
+
+    /// <summary>The delay of the host after this claim. The claim query fills it from the host row.</summary>
+    public int CrawlDelayMs { get; init; } = 1000;
 }
