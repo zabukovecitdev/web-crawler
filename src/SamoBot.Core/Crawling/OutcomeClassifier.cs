@@ -8,7 +8,13 @@ public static class OutcomeClassifier
     public const int MaxFailures = 5;
     public static readonly TimeSpan RecrawlInterval = TimeSpan.FromDays(1);
 
-    public static CrawlOutcome Classify(FetchResponse response, int failCount) => response.StatusCode switch
+    public static CrawlOutcome Classify(FetchResponse response, int failCount) => response switch
+    {
+        { IsBlocked: true } => new Blocked(),
+        _ => ClassifyStatus(response, failCount)
+    };
+
+    private static CrawlOutcome ClassifyStatus(FetchResponse response, int failCount) => response.StatusCode switch
     {
         >= 200 and <= 299 => new Succeeded(RecrawlInterval),
         301 or 302 or 303 or 307 or 308 when HasLocation(response) => new Redirected(response.RedirectLocation!),

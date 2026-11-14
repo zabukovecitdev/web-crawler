@@ -9,7 +9,7 @@ public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser par
     public async Task Handle(FetchToParse fetch, CancellationToken ct)
     {
         var page = await Parse(fetch, ct);
-        await queue.Complete(fetch, page, LinksToFollow(fetch, page), ct);
+        await queue.Complete(fetch, page, LinksToFollow(fetch, page), PageLinkPreparer.Prepare(new Uri(fetch.Url), page.Links), ct);
     }
 
     private async Task<ParsedPage> Parse(FetchToParse fetch, CancellationToken ct)

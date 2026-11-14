@@ -27,7 +27,7 @@ public class CrawlEventListenerTests(PostgresFixture postgres) : IAsyncLifetime
         var deadline = DateTime.UtcNow.AddSeconds(10);
         while (hub.Sent.Count == 0 && DateTime.UtcNow < deadline)
         {
-            await publisher.Publish(job, "JobStarted", new { at = 1 }, default);
+            await publisher.Publish(job, "JobStarted", new { }, default);
             await Task.Delay(200);
         }
 
@@ -35,6 +35,10 @@ public class CrawlEventListenerTests(PostgresFixture postgres) : IAsyncLifetime
         var sent = hub.Sent.Should().NotBeEmpty().And.Subject.First();
         sent.Group.Should().Be($"crawlJob:{job}");
         sent.Method.Should().Be("CrawlEvent");
-        JsonElement.Parse((string)sent.Args[0]!).GetProperty("eventType").GetString().Should().Be("JobStarted");
+        var json = JsonElement.Parse((string)sent.Args[0]!);
+        json.GetProperty("eventType").GetString().Should().Be("JobStarted");
+        json.GetProperty("crawlJobId").GetInt32().Should().Be(job);
+        json.GetProperty("at").GetString().Should().NotBeNullOrEmpty();
+        json.TryGetProperty("payload", out _).Should().BeFalse();
     }
 }

@@ -65,7 +65,7 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
         return fetches.ToList();
     }
 
-    public async Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, CancellationToken ct)
+    public async Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, IReadOnlyList<PageLink> pageLinks, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
@@ -73,6 +73,7 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
 
         await connection.ExecuteAsync(new CommandDefinition(UpsertPageSql, PageParameters(fetch, page, now), transaction, cancellationToken: ct));
         await NewUrlInserter.Insert(connection, transaction, fetch.CrawlJobId, links, now, ct);
+        await PageLinkWriter.Replace(connection, transaction, fetch.UrlId, pageLinks, now, ct);
         await connection.ExecuteAsync(new CommandDefinition(MarkParsedSql, new { fetch.FetchId, Now = now }, transaction, cancellationToken: ct));
         await transaction.CommitAsync(ct);
     }

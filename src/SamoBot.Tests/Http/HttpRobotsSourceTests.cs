@@ -10,7 +10,7 @@ public class HttpRobotsSourceTests
     private static (HttpRobotsSource Source, StubHttpHandler Handler) Build(Func<HttpRequestMessage, HttpResponseMessage> respond)
     {
         var handler = new StubHttpHandler(respond);
-        return (new HttpRobotsSource(new HttpClient(handler), TimeProvider.System), handler);
+        return (new HttpRobotsSource(new HttpClient(handler), Microsoft.Extensions.Options.Options.Create(new CrawlerNetworkOptions()), TimeProvider.System), handler);
     }
 
     private static HttpResponseMessage Status(HttpStatusCode code, string body = "") => new(code) { Content = new StringContent(body) };

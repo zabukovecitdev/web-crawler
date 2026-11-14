@@ -1,3 +1,4 @@
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -7,62 +8,52 @@ namespace SamoBot.Core.Crawling;
 public sealed class CrawlUrlHandler(
     RobotsGate robots,
     FetcherResolver fetchers,
-    IContentStore contentStore,
-    IUrlFrontier frontier,
-    ICrawlEventPublisher events,
-    TimeProvider timeProvider)
+    FetchRecorder recorder,
+    ICrawlEventPublisher events)
 {
     public async Task Handle(ClaimedUrl url, CancellationToken ct)
     {
-        if (!await robots.IsAllowed(url, ct))
+        try
         {
-            await CompleteBlocked(url, ct);
+            if (!await robots.IsAllowed(url, ct))
+            {
+                await recorder.RecordDisallowed(url, ct);
+                return;
+            }
+        }
+        catch (BlockedAddressException)
+        {
+            await Finish(url, FetchResponse.BlockedAddress(), ct);
             return;
         }
 
-        var response = await fetchers.For(url).Fetch(url, ct);
-        var objectName = await SaveContent(url, response, ct);
+        await events.Publish(url.CrawlJobId, CrawlEventTypes.FetchStarted, new { url = url.Url, depth = url.Depth }, ct);
+        await Finish(url, await fetchers.For(url).Fetch(url, ct), ct);
+    }
+
+    private async Task Finish(ClaimedUrl url, FetchResponse response, CancellationToken ct)
+    {
         var outcome = OutcomeClassifier.Classify(response, url.FailCount);
-        await Complete(url, response, outcome, objectName, ct);
-        await PublishFetchCompleted(url, response, outcome, ct);
+        var recorded = await recorder.Record(url, response, outcome, ct);
+        await PublishFetchCompleted(url, response, outcome, recorded, ct);
     }
 
-    private Task CompleteBlocked(ClaimedUrl url, CancellationToken ct)
+    /// <summary>The delay is the one applied to the host after this request (the base delay when the host state did not change).</summary>
+    private Task PublishFetchCompleted(
+        ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, RecordedFetch recorded, CancellationToken ct)
     {
-        var update = new Disabled("robots").ToUpdate(url, timeProvider.GetUtcNow());
-        return frontier.Complete(url, update, null, ct);
-    }
-
-    private async Task<string?> SaveContent(ClaimedUrl url, FetchResponse response, CancellationToken ct)
-    {
-        if (!response.IsSuccess || !response.IsHtml || !response.HasContent)
+        var payload = new
         {
-            return null;
-        }
-
-        return await contentStore.Save(url.Url, response.Content!, response.ContentType, ct);
-    }
-
-    private Task Complete(ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, string? objectName, CancellationToken ct)
-    {
-        var now = timeProvider.GetUtcNow();
-        var record = new FetchRecord
-        {
-            FetchedAt = now,
-            StatusCode = response.StatusCode,
-            ContentType = response.ContentType,
-            ContentLength = response.Content?.Length,
-            ResponseTimeMs = response.ResponseTimeMs,
-            ObjectName = objectName,
-            FinalUrl = url.Url
+            url = url.Url,
+            depth = url.Depth,
+            statusCode = response.StatusCode,
+            responseTimeMs = response.ResponseTimeMs,
+            contentType = response.ContentType,
+            contentLength = response.Content?.Length,
+            contentStatus = ContentStatus.Of(response, recorded.ObjectName),
+            delayMs = (int)recorded.Delay.TotalMilliseconds,
+            outcome = outcome.GetType().Name
         };
-
-        return frontier.Complete(url, outcome.ToUpdate(url, now), record, ct);
-    }
-
-    private Task PublishFetchCompleted(ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, CancellationToken ct)
-    {
-        var payload = new { url = url.Url, statusCode = response.StatusCode, outcome = outcome.GetType().Name };
         return events.Publish(url.CrawlJobId, CrawlEventTypes.FetchCompleted, payload, ct);
     }
 }

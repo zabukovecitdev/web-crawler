@@ -6,5 +6,5 @@ public sealed class MeilisearchOptions
 
     public string Host { get; set; } = "http://localhost:7700";
     public string ApiKey { get; set; } = "masterKey";
-    public string IndexName { get; set; } = "parsed_documents";
+    public string IndexName { get; set; } = "pages";
 }

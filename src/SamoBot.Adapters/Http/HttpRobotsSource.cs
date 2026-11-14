@@ -1,4 +1,6 @@
 using System.Text;
+using Microsoft.Extensions.Options;
+using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -7,11 +9,15 @@ namespace SamoBot.Adapters.Http;
 /// <summary>
 /// Downloads robots.txt. The host key can include a non-default port, so the source tries https first and then http.
 /// A found file gives its rules. A missing file (4xx, or a redirect that never ends) allows everything.
-/// A server error or a network error blocks the host for a short time.
+/// A server error, a network error or a timeout blocks the host for a short time. Each attempt runs under a
+/// <see cref="RequestDeadline"/> (<c>Crawler:RobotsTimeoutSeconds</c> in total, the body read included).
+/// A host (or a redirect hop) with only disallowed addresses throws <see cref="BlockedAddressException"/>.
 /// </summary>
-public sealed class HttpRobotsSource(HttpClient httpClient, TimeProvider timeProvider) : IRobotsSource
+public sealed class HttpRobotsSource(
+    HttpClient httpClient,
+    IOptions<CrawlerNetworkOptions> network,
+    TimeProvider timeProvider) : IRobotsSource
 {
-    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
     private const int MaxBodyBytes = 512 * 1024;
     private static readonly TimeSpan FoundTtl = TimeSpan.FromHours(24);
     private static readonly TimeSpan ErrorTtl = TimeSpan.FromHours(1);
@@ -34,10 +40,20 @@ public sealed class HttpRobotsSource(HttpClient httpClient, TimeProvider timePro
 
     private async Task<RobotsRules?> TryDownload(string scheme, string host, DateTimeOffset now, CancellationToken ct)
     {
+        using var deadline = new RequestDeadline(
+            RequestDeadline.Seconds(network.Value.RobotsTimeoutSeconds),
+            RequestDeadline.Seconds(network.Value.FirstByteTimeoutSeconds),
+            timeProvider,
+            ct);
         try
         {
-            using var response = await httpClient.GetAsync($"{scheme}://{host}/robots.txt", HttpCompletionOption.ResponseHeadersRead, ct);
-            return await ToRules(host, response, now, ct);
+            using var response = await httpClient.GetAsync($"{scheme}://{host}/robots.txt", HttpCompletionOption.ResponseHeadersRead, deadline.Token);
+            deadline.HeadersReceived();
+            return await ToRules(host, response, now, deadline.Token);
+        }
+        catch (HttpRequestException ex) when (BlockedAddressException.IsCause(ex))
+        {
+            throw new BlockedAddressException(host);
         }
         catch (HttpRequestException)
         {
@@ -47,7 +63,7 @@ public sealed class HttpRobotsSource(HttpClient httpClient, TimeProvider timePro
         {
             return null;
         }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             return null;
         }

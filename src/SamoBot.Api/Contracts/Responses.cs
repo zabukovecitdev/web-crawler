@@ -2,9 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-public sealed record MeResponse(string? UserId, string? Name);
-
-public sealed record SitemapsResponse(string Host, string Message, string[] Urls);
 
 public sealed record PagesResponse(int Total, IReadOnlyList<JobPage> Items);
 
@@ -24,4 +21,7 @@ public sealed record ExplainResponse(
     string UserAgent,
     bool AllowedByRobots,
     int? CrawlDelayMs,
-    RobotsResponse RobotsTxt);
+    RobotsResponse RobotsTxt)
+{
+    public string? MatchedRule { get; init; }
+}

@@ -4,6 +4,7 @@ using SamoBot.Core.Crawling;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
+using SamoBot.Core.Sitemaps;
 
 namespace SamoBot.Core;
 
@@ -19,12 +20,14 @@ public static class CoreServiceCollectionExtensions
             .AddCrawling()
             .AddParsing()
             .AddIndexing()
-            .AddJobs();
+            .AddJobs()
+            .AddSitemaps();
     }
 
     private static IServiceCollection AddCrawling(this IServiceCollection services) => services
         .AddScoped<RobotsGate>()
         .AddScoped<FetcherResolver>()
+        .AddScoped<FetchRecorder>()
         .AddScoped<CrawlUrlHandler>()
         .AddScoped<CrawlBatchHandler>();
 
@@ -38,4 +41,10 @@ public static class CoreServiceCollectionExtensions
     private static IServiceCollection AddJobs(this IServiceCollection services) => services
         .AddScoped<CrawlJobService>()
         .AddScoped<JobCompletionHandler>();
+
+    private static IServiceCollection AddSitemaps(this IServiceCollection services) => services
+        .AddSingleton<SitemapEnqueueSchedule>()
+        .AddScoped<SitemapRefresher>()
+        .AddScoped<SitemapOverviewService>()
+        .AddScoped<SitemapBatchHandler>();
 }

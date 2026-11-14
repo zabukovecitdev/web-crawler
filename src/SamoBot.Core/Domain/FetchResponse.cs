@@ -14,6 +14,20 @@ public sealed record FetchResponse
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
 
+    /// <summary>The wait that a Retry-After header asked for (delta seconds, or the date minus now). Null without the header.</summary>
+    public TimeSpan? RetryAfter { get; init; }
+
+    /// <summary>True when the fetch did not run because the host resolves only to disallowed addresses.</summary>
+    public bool IsBlocked { get; init; }
+
+    public static FetchResponse BlockedAddress(long responseTimeMs = 0) => new()
+    {
+        StatusCode = 0,
+        Error = Blocked.Reason,
+        IsBlocked = true,
+        ResponseTimeMs = responseTimeMs
+    };
+
     public bool IsSuccess => StatusCode is >= 200 and <= 299;
 
     public bool HasContent => Content is { Length: > 0 };
@@ -29,8 +43,7 @@ public sealed record FetchResponse
         }
 
         var mediaType = ContentType.Split(';')[0].Trim();
-        return mediaType.Equals("text/html", StringComparison.OrdinalIgnoreCase)
-               || mediaType.Equals("application/xhtml+xml", StringComparison.OrdinalIgnoreCase);
+        return StoredMediaTypes.IsStored(mediaType);
     }
 
     private bool LooksLikeHtml()
