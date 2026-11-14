@@ -6,7 +6,7 @@ namespace SamoBot.Core.Sitemaps;
 
 /// <summary>
 /// Walks the sitemaps of one host: the seeds first, then the children of the indexes (at most 2 levels, 50 files).
-/// Each fetch waits for the host delay and respects robots.txt. Only a walk that found a file replaces the stored data.
+/// Each fetch waits for the host delay and respects robots.txt. A walk that found a file, or found only 404 and 410 answers, replaces the stored data.
 /// </summary>
 public sealed class SitemapRefresher(
     RobotsGate robots,
@@ -14,8 +14,9 @@ public sealed class SitemapRefresher(
     ISitemapStore store,
     TimeProvider timeProvider)
 {
-    public async Task<int> Refresh(string host, CancellationToken ct)
+    public async Task<int> Refresh(SitemapClaim claim, CancellationToken ct)
     {
+        var host = claim.Host;
         var rules = await robots.RulesFor(host, ct);
         var walk = new Walk(host, rules, SitemapDiscovery.Seeds(rules, host));
         while (walk.Pending.TryDequeue(out var item) && walk.Files.Count < SitemapLimits.MaxFilesPerHost)
@@ -23,7 +24,7 @@ public sealed class SitemapRefresher(
             await Visit(walk, item, ct);
         }
 
-        await store.Complete(host, walk.Files, ct);
+        await store.Complete(claim, new SitemapWalkResult(walk.Files, walk.Gone), ct);
         return walk.Files.Count;
     }
 
@@ -41,6 +42,7 @@ public sealed class SitemapRefresher(
         }
 
         var download = await source.Download(item.Url, ct);
+        walk.Record(download);
         var parsed = download.IsSuccess ? SitemapParser.Parse(download.Content!, walk.Host) : null;
         if (parsed is not null)
         {
@@ -71,6 +73,8 @@ public sealed class SitemapRefresher(
     private sealed class Walk
     {
         private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
+        private int _downloads;
+        private int _missing;
 
         public Walk(string host, RobotsRules rules, IEnumerable<string> seeds)
         {
@@ -87,6 +91,18 @@ public sealed class SitemapRefresher(
         public Queue<Step> Pending { get; } = new();
         public HashSet<string> Visited { get; } = new(StringComparer.Ordinal);
         public List<SitemapFileContent> Files { get; } = [];
+
+        /// <summary>True when the walk downloaded at least one URL and every download answered 404 or 410.</summary>
+        public bool Gone => _downloads > 0 && _missing == _downloads;
+
+        public void Record(SitemapDownload download)
+        {
+            _downloads++;
+            if (download.StatusCode is 404 or 410)
+            {
+                _missing++;
+            }
+        }
 
         /// <summary>Keeps the URLs that no earlier file had, up to the limit of the host.</summary>
         public List<SitemapEntry> TakeNewUrls(IEnumerable<SitemapEntry> entries)

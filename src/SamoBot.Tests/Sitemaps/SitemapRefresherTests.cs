@@ -24,6 +24,8 @@ public class SitemapRefresherTests
         return new SitemapRefresher(gate, _source, _store, _time);
     }
 
+    private static SitemapClaim Claim => new(Host, TestData.Now, TestData.Now.AddHours(2));
+
     private IReadOnlyList<SitemapFileContent> Stored => _store.Completed.Single().Files;
 
     [Fact]
@@ -31,7 +33,7 @@ public class SitemapRefresherTests
     {
         _source.Serve("https://a.example/map.xml", SitemapXml.UrlSet("https://a.example/1", "https://a.example/2"));
 
-        var count = await Build("Sitemap: https://a.example/map.xml\n").Refresh(Host, default);
+        var count = await Build("Sitemap: https://a.example/map.xml\n").Refresh(Claim, default);
 
         count.Should().Be(1);
         Stored.Single().File.Should().Match<SitemapFile>(f => f.Kind == SitemapKind.UrlSet && f.UrlCount == 2 && f.ParentUrl == null && f.FetchedAt == TestData.Now);
@@ -43,7 +45,7 @@ public class SitemapRefresherTests
     {
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.UrlSet("https://a.example/1"));
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         _source.Downloaded.Should().Equal("https://a.example/sitemap.xml");
     }
@@ -55,7 +57,7 @@ public class SitemapRefresherTests
             .Serve("https://a.example/a.xml", SitemapXml.UrlSet("https://a.example/1"))
             .Serve("https://a.example/b.xml.gz", SitemapXml.Gzip(SitemapXml.UrlSet("https://a.example/2")));
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         Stored.Select(f => (f.File.Url, f.File.Kind, f.File.ParentUrl)).Should().Equal(
             ("https://a.example/sitemap.xml", SitemapKind.Index, null),
@@ -69,7 +71,7 @@ public class SitemapRefresherTests
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.Index("https://evil.example/x.xml", "https://a.example/a.xml"))
             .Serve("https://a.example/a.xml", SitemapXml.UrlSet("https://a.example/1"));
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         _source.Downloaded.Should().NotContain(url => url.Contains("evil"));
     }
@@ -82,7 +84,7 @@ public class SitemapRefresherTests
             .Serve("https://a.example/l2.xml", SitemapXml.Index("https://a.example/l3.xml"))
             .Serve("https://a.example/l3.xml", SitemapXml.UrlSet("https://a.example/deep"));
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         _source.Downloaded.Should().Equal("https://a.example/sitemap.xml", "https://a.example/l1.xml", "https://a.example/l2.xml");
     }
@@ -97,7 +99,7 @@ public class SitemapRefresherTests
             _source.Serve(child, SitemapXml.UrlSet(child.Replace(".xml", "/p", StringComparison.Ordinal)));
         }
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         Stored.Should().HaveCount(SitemapLimits.MaxFilesPerHost);
         _source.Downloaded.Distinct().Should().HaveCount(_source.Downloaded.Count);
@@ -110,7 +112,7 @@ public class SitemapRefresherTests
             .Serve("https://a.example/a.xml", SitemapXml.UrlSet("https://a.example/same", "https://a.example/a-only"))
             .Serve("https://a.example/b.xml", SitemapXml.UrlSet("https://a.example/same", "https://a.example/b-only"));
 
-        await Build().Refresh(Host, default);
+        await Build().Refresh(Claim, default);
 
         Stored.SelectMany(f => f.Urls).Select(u => u.Loc).Should().OnlyHaveUniqueItems().And.HaveCount(3);
         Stored[2].File.UrlCount.Should().Be(1);
@@ -121,7 +123,7 @@ public class SitemapRefresherTests
     {
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.UrlSet("https://a.example/1"));
 
-        await Build("User-agent: *\nDisallow: /sitemap\n").Refresh(Host, default);
+        await Build("User-agent: *\nDisallow: /sitemap\n").Refresh(Claim, default);
 
         _source.Downloaded.Should().BeEmpty();
     }
@@ -132,7 +134,7 @@ public class SitemapRefresherTests
         _store.Wait = TimeSpan.FromSeconds(5);
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.UrlSet("https://a.example/1"));
 
-        var refresh = Build().Refresh(Host, default);
+        var refresh = Build().Refresh(Claim, default);
         await Task.Yield();
         _source.Downloaded.Should().BeEmpty();
         _time.Advance(TimeSpan.FromSeconds(5));
@@ -147,10 +149,29 @@ public class SitemapRefresherTests
     {
         _source.Serve("https://a.example/sitemap.xml", "<html>not a sitemap</html>");
 
-        var count = await Build().Refresh(Host, default);
+        var count = await Build().Refresh(Claim, default);
 
         count.Should().Be(0);
         _store.Completed.Single().Files.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RefreshReportsTheSitemapsGoneWhenEverySeedAnswers404()
+    {
+        await Build().Refresh(Claim, default);
+
+        _source.Downloaded.Should().NotBeEmpty();
+        _store.Results.Single().Gone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RefreshDoesNotReportGoneWhenADownloadFailsForOtherReasons()
+    {
+        _source.Fail("https://a.example/sitemap.xml", 500);
+
+        await Build().Refresh(Claim, default);
+
+        _store.Results.Single().Should().Match<SitemapWalkResult>(r => !r.Gone && r.Files.Count == 0);
     }
 
     [Fact]

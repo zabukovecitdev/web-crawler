@@ -29,6 +29,18 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
 
     private PostgresSitemapReader Reader => new(postgres.DataSource);
 
+    private static readonly TimeSpan Lease = TimeSpan.FromMinutes(5);
+
+    private async Task<SitemapClaim> Claim()
+    {
+        await Store.Enqueue(Host, default);
+        return (await Store.ClaimNext(Lease, default))!;
+    }
+
+    /// <summary>Queues the host, claims it and completes the claim with the given files.</summary>
+    private async Task Finish(params SitemapFileContent[] files) =>
+        (await Store.Complete(await Claim(), new SitemapWalkResult(files, false), default)).Should().BeTrue();
+
     private static SitemapEntry Entry(string path) => new($"https://a.example/{path}", $"https://a.example/{path}", null);
 
     private static SitemapFileContent File(string url, string? parent, SitemapKind kind, params SitemapEntry[] urls) =>
@@ -52,9 +64,9 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task CompleteStoresFilesAndUrlsAndTheReaderPagesThem()
     {
-        await Store.Complete(Host, [
+        await Finish(
             File("https://a.example/sitemap.xml", null, SitemapKind.Index),
-            File("https://a.example/s1.xml", "https://a.example/sitemap.xml", SitemapKind.UrlSet, Entry("b"), Entry("a"), Entry("c"))], default);
+            File("https://a.example/s1.xml", "https://a.example/sitemap.xml", SitemapKind.UrlSet, Entry("b"), Entry("a"), Entry("c")));
 
         var snapshot = await Reader.Read(Host, 2, 1, default);
 
@@ -69,11 +81,11 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task CompleteReplacesTheOldFilesButAnEmptyListKeepsThem()
     {
-        await Store.Complete(Host, [File("https://a.example/old.xml", null, SitemapKind.UrlSet, Entry("old"))], default);
-        await Store.Complete(Host, [], default);
+        await Finish(File("https://a.example/old.xml", null, SitemapKind.UrlSet, Entry("old")));
+        await Finish();
         (await Reader.Read(Host, 50, 0, default)).Urls.Items.Select(u => u.Loc).Should().Equal("https://a.example/old");
 
-        await Store.Complete(Host, [File("https://a.example/new.xml", null, SitemapKind.UrlSet, Entry("new"))], default);
+        await Finish(File("https://a.example/new.xml", null, SitemapKind.UrlSet, Entry("new")));
 
         var snapshot = await Reader.Read(Host, 50, 0, default);
         snapshot.Files.Select(f => f.Url).Should().Equal("https://a.example/new.xml");
@@ -97,7 +109,7 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
         await Fetched(job, "a", 200);
         await Fetched(job, "extra", 404);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/queued");
-        await Store.Complete(Host, [File("https://a.example/s.xml", null, SitemapKind.UrlSet, Entry("a"), Entry("queued"), Entry("unknown"))], default);
+        await Finish(File("https://a.example/s.xml", null, SitemapKind.UrlSet, Entry("a"), Entry("queued"), Entry("unknown")));
 
         var snapshot = await Reader.Read(Host, 50, 0, default);
 
@@ -121,16 +133,17 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
         _time.Advance(TimeSpan.FromMinutes(6));
         var again = await Store.ClaimNext(TimeSpan.FromMinutes(5), default);
 
-        (first, second, none, again).Should().Be(("b.example", "c.example", null, "b.example"));
+        (first?.Host, second?.Host, none, again?.Host).Should().Be(("b.example", "c.example", null, "b.example"));
     }
 
     [Fact]
     public async Task CompleteFinishesTheQueueRowSoItIsNotClaimedAgain()
     {
         await Store.Enqueue(Host, default);
-        (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().Be(Host);
+        var claim = await Store.ClaimNext(TimeSpan.FromMinutes(5), default);
+        claim!.Host.Should().Be(Host);
 
-        await Store.Complete(Host, [], default);
+        await Store.Complete(claim, new SitemapWalkResult([], false), default);
         _time.Advance(TimeSpan.FromHours(1));
 
         (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().BeNull();
@@ -145,15 +158,16 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
         await PostgresTestData.InsertUrl(postgres.DataSource, running, "https://b.example/x");
 
         await Store.EnqueueFinishedHosts(TimeSpan.FromDays(7), default);
-        (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().Be(Host);
+        var claim = await Store.ClaimNext(TimeSpan.FromMinutes(5), default);
+        claim!.Host.Should().Be(Host);
         (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().BeNull();
-        await Store.Complete(Host, [], default);
+        await Store.Complete(claim, new SitemapWalkResult([], false), default);
 
         await Store.EnqueueFinishedHosts(TimeSpan.FromDays(7), default);
         (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().BeNull();
         _time.Advance(TimeSpan.FromDays(8));
         await Store.EnqueueFinishedHosts(TimeSpan.FromDays(7), default);
-        (await Store.ClaimNext(TimeSpan.FromMinutes(5), default)).Should().Be(Host);
+        (await Store.ClaimNext(TimeSpan.FromMinutes(5), default))!.Host.Should().Be(Host);
     }
 
     [Fact]

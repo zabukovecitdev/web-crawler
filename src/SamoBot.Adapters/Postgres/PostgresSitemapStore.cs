@@ -3,6 +3,7 @@ using Npgsql;
 using NpgsqlTypes;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
+using SamoBot.Core.Sitemaps;
 
 namespace SamoBot.Adapters.Postgres;
 
@@ -17,44 +18,42 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
         SELECT h."Host", @Now
         FROM "{TableNames.Hosts}" h
         LEFT JOIN "{TableNames.SitemapRequests}" r ON r."Host" = h."Host"
-        WHERE (r."Host" IS NULL OR r."CompletedAt" < @StaleBefore)
+        WHERE (r."Host" IS NULL OR r."CompletedAt" < @StaleBefore
+               OR (r."CompletedAt" IS NULL AND r."Attempts" >= @MaxAttempts AND r."RequestedAt" < @StaleBefore))
           AND EXISTS (
               SELECT 1 FROM "{TableNames.DiscoveredUrls}" u
               JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId"
               WHERE u."Host" = h."Host" AND j."Status" = 'Completed')
-        ON CONFLICT ("Host") DO UPDATE SET "RequestedAt" = EXCLUDED."RequestedAt", "CompletedAt" = NULL, "LeaseUntil" = NULL
+        ON CONFLICT ("Host") DO UPDATE SET "RequestedAt" = EXCLUDED."RequestedAt", "CompletedAt" = NULL, "LeaseUntil" = NULL, "Attempts" = 0
         """;
 
     private const string EnqueueSql = $"""
         INSERT INTO "{TableNames.SitemapRequests}" ("Host", "RequestedAt") VALUES (@Host, @Now)
-        ON CONFLICT ("Host") DO UPDATE SET "RequestedAt" = EXCLUDED."RequestedAt", "CompletedAt" = NULL
+        ON CONFLICT ("Host") DO UPDATE SET "RequestedAt" = EXCLUDED."RequestedAt", "CompletedAt" = NULL, "Attempts" = 0
         """;
 
     private const string ClaimSql = $"""
         UPDATE "{TableNames.SitemapRequests}" r
-        SET "LeaseUntil" = @Now + make_interval(secs => @LeaseSeconds)
+        SET "LeaseUntil" = @Now + make_interval(secs => @LeaseSeconds), "Attempts" = r."Attempts" + 1
         WHERE r."Host" = (
             SELECT q."Host" FROM "{TableNames.SitemapRequests}" q
-            WHERE q."CompletedAt" IS NULL AND (q."LeaseUntil" IS NULL OR q."LeaseUntil" < @Now)
+            WHERE q."CompletedAt" IS NULL AND q."Attempts" < @MaxAttempts AND (q."LeaseUntil" IS NULL OR q."LeaseUntil" < @Now)
             ORDER BY q."RequestedAt"
             LIMIT 1
             FOR UPDATE SKIP LOCKED)
-        RETURNING r."Host"
+        RETURNING r."Host", r."LeaseUntil"
         """;
 
-    // Locks the host row, so that two workers never book the same slot. A missing host row means no wait.
+    // One statement. The row lock of the UPDATE serializes callers, and RETURNING sees the new value, so the booked slot is the new
+    // NextAllowedAt minus the delay. A missing host row returns no row, which means no wait.
     private const string ReserveSql = $"""
-        WITH cur AS (
-            SELECT "Host", "NextAllowedAt", "CrawlDelayMs" FROM "{TableNames.Hosts}" WHERE "Host" = @Host FOR UPDATE
-        ),
-        bump AS (
-            UPDATE "{TableNames.Hosts}" h
-            SET "NextAllowedAt" = GREATEST(c."NextAllowedAt", @Now) + make_interval(secs => c."CrawlDelayMs" / 1000.0)
-            FROM cur c WHERE h."Host" = c."Host"
-            RETURNING GREATEST(c."NextAllowedAt", @Now) AS "Slot"
-        )
-        SELECT extract(epoch FROM ("Slot" - @Now))::float8 FROM bump
+        UPDATE "{TableNames.Hosts}"
+        SET "NextAllowedAt" = GREATEST("NextAllowedAt", @Now) + make_interval(secs => "CrawlDelayMs" / 1000.0)
+        WHERE "Host" = @Host
+        RETURNING extract(epoch FROM (("NextAllowedAt" - make_interval(secs => "CrawlDelayMs" / 1000.0)) - @Now))::float8
         """;
+
+    private const string LockRequestSql = $"""SELECT "LeaseUntil" FROM "{TableNames.SitemapRequests}" WHERE "Host" = @Host FOR UPDATE""";
 
     private const string DeleteUrlsSql = $"""DELETE FROM "{TableNames.SitemapUrls}" WHERE "Host" = @Host""";
 
@@ -68,8 +67,11 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
     private const string CopyUrlsSql =
         $"""COPY "{TableNames.SitemapUrls}" ("Host", "Loc", "NormalizedLoc", "LastModified", "SitemapFileId") FROM STDIN (FORMAT BINARY)""";
 
+    // A request made after the claim stays queued (CompletedAt NULL), so the refresh it asked for is not lost.
     private const string CompleteSql = $"""
-        UPDATE "{TableNames.SitemapRequests}" SET "CompletedAt" = @Now, "LeaseUntil" = NULL WHERE "Host" = @Host
+        UPDATE "{TableNames.SitemapRequests}"
+        SET "CompletedAt" = CASE WHEN "RequestedAt" <= @ClaimedAt THEN @Now ELSE NULL END, "LeaseUntil" = NULL, "Attempts" = 0
+        WHERE "Host" = @Host
         """;
 
     static PostgresSitemapStore() => DapperTypeHandlers.Register();
@@ -78,7 +80,7 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         var now = timeProvider.GetUtcNow();
-        await connection.ExecuteAsync(new CommandDefinition(EnqueueFinishedSql, new { Now = now, StaleBefore = now - refreshAfter }, cancellationToken: ct));
+        await connection.ExecuteAsync(new CommandDefinition(EnqueueFinishedSql, new { Now = now, StaleBefore = now - refreshAfter, MaxAttempts = SitemapBatchHandler.MaxAttempts }, cancellationToken: ct));
     }
 
     public async Task Enqueue(string host, CancellationToken ct)
@@ -87,11 +89,14 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
         await connection.ExecuteAsync(new CommandDefinition(EnqueueSql, new { Host = host, Now = timeProvider.GetUtcNow() }, cancellationToken: ct));
     }
 
-    public async Task<string?> ClaimNext(TimeSpan lease, CancellationToken ct)
+    public async Task<SitemapClaim?> ClaimNext(TimeSpan lease, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
-        var parameters = new { Now = timeProvider.GetUtcNow(), LeaseSeconds = lease.TotalSeconds };
-        return await connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition(ClaimSql, parameters, cancellationToken: ct));
+        var now = timeProvider.GetUtcNow();
+        var parameters = new { Now = now, LeaseSeconds = lease.TotalSeconds, MaxAttempts = SitemapBatchHandler.MaxAttempts };
+        var claimed = await connection.QuerySingleOrDefaultAsync<(string? Host, DateTimeOffset LeaseUntil)>(
+            new CommandDefinition(ClaimSql, parameters, cancellationToken: ct));
+        return claimed.Host is { } host ? new SitemapClaim(host, now, claimed.LeaseUntil) : null;
     }
 
     public async Task<TimeSpan> ReserveFetchSlot(string host, CancellationToken ct)
@@ -102,18 +107,27 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
         return seconds is > 0 ? TimeSpan.FromSeconds(seconds.Value) : TimeSpan.Zero;
     }
 
-    public async Task Complete(string host, IReadOnlyList<SitemapFileContent> files, CancellationToken ct)
+    public async Task<bool> Complete(SitemapClaim claim, SitemapWalkResult result, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
-        if (files.Count > 0)
+        var current = await connection.QuerySingleOrDefaultAsync<DateTimeOffset?>(
+            new CommandDefinition(LockRequestSql, new { claim.Host }, transaction, cancellationToken: ct));
+        if (current != claim.LeaseUntil)
         {
-            await Replace(connection, transaction, host, files, ct);
+            await transaction.RollbackAsync(ct);
+            return false;
         }
 
-        var parameters = new { Host = host, Now = timeProvider.GetUtcNow() };
+        if (result.Files.Count > 0 || result.Gone)
+        {
+            await Replace(connection, transaction, claim.Host, result.Files, ct);
+        }
+
+        var parameters = new { claim.Host, claim.ClaimedAt, Now = timeProvider.GetUtcNow() };
         await connection.ExecuteAsync(new CommandDefinition(CompleteSql, parameters, transaction, cancellationToken: ct));
         await transaction.CommitAsync(ct);
+        return true;
     }
 
     private static async Task Replace(

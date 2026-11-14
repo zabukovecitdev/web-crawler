@@ -22,3 +22,15 @@ public sealed record SitemapDownload(int StatusCode, byte[]? Content)
 {
     public bool IsSuccess => StatusCode is >= 200 and <= 299 && Content is { Length: > 0 };
 }
+
+/// <summary>
+/// A host claimed from the sitemap queue. <paramref name="LeaseUntil"/> is the ownership token: it is the lease timestamp
+/// stored with the queue row, and <c>Complete</c> only writes while the row still holds exactly this value.
+/// </summary>
+public sealed record SitemapClaim(string Host, DateTimeOffset ClaimedAt, DateTimeOffset LeaseUntil);
+
+/// <summary>
+/// The outcome of a sitemap walk. <paramref name="Gone"/> is true when the walk downloaded at least one URL and
+/// every download answered 404 or 410, so the stored files of the host are stale and may be deleted.
+/// </summary>
+public sealed record SitemapWalkResult(IReadOnlyList<SitemapFileContent> Files, bool Gone);

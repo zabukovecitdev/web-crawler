@@ -5,6 +5,7 @@ namespace SamoBot.Tests.Fakes;
 
 public sealed class FakeSitemapStore : ISitemapStore
 {
+    public List<SitemapWalkResult> Results { get; } = [];
     public Queue<string> Claims { get; } = new();
     public int EnqueueFinishedCalls { get; private set; }
     public int Reservations { get; private set; }
@@ -19,8 +20,8 @@ public sealed class FakeSitemapStore : ISitemapStore
 
     public Task Enqueue(string host, CancellationToken ct) => Task.CompletedTask;
 
-    public Task<string?> ClaimNext(TimeSpan lease, CancellationToken ct) =>
-        Task.FromResult(Claims.TryDequeue(out var host) ? host : null);
+    public Task<SitemapClaim?> ClaimNext(TimeSpan lease, CancellationToken ct) =>
+        Task.FromResult(Claims.TryDequeue(out var host) ? new SitemapClaim(host, TestData.Now, TestData.Now + lease) : null);
 
     public Task<TimeSpan> ReserveFetchSlot(string host, CancellationToken ct)
     {
@@ -28,9 +29,10 @@ public sealed class FakeSitemapStore : ISitemapStore
         return Task.FromResult(Wait);
     }
 
-    public Task Complete(string host, IReadOnlyList<SitemapFileContent> files, CancellationToken ct)
+    public Task<bool> Complete(SitemapClaim claim, SitemapWalkResult result, CancellationToken ct)
     {
-        Completed.Add((host, files));
-        return Task.CompletedTask;
+        Completed.Add((claim.Host, result.Files));
+        Results.Add(result);
+        return Task.FromResult(true);
     }
 }
