@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { CONTENT_LABELS } from './labels'
-import { KeyValues } from './KeyValues'
+import { PageLinksView } from './PageLinksView'
 import { Panel } from './Panel'
 import { usePageContent } from './pages-api'
 
@@ -40,19 +40,6 @@ function HeadingsView({ parsed }: { parsed: ParsedPageDto }) {
   )
 }
 
-function LinksView({ parsed }: { parsed: ParsedPageDto }) {
-  return (
-    <KeyValues
-      rows={[
-        ['Links', formatNumber(parsed.linkCount)],
-        ['Internal', formatNumber(parsed.internalLinkCount)],
-        ['External', formatNumber(Math.max(parsed.linkCount - parsed.internalLinkCount, 0))],
-        ['Images', formatNumber(parsed.imageCount)],
-      ]}
-    />
-  )
-}
-
 function SourceView({ id }: { id: number }) {
   const content = usePageContent(id, true)
   if (content.isPending) {
@@ -77,6 +64,9 @@ function ViewBody({ view, page }: { view: View; page: PageDetail }) {
   if (view === 'html') {
     return <SourceView id={page.id} />
   }
+  if (view === 'links') {
+    return <PageLinksView id={page.id} />
+  }
   if (!page.parsed) {
     return (
       <EmptyState title="No parsed content">
@@ -87,7 +77,7 @@ function ViewBody({ view, page }: { view: View; page: PageDetail }) {
   if (view === 'headings') {
     return <HeadingsView parsed={page.parsed} />
   }
-  return view === 'links' ? <LinksView parsed={page.parsed} /> : <TextView parsed={page.parsed} />
+  return <TextView parsed={page.parsed} />
 }
 
 export function PageContentCard({ page }: { page: PageDetail }) {

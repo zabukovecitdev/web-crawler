@@ -6,10 +6,25 @@ import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { CONTENT_LABELS } from './labels'
 import { KeyValues } from './KeyValues'
 import { Panel } from './Panel'
+import { linkTarget } from './link-target'
 import { TD, TD_N, TH, TH_R } from './table-styles'
 
 const fullDate = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'medium' })
 const when = (iso: string | null): string => (iso ? fullDate.format(new Date(iso)) : '—')
+
+function FoundOn({ page }: { page: PageDetail }) {
+  if (!page.foundOn) {
+    return <>Seed URL</>
+  }
+  const { pageId, url } = page.foundOn
+  const target = linkTarget(url, pageId)
+  const to = target.kind === 'app' ? target.to : `/sites/${encodeURIComponent(page.host)}/pages/${pageId}`
+  return (
+    <Link to={to} className="[overflow-wrap:anywhere]">
+      {url}
+    </Link>
+  )
+}
 
 export function CrawlMetadataCard({ page }: { page: PageDetail }) {
   const last = page.fetches[0]
@@ -23,6 +38,7 @@ export function CrawlMetadataCard({ page }: { page: PageDetail }) {
           ['Content type', page.contentType ?? '—'],
           ['Size', formatBytes(page.contentLength)],
           ['Depth', formatNumber(page.depth)],
+          ['Found on', <FoundOn key="f" page={page} />],
           ['Final URL', last?.finalUrl ?? page.url],
           ['Rendering', page.usedJsRendering ? 'Rendered with JavaScript' : 'HTTP, no JavaScript'],
           [
