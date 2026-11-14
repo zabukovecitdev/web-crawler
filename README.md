@@ -84,6 +84,25 @@ resolve to a private address (DNS rebinding) and a redirect can point at one.
   `Crawler:UseProxy` (default false; a proxy would hide the target from the connect check),
   `Crawler:DnsCacheMinutes` (default 60).
 
+## Timeouts
+
+`HttpClient.Timeout` covers only the headers when the body is streamed, so the HTTP clients have none (infinite) and every
+request runs under a `RequestDeadline`: one total deadline for the whole request, the body read included, and a shorter
+first-byte deadline until the response headers arrive. A timeout gives status 0 with the error `timeout` (the robots and
+sitemap sources treat it like any network error). A cancellation by the worker's shutdown token is not a timeout and still
+propagates. A value of 0 turns a limit off.
+
+| Setting (`Crawler:`) | Default | Covers |
+|---|---|---|
+| `ConnectTimeoutSeconds` | 5 | DNS resolution and connect, in `SafeConnect` (also `SocketsHttpHandler.ConnectTimeout`) |
+| `FirstByteTimeoutSeconds` | 10 | From sending the request until the headers arrive |
+| `RequestTimeoutSeconds` | 20 | A page request in total, body included |
+| `RobotsTimeoutSeconds` | 10 | Each robots.txt attempt (https, then http), body included |
+| `SitemapTimeoutSeconds` | 30 | Each sitemap file, body included |
+
+The browser: `ChromeRendering:DefaultTimeoutMs` (default 30000) limits the navigation and every page call, and
+`ChromeRendering:TotalTimeoutMs` (default 45000) caps the whole render. A Playwright timeout also gives status 0, `timeout`.
+
 ## Design decisions
 
 - PostgreSQL replaces RabbitMQ, Redis and Neo4j. One system holds all state, and one transaction records each result.

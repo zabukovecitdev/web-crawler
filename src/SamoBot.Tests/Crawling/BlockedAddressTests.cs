@@ -102,7 +102,7 @@ public class BlockedAddressTests
     public async Task HttpFetcherTurnsABlockedConnectIntoABlockedResponse()
     {
         var handler = new StubHttpHandler(_ => throw new HttpRequestException("connect", new BlockedAddressException("evil.example")));
-        var fetcher = new HttpFetcher(new HttpClient(handler), Options.Create(new ChromeRenderingOptions()), _time);
+        var fetcher = new HttpFetcher(new HttpClient(handler), Options.Create(new ChromeRenderingOptions()), Options.Create(new CrawlerNetworkOptions()), _time);
 
         var response = await fetcher.Fetch(TestData.Url(), default);
 
@@ -114,7 +114,7 @@ public class BlockedAddressTests
     public async Task HttpRobotsSourceRethrowsABlockedHostInsteadOfTryingHttp()
     {
         var handler = new StubHttpHandler(_ => throw new HttpRequestException("connect", new BlockedAddressException("evil.example")));
-        var source = new HttpRobotsSource(new HttpClient(handler), _time);
+        var source = new HttpRobotsSource(new HttpClient(handler), Options.Create(new CrawlerNetworkOptions()), _time);
 
         var act = () => source.Download("evil.example", default);
 

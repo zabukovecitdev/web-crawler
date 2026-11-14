@@ -13,6 +13,7 @@ public class HttpFetcherTests
         new(
             new HttpClient(new StubHttpHandler(respond)),
             Options.Create(new ChromeRenderingOptions { Enabled = chromeEnabled, CdpEndpoint = chromeEnabled ? "http://chrome:9222" : null }),
+            Options.Create(new CrawlerNetworkOptions()),
             TimeProvider.System);
 
     private static HttpResponseMessage Html(HttpStatusCode status, string body = "<html></html>") => new(status)

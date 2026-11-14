@@ -22,4 +22,19 @@ public sealed class CrawlerNetworkOptions
     /// Cached addresses are checked against the address policy on every use.
     /// </summary>
     public int DnsCacheMinutes { get; set; } = 60;
+
+    /// <summary>DNS resolution and connect together. Default 5. 0 turns it off.</summary>
+    public int ConnectTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>From sending the request until the response headers arrive. Default 10. 0 turns it off.</summary>
+    public int FirstByteTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>One deadline for a whole page request, the body read included. Default 20. 0 turns it off.</summary>
+    public int RequestTimeoutSeconds { get; set; } = 20;
+
+    /// <summary>One deadline for a robots.txt request (each of the https and http attempts), body included. Default 10.</summary>
+    public int RobotsTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>One deadline for each sitemap file, body included. Default 30.</summary>
+    public int SitemapTimeoutSeconds { get; set; } = 30;
 }

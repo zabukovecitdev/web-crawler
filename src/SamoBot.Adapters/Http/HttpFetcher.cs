@@ -9,11 +9,16 @@ namespace SamoBot.Adapters.Http;
 /// <summary>
 /// Downloads a URL with a plain HTTP request. It does not follow redirects. The frontier decides what to do with them.
 /// A network error or a timeout gives status code 0. The fetcher does not throw for them.
+/// A <see cref="RequestDeadline"/> limits the time to the first byte and the total time, the body read included.
+/// A cancellation by the caller (shutdown) is not a timeout and still throws.
 /// </summary>
-public sealed class HttpFetcher(HttpClient httpClient, IOptions<ChromeRenderingOptions> chrome, TimeProvider timeProvider) : IFetcher
+public sealed class HttpFetcher(
+    HttpClient httpClient,
+    IOptions<ChromeRenderingOptions> chrome,
+    IOptions<CrawlerNetworkOptions> network,
+    TimeProvider timeProvider) : IFetcher
 {
     public const string UserAgent = "SamoBot/1.0 (+https://github.com/zabukovecitdev/web-crawler)";
-    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
     public const int MaxBodyBytes = 5 * 1024 * 1024;
 
     public bool Supports(ClaimedUrl url) => !url.UseJsRendering || !chrome.Value.IsAvailable;
@@ -21,35 +26,48 @@ public sealed class HttpFetcher(HttpClient httpClient, IOptions<ChromeRenderingO
     public async Task<FetchResponse> Fetch(ClaimedUrl url, CancellationToken ct)
     {
         var started = timeProvider.GetTimestamp();
+        var limits = network.Value;
+        using var deadline = new RequestDeadline(
+            RequestDeadline.Seconds(limits.RequestTimeoutSeconds),
+            RequestDeadline.Seconds(limits.FirstByteTimeoutSeconds),
+            timeProvider,
+            ct);
         try
         {
-            return await Send(url, started, ct);
-        }
-        catch (HttpRequestException ex) when (BlockedAddressException.IsCause(ex))
-        {
-            return FetchResponse.BlockedAddress((long)timeProvider.GetElapsedTime(started).TotalMilliseconds);
+            return await Send(url, started, deadline);
         }
         catch (HttpRequestException ex)
         {
-            return Failure(ex.Message, started);
+            return FromHttpError(ex, started);
         }
         catch (IOException ex)
         {
             return Failure(ex.Message, started);
         }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             return Failure("timeout", started);
         }
     }
 
-    private async Task<FetchResponse> Send(ClaimedUrl url, long started, CancellationToken ct)
+    private FetchResponse FromHttpError(HttpRequestException ex, long started)
+    {
+        if (BlockedAddressException.IsCause(ex))
+        {
+            return FetchResponse.BlockedAddress((long)timeProvider.GetElapsedTime(started).TotalMilliseconds);
+        }
+
+        return Failure(RequestDeadline.IsConnectTimeout(ex) ? "timeout" : ex.Message, started);
+    }
+
+    private async Task<FetchResponse> Send(ClaimedUrl url, long started, RequestDeadline deadline)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url.Url);
-        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token);
+        deadline.HeadersReceived();
 
-        await using var body = await response.Content.ReadAsStreamAsync(ct);
-        var content = await BodyReader.ReadLimited(body, MaxBodyBytes, ct);
+        await using var body = await response.Content.ReadAsStreamAsync(deadline.Token);
+        var content = await BodyReader.ReadLimited(body, MaxBodyBytes, deadline.Token);
 
         return new FetchResponse
         {
