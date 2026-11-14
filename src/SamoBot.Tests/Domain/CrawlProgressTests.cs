@@ -37,7 +37,7 @@ public class CrawlProgressTests
         {
             JobId = 3, Status = "Running", Crawled = 20, Queued = 5, InFlight = 1, Failed = 2, MaxUrls = 100,
             CurrentUrl = "https://a.example/x", CurrentDepth = 2, CrawlDelayMs = 2000, MaxResponseMs = 900L,
-            StatusCounts = new StatusClassCounts(20, 4, 5, 1)
+            StatusCounts = new CrawlStatusCounts(20, 4, 5, 1)
         });
         progress.AvgResponseMs.Should().Be(123.5);
     }

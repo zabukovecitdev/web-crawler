@@ -18,7 +18,7 @@ public sealed record CrawlProgress(
     long? MaxResponseMs,
     double? PagesPerMinute,
     DateTimeOffset? StartedAt,
-    StatusClassCounts StatusCounts)
+    CrawlStatusCounts StatusCounts)
 {
     public const string RobotsSource = "robots.txt";
     public const string DefaultSource = "default";
@@ -41,7 +41,7 @@ public sealed record CrawlProgress(
         data.MaxResponseMs,
         Rate(data, now),
         data.StartedAt,
-        new StatusClassCounts(data.Ok, data.Redirect, data.ClientError, data.ServerError));
+        new CrawlStatusCounts(data.Ok, data.Redirect, data.ClientError, data.ServerError));
 
     // Only a running job makes a next request, and only when the host is not yet due.
     private static DateTimeOffset? NextRequest(JobProgressData data, DateTimeOffset now) =>
@@ -59,4 +59,4 @@ public sealed record CrawlProgress(
     }
 }
 
-public sealed record StatusClassCounts(int Ok, int Redirect, int ClientError, int ServerError);
+public sealed record CrawlStatusCounts(int Ok, int Redirect, int ClientError, int ServerError);
