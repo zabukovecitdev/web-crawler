@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { CONTENT_LABELS } from './labels'
@@ -9,6 +9,7 @@ import { Panel } from './Panel'
 import { usePageContent } from './pages-api'
 
 type View = 'text' | 'html' | 'headings' | 'links'
+const VIEWS: View[] = ['text', 'html', 'headings', 'links']
 
 function TextView({ parsed }: { parsed: ParsedPageDto }) {
   const paragraphs = parsed.bodyText.split(/\n{2,}/).filter((p) => p.trim() !== '')
@@ -104,8 +105,12 @@ export function PageContentCard({ page }: { page: PageDetail }) {
           <TabsTrigger value="headings">Headings {parsed ? parsed.headings.length : 0}</TabsTrigger>
           <TabsTrigger value="links">Links {parsed ? formatNumber(parsed.linkCount) : 0}</TabsTrigger>
         </TabsList>
+        {VIEWS.map((v) => (
+          <TabsContent key={v} value={v}>
+            <ViewBody view={v} page={page} />
+          </TabsContent>
+        ))}
       </Tabs>
-      <ViewBody view={view} page={page} />
     </Panel>
   )
 }

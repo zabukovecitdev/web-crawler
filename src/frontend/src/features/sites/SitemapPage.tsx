@@ -8,6 +8,6 @@ export function SitemapPage() {
   const host = useParams().host ?? ''
   const [search] = useSearchParams()
   return (
-    <SiteFrame host={host}>{search.get('tab') === 'robots' ? <RobotsCard host={host} /> : <SitemapCard host={host} />}</SiteFrame>
+    <SiteFrame host={host}>{search.get('tab') === 'robots' ? <RobotsCard key={host} host={host} /> : <SitemapCard key={host} host={host} />}</SiteFrame>
   )
 }

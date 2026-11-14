@@ -5,7 +5,7 @@ import { useSite } from './sites-api'
 
 function PagesTab({ host }: { host: string }) {
   const site = useSite(host)
-  return site.data ? <PagesPanel host={host} site={site.data} /> : null
+  return site.data ? <PagesPanel key={host} host={host} site={site.data} /> : null
 }
 
 export function SiteDetailPage() {

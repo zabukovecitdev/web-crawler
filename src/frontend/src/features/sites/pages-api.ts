@@ -1,6 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ApiError, apiFetch, queryString } from '@/lib/api'
-import { apiBase } from '@/lib/config'
+import { apiFetch, apiFetchResponse, queryString } from '@/lib/api'
 import type { Page, PageDetail, PageSummary } from '@/types/api'
 import { hostPath, retryUnlessMissing } from './sites-api'
 
@@ -15,10 +14,11 @@ export function useHostPages(host: string, params: PagesQuery) {
   })
 }
 
-export function usePage(id: number) {
+export function usePage(id: number, enabled = true) {
   return useQuery({
     queryKey: ['page', id],
     queryFn: () => apiFetch<PageDetail>(`/api/v1/pages/${id}`),
+    enabled,
     retry: retryUnlessMissing,
   })
 }
@@ -26,11 +26,8 @@ export function usePage(id: number) {
 export type PageContent = { text: string; truncated: boolean }
 
 async function fetchContent(id: number): Promise<PageContent> {
-  const res = await fetch(`${apiBase}/api/v1/pages/${id}/content`, { credentials: 'include' })
-  if (!res.ok) {
-    throw new ApiError(res.status, await res.text())
-  }
-  return { text: await res.text(), truncated: res.headers.has('X-Content-Truncated') }
+  const res = await apiFetchResponse(`/api/v1/pages/${id}/content`, { headers: { Accept: 'text/plain' } })
+  return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true' }
 }
 
 /** The stored body, loaded only when `enabled`. Shown as text, never as HTML. */

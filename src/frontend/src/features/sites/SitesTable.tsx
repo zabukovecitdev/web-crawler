@@ -14,7 +14,7 @@ type SortHeadProps = { label: string; field: SiteSort; sort: SiteSort; right?: b
 function SortHead({ label, field, sort, right, onSort }: SortHeadProps) {
   const active = sort === field
   return (
-    <TableHead scope="col" className={right ? TH_R : TH} aria-sort={active ? 'descending' : undefined}>
+    <TableHead scope="col" className={right ? TH_R : TH} aria-sort={active ? (field === 'host' ? 'ascending' : 'descending') : 'none'}>
       <button
         type="button"
         onClick={() => onSort(field)}
