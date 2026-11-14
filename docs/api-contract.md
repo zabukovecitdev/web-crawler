@@ -4,6 +4,13 @@ Source of truth for shapes: `src/frontend/src/types/api.ts`. The C# records in `
 
 Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keeps working for the MCP server and scripts. Every endpoint below needs either. Errors: `400` with `ProblemDetails`, `401` when not signed in, `404` when missing.
 
+Transport notes:
+- Sessions last at most 24 hours from sign-in and the account is checked against the allowlist on every request, so removing an account signs it out on the next call (`401`).
+- Rate limit: 300 requests per minute per signed-in user (per client address when anonymous), configurable with `RateLimiting:PermitsPerMinute`. Over the limit the answer is `429` with `Retry-After: 60`. The SignalR hub is not limited.
+- Every cookie-authenticated `POST`, `PUT`, `PATCH` and `DELETE` needs `X-Requested-With: samobot`. That includes the SignalR negotiate request: the client sends the header through the `headers` option of `withUrl`.
+- The hub (`/hubs/*`) and `POST /api/v1/auth/google` check the `Origin` header when a browser sends one. It must be the API's own origin or one of `Cors:Origins`, otherwise `403`. Calls without `Origin` (scripts, the MCP server) pass.
+- Cross-origin browsers can read the response header `X-Content-Truncated` (exposed by CORS).
+
 | Method and path | Request | Response |
 |---|---|---|
 | `POST /api/v1/auth/google` | `GoogleSignInRequest` | `204` and `Set-Cookie`; `403` if the account is not allowed |

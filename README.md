@@ -29,16 +29,43 @@ The compiler enforces the dependency rule: `Core` references no project.
 ## How to run
 
 ```bash
-cp .env.example .env   # then set DASHBOARD_API_KEY in .env
+cp .env.example .env
+openssl rand -hex 32   # put the output in .env as DASHBOARD_API_KEY
 docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
 Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`.
 
+- **API key:** `DASHBOARD_API_KEY` is required. In Production (the Docker images) the API refuses to start when the key is shorter than 32 characters or a placeholder such as `change-me`; an existing deployment with a short key must be changed.
+- **Ports:** compose binds every published port (PostgreSQL, RustFS, Meilisearch, the API) to `127.0.0.1`. The database, storage and search credentials default to development values; set `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` and `MEILI_MASTER_KEY` in `.env` before publishing on another interface, and then only behind a firewall.
+- **Cookie:** compose serves plain http on localhost, so `AUTH_ALLOW_INSECURE_COOKIE` defaults to `true` (the session cookie is sent without `Secure`). Set it to `false` behind HTTPS. Outside Development without this flag the cookie is always `Secure`.
+- **Allowlist changes:** the allowlist is checked on every request, so removing an account signs it out on its next call. `appsettings.json` changes are picked up at once; environment variables (compose) are read once, so restart the `api` container after editing `AUTH_ALLOWED_EMAILS` or `AUTH_ALLOWED_DOMAINS`. A session also ends 24 hours after sign-in.
+- **Swagger** is served only in Development (`dotnet run`). **Rate limit:** 300 requests per minute per user (`RateLimiting:PermitsPerMinute`), `429` with `Retry-After` above it; the live hub is exempt.
+- **Dashboard in dev:** with `dotnet run` the API listens on http://localhost:5288 and allows the origins in `appsettings.Development.json`; with compose it is http://localhost:5080 and allows `CORS_ORIGIN`.
+
+### JavaScript rendering
+
+Pages that need JavaScript can be rendered with headless Chrome. It is off by default:
+
+```bash
+CHROME_RENDERING_ENABLED=true docker compose --profile js up --build
+```
+
+The `chrome` service sits on two networks of its own: `browser` (internal, shared only with the worker) and `chrome_egress` (a bridge with the fixed subnet `172.31.250.0/24`). It is not on the default network, so Chrome cannot reach PostgreSQL, RustFS, Meilisearch or the API. The worker reaches it at `http://172.31.251.10:9222` (an IP, because the DevTools endpoint rejects other `Host` headers).
+
+Chrome resolves host names itself, so the address checks of the crawler cannot close a DNS rebinding window completely. The network is the control: drop new connections from the egress subnet to private and special ranges on the Docker host.
+
+```bash
+iptables -I DOCKER-USER -s 172.31.250.0/24 -m conntrack --ctstate NEW \
+  -d 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,100.64.0.0/10,127.0.0.0/8 -j DROP
+```
+
+On a cloud deployment use the provider's egress controls (security group or network policy) for the same ranges, including the metadata address 169.254.169.254. This setup has not been verified end to end here (no Docker available); run `docker compose --profile js up` once and crawl a JavaScript page before relying on it.
+
 ### Dashboard sign-in (Google)
 
-The dashboard signs in with Google and the API issues a cookie session (`samobot.session`: HttpOnly, SameSite=Lax, 8 hours sliding, Secure outside Development).
+The dashboard signs in with Google and the API issues a cookie session (`samobot.session`: HttpOnly, SameSite=Lax, 8 hours sliding and at most 24 hours from sign-in, Secure outside Development unless `AUTH_ALLOW_INSECURE_COOKIE=true`).
 Set these in `.env`:
 
 | Variable | Meaning |
