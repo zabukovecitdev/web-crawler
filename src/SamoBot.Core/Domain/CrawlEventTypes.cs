@@ -8,5 +8,6 @@ public static class CrawlEventTypes
     public const string JobPaused = "JobPaused";
     public const string JobCancelled = "JobCancelled";
     public const string JobCompleted = "JobCompleted";
+    public const string FetchStarted = "FetchStarted";
     public const string FetchCompleted = "FetchCompleted";
 }
