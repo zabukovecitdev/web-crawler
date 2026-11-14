@@ -158,13 +158,28 @@ public class SitemapRefresherTests
     {
         _store.Claims.Enqueue(Host);
         _source.Serve("https://a.example/sitemap.xml", SitemapXml.UrlSet("https://a.example/1"));
-        var handler = new SitemapBatchHandler(_store, Build());
+        var handler = new SitemapBatchHandler(_store, Build(), new SitemapEnqueueSchedule(_time));
 
         var first = await handler.HandleBatch(default);
         var second = await handler.HandleBatch(default);
 
         (first, second).Should().Be((1, 0));
-        _store.EnqueueFinishedCalls.Should().Be(2);
+        _store.EnqueueFinishedCalls.Should().Be(1);
         _store.Completed.Should().ContainSingle().Which.Host.Should().Be(Host);
+    }
+
+    [Fact]
+    public async Task BatchHandlerQueuesFinishedHostsOnlyOncePerInterval()
+    {
+        var handler = new SitemapBatchHandler(_store, Build(), new SitemapEnqueueSchedule(_time));
+
+        await handler.HandleBatch(default);
+        _time.Advance(TimeSpan.FromMinutes(4));
+        await handler.HandleBatch(default);
+        _store.EnqueueFinishedCalls.Should().Be(1);
+
+        _time.Advance(TimeSpan.FromMinutes(1));
+        await handler.HandleBatch(default);
+        _store.EnqueueFinishedCalls.Should().Be(2);
     }
 }

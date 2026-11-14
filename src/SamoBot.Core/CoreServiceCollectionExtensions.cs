@@ -42,6 +42,7 @@ public static class CoreServiceCollectionExtensions
         .AddScoped<JobCompletionHandler>();
 
     private static IServiceCollection AddSitemaps(this IServiceCollection services) => services
+        .AddSingleton<SitemapEnqueueSchedule>()
         .AddScoped<SitemapRefresher>()
         .AddScoped<SitemapOverviewService>()
         .AddScoped<SitemapBatchHandler>();
