@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SamoBot.Api.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
@@ -14,6 +15,7 @@ public static class AuthServiceCollectionExtensions
             .Bind(configuration.GetSection(ApiKeyOptions.SectionName))
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<ApiKeyOptions>, ApiKeyOptionsValidator>();
+        services.Configure<DashboardCorsOptions>(configuration.GetSection(DashboardCorsOptions.SectionName));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
         services.TryAddSingleton(TimeProvider.System);
@@ -34,6 +36,7 @@ public static class AuthServiceCollectionExtensions
     public static IApplicationBuilder UseSamoBotAuth(this IApplicationBuilder app)
     {
         app.UseAuthentication();
+        app.UseMiddleware<OriginCheckMiddleware>();
         app.UseMiddleware<CsrfHeaderMiddleware>();
         app.UseAuthorization();
         return app;

@@ -29,6 +29,8 @@ public sealed class AuthTestHost : IAsyncDisposable
 {
     public const string ApiKey = "test-key";
 
+    public const string ListedOrigin = "https://dash.example";
+
     private readonly WebApplication _app;
 
     private AuthTestHost(WebApplication app, FakeGoogleTokenValidator validator, IConfigurationRoot configuration)
@@ -65,6 +67,7 @@ public sealed class AuthTestHost : IAsyncDisposable
         app.UseSamoBotAuth();
         app.MapControllers();
         app.MapPost("/api/v1/test/echo", () => Results.NoContent()).RequireAuthorization();
+        app.MapGet("/hubs/test", () => Results.NoContent());
         await app.StartAsync();
         return new AuthTestHost(app, validator, builder.Configuration);
     }
@@ -107,6 +110,7 @@ public sealed class AuthTestHost : IAsyncDisposable
     {
         ["DashboardApi:Key"] = ApiKey,
         ["Google:ClientId"] = "client-id",
+        ["Cors:Origins:0"] = ListedOrigin,
         ["Auth:AllowedEmailsCsv"] = string.Join(',', emails),
         ["Auth:AllowedDomainsCsv"] = string.Join(',', domains)
     };

@@ -39,15 +39,17 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<CrawlEventListener>();
 
-var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:5173"];
+var corsOptions = new DashboardCorsOptions();
+builder.Configuration.GetSection(DashboardCorsOptions.SectionName).Bind(corsOptions);
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(corsOrigins)
+        policy.WithOrigins(corsOptions.Origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("X-Content-Truncated");
     });
 });
 
