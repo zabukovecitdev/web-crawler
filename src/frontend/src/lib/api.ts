@@ -20,6 +20,10 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
 function buildHeaders(init?: RequestInit): Headers {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD') {
+    headers.set('X-Requested-With', 'samobot')
+  }
   if (init?.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
