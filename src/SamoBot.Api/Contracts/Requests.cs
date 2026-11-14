@@ -7,6 +7,7 @@ public sealed class CreateCrawlJobRequest
     public int? MaxUrls { get; set; }
     public bool? UseJsRendering { get; set; }
     public bool? RespectRobots { get; set; }
+    public bool? StartImmediately { get; set; }
 }
 
 public sealed class CrawlJobActionRequest

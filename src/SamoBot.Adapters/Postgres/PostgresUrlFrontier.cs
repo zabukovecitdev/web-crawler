@@ -13,7 +13,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
 {
     private const string ClaimSql = $"""
         WITH due AS (
-            SELECT DISTINCT ON (u."Host") u."Id", u."Host"
+            SELECT DISTINCT ON (u."Host") u."Id", u."Host", h."CrawlDelayMs"
             FROM "{TableNames.DiscoveredUrls}" u
             JOIN "{TableNames.Hosts}" h ON h."Host" = u."Host"
             JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId" AND j."Status" = 'Running'
@@ -30,7 +30,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             FOR UPDATE OF h SKIP LOCKED
         ),
         picked AS (
-            SELECT d."Id", d."Host" FROM due d JOIN locked l ON l."Host" = d."Host"
+            SELECT d."Id", d."Host", d."CrawlDelayMs" FROM due d JOIN locked l ON l."Host" = d."Host"
         ),
         bump AS (
             UPDATE "{TableNames.Hosts}" h
@@ -43,7 +43,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE p."Id" = u."Id"
           AND (u."Status" = 'Idle' OR (u."Status" = 'InFlight' AND u."LeaseUntil" < @Now))
         RETURNING u."Id", u."CrawlJobId", u."Host", u."Url", u."NormalizedUrl", u."Depth", u."FailCount",
-                  u."UseJsRendering", u."RespectRobots"
+                  u."UseJsRendering", u."RespectRobots", p."CrawlDelayMs"
         """;
 
     private const string InsertFetchSql = $"""

@@ -14,17 +14,18 @@ public class ApiJsonContractTests
     private static JsonElement Serialize<T>(T value) => JsonSerializer.SerializeToElement(value, Web);
 
     [Fact]
-    public void CrawlJobHasStringStatusAndAJsonStringOfSeedUrls()
+    public void CrawlJobMatchesTheDtoTypeWithARealSeedArray()
     {
-        var job = CrawlJob.Create(new NewCrawlJob("u1", ["https://a.example/"], 2, 10, false, true), TestData.Now).Value;
+        var job = CrawlJob.Create(new NewCrawlJob("u1", ["https://a.example/", "https://b.example/x"], 2, 10, false, true), TestData.Now).Value;
 
-        var json = Serialize(CrawlJobResponse.From(job));
+        var json = Serialize(CrawlJobDto.From(job));
 
         json.GetProperty("status").GetString().Should().Be("Pending");
-        json.GetProperty("seedUrls").GetString().Should().Be("""["https://a.example/"]""");
+        json.GetProperty("host").GetString().Should().Be("a.example");
+        json.GetProperty("seedUrls").EnumerateArray().Select(e => e.GetString()).Should().Equal("https://a.example/", "https://b.example/x");
         json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
-            "id", "ownerUserId", "status", "seedUrls", "maxDepth", "maxUrls", "useJsRendering", "respectRobots",
-            "createdAt", "updatedAt", "startedAt", "completedAt");
+            "id", "status", "host", "seedUrls", "maxDepth", "maxUrls", "useJsRendering", "respectRobots",
+            "createdAt", "startedAt", "completedAt");
     }
 
     [Fact]
@@ -38,11 +39,24 @@ public class ApiJsonContractTests
     }
 
     [Fact]
-    public void JobEventHasAStringPayload()
+    public void StoredEventIsFlatAndCarriesTheCursorId()
     {
-        var json = Serialize(new JobEvent { Id = 3, CrawlJobId = 1, EventType = "JobStarted", Payload = "{}", CreatedAt = TestData.Now });
+        var json = Serialize(CrawlEventEnvelope.Build(1, "FetchStarted", TestData.Now, """{"url":"https://a.example/","depth":2}""", 3));
 
-        json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("id", "crawlJobId", "eventType", "payload", "createdAt");
-        json.GetProperty("payload").ValueKind.Should().Be(JsonValueKind.String);
+        json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("id", "crawlJobId", "eventType", "at", "url", "depth");
+        json.GetProperty("id").GetInt64().Should().Be(3);
+        json.GetProperty("depth").GetInt32().Should().Be(2);
+    }
+
+    [Fact]
+    public void ProgressMatchesTheTypeScriptShape()
+    {
+        var json = Serialize(CrawlProgress.From(new JobProgressData { JobId = 1, Status = "Running" }, TestData.Now));
+
+        json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
+            "jobId", "status", "crawled", "queued", "inFlight", "failed", "maxUrls", "currentUrl", "currentDepth", "crawlDelayMs",
+            "delaySource", "nextRequestAt", "avgResponseMs", "maxResponseMs", "pagesPerMinute", "startedAt", "statusCounts");
+        json.GetProperty("statusCounts").EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
+            "ok", "redirect", "clientError", "serverError");
     }
 }
