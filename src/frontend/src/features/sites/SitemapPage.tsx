@@ -1,12 +1,13 @@
-import { PageHeader } from '@/components/shared/PageHeader'
-import { EmptyState } from '@/components/shared/States'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { RobotsCard } from './RobotsCard'
+import { SiteFrame } from './SiteFrame'
+import { SitemapCard } from './SitemapCard'
 
-// Placeholder: the feature agent replaces this file's body and keeps the export name.
+/** /sites/:host/sitemap shows the sitemap; ?tab=robots shows robots.txt. */
 export function SitemapPage() {
+  const host = useParams().host ?? ''
+  const [search] = useSearchParams()
   return (
-    <>
-      <PageHeader kicker="Sitemap" title="Sitemap" />
-      <EmptyState title="Not built yet">This screen is filled in by its feature module.</EmptyState>
-    </>
+    <SiteFrame host={host}>{search.get('tab') === 'robots' ? <RobotsCard host={host} /> : <SitemapCard host={host} />}</SiteFrame>
   )
 }
