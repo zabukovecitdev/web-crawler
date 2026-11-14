@@ -1,14 +1,18 @@
 # SamoBot: PostgreSQL is the only queue. Run with:
-#   DASHBOARD_API_KEY=<secret> docker compose up --build
+#   cp .env.example .env   (then set DASHBOARD_API_KEY: openssl rand -hex 32)
+#   docker compose up --build
+#
+# Every published port binds to 127.0.0.1. Publish on another interface only behind a firewall:
+# the defaults for the database, storage and search credentials are development values.
 services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: samobot
       POSTGRES_USER: samobot
-      POSTGRES_PASSWORD: samobot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samobot}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U samobot"]
       interval: 10s
@@ -21,11 +25,11 @@ services:
   rustfs:
     image: rustfs/rustfs:1.0.5
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
-      RUSTFS_ACCESS_KEY: minioadmin
-      RUSTFS_SECRET_KEY: minioadmin
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       RUSTFS_CONSOLE_ENABLE: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
@@ -39,9 +43,9 @@ services:
   meilisearch:
     image: getmeili/meilisearch:v1.11
     ports:
-      - "7700:7700"
+      - "127.0.0.1:7700:7700"
     environment:
-      MEILI_MASTER_KEY: masterKey
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterKey}
       MEILI_ENV: development
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
@@ -58,24 +62,42 @@ services:
       context: .
       dockerfile: src/SamoBot.Migrations/Dockerfile
     environment:
-      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=${POSTGRES_PASSWORD:-samobot}
     depends_on:
       postgres:
         condition: service_healthy
     restart: "no"
+
+  # Optional JavaScript rendering: docker compose --profile js up (see README, "JavaScript rendering").
+  # Chrome sits on its own networks, never on the default network, so it cannot reach the database,
+  # storage, search or the API. Only the worker shares the internal "browser" network with it.
+  chrome:
+    image: chromedp/headless-shell:158.0.8127.18
+    profiles: ["js"]
+    networks:
+      browser:
+        ipv4_address: 172.31.251.10
+      chrome_egress: {}
+    restart: unless-stopped
 
   worker:
     image: samobot-worker
     build:
       context: .
       dockerfile: src/SamoBot.Worker/Dockerfile
+    networks:
+      - default
+      - browser
     environment:
-      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=${POSTGRES_PASSWORD:-samobot}
       MinIO__Endpoint: rustfs
-      MinIO__AccessKey: minioadmin
-      MinIO__SecretKey: minioadmin
+      MinIO__AccessKey: ${S3_ACCESS_KEY:-minioadmin}
+      MinIO__SecretKey: ${S3_SECRET_KEY:-minioadmin}
       Meilisearch__Host: http://meilisearch:7700
-      Meilisearch__ApiKey: masterKey
+      Meilisearch__ApiKey: ${MEILI_MASTER_KEY:-masterKey}
+      ChromeRendering__Enabled: ${CHROME_RENDERING_ENABLED:-false}
+      # An IP, not the name "chrome": Chrome's DevTools endpoint rejects any other Host header.
+      ChromeRendering__CdpEndpoint: http://172.31.251.10:9222
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -91,14 +113,42 @@ services:
       context: .
       dockerfile: src/SamoBot.Api/Dockerfile
     ports:
-      - "5080:8080"
+      - "127.0.0.1:5080:8080"
     environment:
-      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=samobot
-      DashboardApi__Key: ${DASHBOARD_API_KEY:?Set DASHBOARD_API_KEY to the dashboard API key}
+      Database__ConnectionString: Host=postgres;Port=5432;Database=samobot;Username=samobot;Password=${POSTGRES_PASSWORD:-samobot}
+      MinIO__Endpoint: rustfs
+      MinIO__AccessKey: ${S3_ACCESS_KEY:-minioadmin}
+      MinIO__SecretKey: ${S3_SECRET_KEY:-minioadmin}
+      Meilisearch__Host: http://meilisearch:7700
+      Meilisearch__ApiKey: ${MEILI_MASTER_KEY:-masterKey}
+      DashboardApi__Key: ${DASHBOARD_API_KEY:?Set DASHBOARD_API_KEY to the dashboard API key (openssl rand -hex 32)}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Auth__AllowedEmailsCsv: ${AUTH_ALLOWED_EMAILS:-}
+      Auth__AllowedDomainsCsv: ${AUTH_ALLOWED_DOMAINS:-}
+      # Compose serves plain http on localhost. Set AUTH_ALLOW_INSECURE_COOKIE=false behind HTTPS.
+      Auth__AllowInsecureCookie: ${AUTH_ALLOW_INSECURE_COOKIE:-true}
+      Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:5173}
     depends_on:
       migrations:
         condition: service_completed_successfully
+      rustfs:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
     restart: unless-stopped
+
+networks:
+  default: {}
+  browser:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.31.251.0/24
+  chrome_egress:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.250.0/24
 
 volumes:
   postgres_data:
