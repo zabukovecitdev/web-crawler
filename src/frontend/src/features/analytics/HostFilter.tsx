@@ -13,6 +13,7 @@ export function HostFilter({ hosts, value, onChange }: Props) {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL}>All hosts</SelectItem>
+        {value && !hosts.some((h) => h.host === value) ? <SelectItem value={value}>{value}</SelectItem> : null}
         {hosts.map((h) => (
           <SelectItem key={h.host} value={h.host}>
             {h.host}
