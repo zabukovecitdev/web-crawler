@@ -52,9 +52,7 @@ public class CreateSitemapTables : Migration
         Create.Index("IX_SitemapUrls_Host_NormalizedLoc").OnTable(UrlsTable).OnColumn("Host").Ascending().OnColumn("NormalizedLoc").Ascending();
         Create.Index("IX_SitemapUrls_SitemapFileId").OnTable(UrlsTable).OnColumn("SitemapFileId");
 
-        // The crawl state and the not-in-sitemap count look up crawled pages by host and normalized URL.
-        Create.Index("IX_DiscoveredUrls_Host_NormalizedUrl").OnTable(TableNames.Database.DiscoveredUrls)
-            .OnColumn("Host").Ascending().OnColumn("NormalizedUrl").Ascending();
+        // The index on DiscoveredUrls (Host, NormalizedUrl) is migration 022: DiscoveredUrls is a large table, so it is built concurrently.
     }
 
     private void CreateRequests()
@@ -72,7 +70,6 @@ public class CreateSitemapTables : Migration
     public override void Down()
     {
         Delete.Table(RequestsTable);
-        Delete.Index("IX_DiscoveredUrls_Host_NormalizedUrl").OnTable(TableNames.Database.DiscoveredUrls);
         Delete.Table(UrlsTable);
         Delete.Table(FilesTable);
     }
