@@ -1,4 +1,3 @@
-using System.Net;
 using Meilisearch;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,10 +39,10 @@ public static class AdaptersServiceCollectionExtensions
         services.Configure<ChromeRenderingOptions>(configuration.GetSection(ChromeRenderingOptions.SectionName));
 
         // The fetcher does not follow redirects, because the frontier handles them. The robots source follows a few.
-        services.AddHttpClient<HttpFetcher>(client => ConfigureClient(client, HttpFetcher.Timeout))
-            .ConfigurePrimaryHttpMessageHandler(() => Handler(allowRedirects: false));
-        services.AddHttpClient<HttpRobotsSource>(client => ConfigureClient(client, HttpRobotsSource.Timeout))
-            .ConfigurePrimaryHttpMessageHandler(() => Handler(allowRedirects: true));
+        // Both connect through SafeConnect, so every hop is checked against the address policy.
+        services.AddSafeNetwork(configuration);
+        services.AddSafeHttpClient<HttpFetcher>(HttpFetcher.Timeout, followRedirects: false);
+        services.AddSafeHttpClient<HttpRobotsSource>(HttpRobotsSource.Timeout, followRedirects: true);
 
         services.AddTransient<IFetcher>(provider => provider.GetRequiredService<HttpFetcher>());
         services.AddTransient<IRobotsSource>(provider => provider.GetRequiredService<HttpRobotsSource>());
@@ -72,19 +71,6 @@ public static class AdaptersServiceCollectionExtensions
         services.AddSingleton<ISearchIndex>(provider => provider.GetRequiredService<MeilisearchIndex>());
         return services.AddSingleton<ISearchQuery>(provider => provider.GetRequiredService<MeilisearchIndex>());
     }
-
-    private static void ConfigureClient(HttpClient client, TimeSpan timeout)
-    {
-        client.Timeout = timeout;
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(HttpFetcher.UserAgent);
-    }
-
-    private static SocketsHttpHandler Handler(bool allowRedirects) => new()
-    {
-        AllowAutoRedirect = allowRedirects,
-        MaxAutomaticRedirections = 5,
-        AutomaticDecompression = DecompressionMethods.All
-    };
 
     private static IMinioClient BuildMinioClient(MinioOptions options)
     {

@@ -161,6 +161,26 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         ((object?)row.LastCrawlAt).Should().BeNull();
     }
 
+    // UNVERIFIED: written without Docker.
+    [Fact]
+    public async Task CompleteOfABlockedUrlDisablesItRecordsStatusZeroAndNeverClaimsItAgain()
+    {
+        var url = await ClaimOne("https://a.example/");
+        var fetch = new FetchRecord { FetchedAt = TestData.Now, StatusCode = 0, ResponseTimeMs = 0, FinalUrl = url.Url };
+
+        await Frontier().Complete(url, new Blocked().ToUpdate(url, TestData.Now), fetch, default);
+        _time.Advance(TimeSpan.FromDays(30));
+
+        var row = await PostgresTestData.Row(postgres.DataSource, """SELECT * FROM "DiscoveredUrls" WHERE "Id" = @id""", new { id = url.Id });
+        ((string)row.Status).Should().Be("Disabled");
+        ((string)row.FailReason).Should().Be("blocked-address");
+        ((object?)row.NextCrawlAt).Should().BeNull();
+        var fetchStatus = await PostgresTestData.Scalar<int>(
+            postgres.DataSource, """SELECT "StatusCode" FROM "UrlFetches" WHERE "DiscoveredUrlId" = @id""", new { id = url.Id });
+        fetchStatus.Should().Be(0);
+        (await Frontier().Claim(10, Lease, default)).Should().BeEmpty();
+    }
+
     [Fact]
     public async Task CompleteOfARedirectAddsTheTargetAtTheSameDepthWithItsHostRow()
     {
