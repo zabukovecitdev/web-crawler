@@ -35,8 +35,14 @@ export function contentWord(status: ContentStatus): string {
   return CONTENT_WORDS[status]
 }
 
+const DELAY_SOURCE_WORDS: Record<CrawlProgress['delaySource'], string> = {
+  default: 'Default delay',
+  'robots.txt': 'robots.txt Crawl-delay',
+  adaptive: 'Adaptive, the site is slow or failing',
+}
+
 export function delaySourceWord(source: CrawlProgress['delaySource']): string {
-  return source === 'robots.txt' ? 'robots.txt Crawl-delay' : 'Default delay'
+  return DELAY_SOURCE_WORDS[source]
 }
 
 export type JobLook = { tone: Tone; word: string; live: boolean }
