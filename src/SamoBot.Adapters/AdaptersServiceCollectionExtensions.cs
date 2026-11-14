@@ -67,6 +67,8 @@ public static class AdaptersServiceCollectionExtensions
             return new MeilisearchClient(options.Host, options.ApiKey);
         });
 
+        services.AddSingleton<MeilisearchSettings>();
+        services.AddSingleton<ISearchPages, MeilisearchPageSearch>();
         services.AddSingleton<MeilisearchIndex>();
         services.AddSingleton<ISearchIndex>(provider => provider.GetRequiredService<MeilisearchIndex>());
         return services.AddSingleton<ISearchQuery>(provider => provider.GetRequiredService<MeilisearchIndex>());
