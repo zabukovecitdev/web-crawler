@@ -52,7 +52,7 @@ function Nav() {
 /** Graphite sidebar on desktop; stacks above the content on phones. */
 export function AppShell() {
   return (
-    <SidebarProvider className="flex-wrap items-stretch bg-background">
+    <SidebarProvider className="flex-wrap content-start items-stretch bg-background md:content-stretch">
       <Sidebar
         collapsible="none"
         className="h-auto w-full gap-6 border-r border-sidebar-border p-4 md:sticky md:top-0 md:h-svh md:w-[232px] md:shrink-0"

@@ -22,7 +22,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signOutRequest()
     } finally {
-      client.clear()
+      // Keep the /me query (it is observed); drop everything else cached for the old user.
+      client.removeQueries({ predicate: (query) => query.queryKey[0] !== meKey[0] })
       client.setQueryData(meKey, null)
     }
   }, [client])
