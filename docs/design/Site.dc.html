@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Site pages</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls<span class="cnt"><span class="led" aria-hidden="true"></span>1 live</span></a>
+<a href="Analytics.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="row between end">
+<div class="col">
+<p class="lbl"><a class="lnk" href="Main.dc.html" style="color: inherit">Sites</a> / Site</p>
+<div class="row">
+<h1 class="h1">docs.example.com</h1>
+<x-import component-from-global-scope="Zabukovec.Badge" tone="success" dot="{{yes}}">Crawling</x-import>
+</div>
+</div>
+<div class="row">
+<a class="lnk sm" href="Live.dc.html">Open live crawl</a>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Crawl again</x-import>
+</div>
+</div>
+<div class="row" style="gap: 12px 32px">
+<p class="lbl">Pages · <span style="color: var(--ink)">4&thinsp;812</span></p>
+<p class="lbl">Failed · <span style="color: var(--ink)">37</span></p>
+<p class="lbl">Median response · <span style="color: var(--ink)">184 ms</span></p>
+<p class="lbl">Delay · <span style="color: var(--ink)">1&thinsp;000 ms</span></p>
+<p class="lbl">First crawl · <span style="color: var(--ink)">2 Nov 2026</span></p>
+</div>
+<nav class="tabs" aria-label="Site sections">
+<a href="Site.dc.html" class="on" aria-current="page">Pages</a>
+<a href="Sitemap.dc.html">Sitemap</a>
+<a href="Sitemap.dc.html">Robots.txt</a>
+</nav>
+<x-import component-from-global-scope="Zabukovec.Card">
+<div class="row between" style="margin-bottom: 20px">
+<x-import component-from-global-scope="Zabukovec.Input" type="search" placeholder="Filter by URL or title" aria-label="Filter by URL or title" class="grow" style="max-width: 360px"></x-import>
+<nav class="tabs" aria-label="Status filter">
+<a href="#all" class="on" aria-current="true">All 4&thinsp;812</a>
+<a href="#ok">OK 4&thinsp;611</a>
+<a href="#redirects">Redirects 164</a>
+<a href="#errors">Errors 37</a>
+</nav>
+</div>
+<div class="scroll">
+<table class="tbl" style="min-width: 920px">
+<thead><tr><th scope="col">Page</th><th scope="col">Status</th><th scope="col">Type</th><th scope="col" style="text-align: right">Size</th><th scope="col" style="text-align: right">Response</th><th scope="col" style="text-align: right">Depth</th><th scope="col">Fetched</th><th scope="col">Content</th></tr></thead>
+<tbody>
+<sc-for list="{{pages}}" as="p" hint-placeholder-count="8">
+<tr>
+<td><a class="lnk" href="Page.dc.html">{{p.title}}</a><div class="ro mut">{{p.path}}</div></td>
+<td><x-import component-from-global-scope="Zabukovec.Badge" tone="{{p.tone}}">{{p.code}}</x-import></td>
+<td class="ro">{{p.type}}</td>
+<td class="n">{{p.size}}</td>
+<td class="n">{{p.ms}}</td>
+<td class="n">{{p.depth}}</td>
+<td class="mut">{{p.at}}</td>
+<td>{{p.content}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div class="row between" style="margin-top: 20px">
+<p class="ro mut">1–8 of 4&thinsp;812</p>
+<div class="row">
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet" size="sm" disabled="{{yes}}">Previous</x-import>
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet" size="sm">Next</x-import>
+</div>
+</div>
+</x-import>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+theme: this.props.dark ? 'dark' : 'light',
+yes: true,
+pages: [
+{ title: 'Installation guide', path: '/guide/installation', code: '200 OK', tone: 'success', type: 'text/html', size: '48.2 kB', ms: '172 ms', depth: '2', at: '13 Nov, 23:41', content: 'Parsed, indexed' },
+{ title: 'Getting started', path: '/guide/getting-started', code: '200 OK', tone: 'success', type: 'text/html', size: '36.9 kB', ms: '158 ms', depth: '1', at: '13 Nov, 23:41', content: 'Parsed, indexed' },
+{ title: 'Configuration reference', path: '/reference/configuration', code: '200 OK', tone: 'success', type: 'text/html', size: '112.4 kB', ms: '264 ms', depth: '2', at: '13 Nov, 23:40', content: 'Parsed, waiting for index' },
+{ title: 'Moved: upgrade notes', path: '/upgrade', code: '301 Moved', tone: 'neutral', type: 'text/html', size: '0.3 kB', ms: '61 ms', depth: '2', at: '13 Nov, 23:40', content: 'Redirect, no content' },
+{ title: 'API: crawl jobs', path: '/api/crawl-jobs', code: '200 OK', tone: 'success', type: 'text/html', size: '74.0 kB', ms: '201 ms', depth: '3', at: '13 Nov, 23:40', content: 'Parsed, indexed' },
+{ title: 'Not found', path: '/guide/legacy-setup', code: '404 Not found', tone: 'warning', type: 'text/html', size: '2.1 kB', ms: '88 ms', depth: '4', at: '13 Nov, 23:39', content: 'Not stored' },
+{ title: 'User manual (PDF)', path: '/downloads/manual.pdf', code: '200 OK', tone: 'success', type: 'application/pdf', size: '2.4 MB', ms: '912 ms', depth: '3', at: '13 Nov, 23:39', content: 'Skipped, not HTML' },
+{ title: 'Server error', path: '/api/playground', code: '503 Error', tone: 'signal', type: 'text/html', size: '0.9 kB', ms: '5 004 ms', depth: '3', at: '13 Nov, 23:38', content: 'Failed, retry in 10 min' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

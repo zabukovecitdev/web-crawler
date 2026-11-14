@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Request a crawl</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="zb.css">
+<link rel="stylesheet" href="ds/zabukovec/components/bundle.css">
+<script src="ds/zabukovec/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="app" data-theme="{{theme}}">
+<aside class="side">
+<div class="brand"><i aria-hidden="true"></i>SamoBot</div>
+<nav class="nav" aria-label="Main">
+<a href="Main.dc.html" class="on" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>Sites</a>
+<a href="Search.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</a>
+<a href="Live.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Crawls</a>
+<a href="Analytics.dc.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+</nav>
+<div class="who"><div class="av" aria-hidden="true">RZ</div><div>Rok Zabukovec<br><span>Signed in with Google</span></div></div>
+</aside>
+<main class="main">
+<div class="col">
+<p class="lbl">Sites · 5</p>
+<h1 class="h1">Sites</h1>
+</div>
+<x-import component-from-global-scope="Zabukovec.Card" title="All sites">
+<p class="mut">The list of sites is behind this dialog.</p>
+</x-import>
+</main>
+<div class="scrim">
+<section class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+<div class="col">
+<p class="lbl">New crawl</p>
+<h2 class="h2" id="dlg-title">Request a crawl</h2>
+<p class="mut">Give the address of the site. The crawl starts at this page and stays on this host.</p>
+</div>
+<x-import component-from-global-scope="Zabukovec.Input" type="url" label="Site URL" default-value="https://docs.example.com" hint="Include https://. One site for each crawl."></x-import>
+<div class="row sm" role="status" style="padding: 12px; border-radius: var(--radius-sm); background: var(--led-100); color: var(--led-ink)">
+<span class="led" aria-hidden="true"></span>
+<span><strong>Allowed.</strong> robots.txt lets SamoBot crawl this site. Delay between requests: 1&thinsp;000 ms.</span>
+</div>
+<hr class="rule">
+<div class="col" style="gap: 16px">
+<p class="lbl">Options</p>
+<div class="g2" style="gap: 16px">
+<x-import component-from-global-scope="Zabukovec.Input" type="number" label="Maximum depth" default-value="5" hint="Links away from the first page."></x-import>
+<x-import component-from-global-scope="Zabukovec.Input" type="number" label="Maximum pages" default-value="5000" hint="The crawl stops at this number."></x-import>
+</div>
+<x-import component-from-global-scope="Zabukovec.Toggle" label="Respect robots.txt" default-checked="{{yes}}"></x-import>
+<x-import component-from-global-scope="Zabukovec.Toggle" label="Render JavaScript in a browser (slower)"></x-import>
+</div>
+<div class="row" style="justify-content: flex-end">
+<x-import component-from-global-scope="Zabukovec.Button" variant="quiet">Cancel</x-import>
+<x-import component-from-global-scope="Zabukovec.Button" variant="primary">Start crawl</x-import>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.dark ? 'dark' : 'light', yes: true };
+}
+}
+</script>
+</body>
+</html>

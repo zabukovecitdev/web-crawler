@@ -35,6 +35,6 @@ public class CrawlEventListenerTests(PostgresFixture postgres) : IAsyncLifetime
         var sent = hub.Sent.Should().NotBeEmpty().And.Subject.First();
         sent.Group.Should().Be($"crawlJob:{job}");
         sent.Method.Should().Be("CrawlEvent");
-        JsonDocument.Parse((string)sent.Args[0]!).RootElement.GetProperty("eventType").GetString().Should().Be("JobStarted");
+        JsonElement.Parse((string)sent.Args[0]!).GetProperty("eventType").GetString().Should().Be("JobStarted");
     }
 }

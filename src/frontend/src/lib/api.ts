@@ -1,6 +1,6 @@
 import { apiBase, apiKey } from './config'
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+function buildHeaders(init?: RequestInit): Headers {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
   if (apiKey) {
@@ -9,7 +9,11 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   if (init?.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
-  const res = await fetch(`${apiBase}${path}`, { ...init, headers })
+  return headers
+}
+
+export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${apiBase}${path}`, { ...init, headers: buildHeaders(init) })
   if (!res.ok) {
     const text = await res.text()
     throw new Error(text || `${res.status} ${res.statusText}`)
