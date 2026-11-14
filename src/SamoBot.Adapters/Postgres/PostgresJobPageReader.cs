@@ -28,6 +28,18 @@ public sealed class PostgresJobPageReader(NpgsqlDataSource dataSource) : IJobPag
         LIMIT @Limit
         """;
 
+    private const string ListRecentEventsSql = $"""
+        SELECT "Id", "CrawlJobId", "EventType", "Payload", "CreatedAt"
+        FROM (
+            SELECT "Id", "CrawlJobId", "EventType", "Payload", "CreatedAt"
+            FROM "{TableNames.CrawlJobEvents}"
+            WHERE "CrawlJobId" = @CrawlJobId
+            ORDER BY "Id" DESC
+            LIMIT @Limit
+        ) recent
+        ORDER BY "Id"
+        """;
+
     public Task<IReadOnlyList<JobPage>> ListPages(int crawlJobId, int limit, int offset, CancellationToken ct) =>
         Query<JobPage>(ListPagesSql, new { CrawlJobId = crawlJobId, Limit = limit, Offset = offset }, ct);
 
@@ -39,6 +51,9 @@ public sealed class PostgresJobPageReader(NpgsqlDataSource dataSource) : IJobPag
 
     public Task<IReadOnlyList<JobEvent>> ListEvents(int crawlJobId, long afterId, int limit, CancellationToken ct) =>
         Query<JobEvent>(ListEventsSql, new { CrawlJobId = crawlJobId, AfterId = afterId, Limit = limit }, ct);
+
+    public Task<IReadOnlyList<JobEvent>> ListRecentEvents(int crawlJobId, int limit, CancellationToken ct) =>
+        Query<JobEvent>(ListRecentEventsSql, new { CrawlJobId = crawlJobId, Limit = limit }, ct);
 
     private async Task<IReadOnlyList<T>> Query<T>(string sql, object parameters, CancellationToken ct)
     {

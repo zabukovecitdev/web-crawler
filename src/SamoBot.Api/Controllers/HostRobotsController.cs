@@ -14,8 +14,11 @@ public sealed class HostRobotsController(RobotsGate robots) : ControllerBase
 {
     [HttpGet("{host}/robots")]
     [ProducesResponseType<RobotsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetRobots(string host, CancellationToken ct) =>
-        Ok(RobotsResponse.From(await robots.RulesFor(host, ct)));
+        HostKey.TryNormalize(host, out var key)
+            ? Ok(RobotsResponse.From(await robots.RulesFor(key, ct)))
+            : BadRequest("Invalid host.");
 
     [HttpGet("{host}/sitemaps")]
     [ProducesResponseType<SitemapsResponse>(StatusCodes.Status200OK)]
@@ -29,7 +32,7 @@ public sealed class HostRobotsController(RobotsGate robots) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Explain([FromBody] ExplainRequest request, CancellationToken ct)
     {
-        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
         {
             return BadRequest("Invalid URL.");
         }
