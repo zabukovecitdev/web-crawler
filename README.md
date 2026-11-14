@@ -34,7 +34,23 @@ docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
-Send the key in the header `X-Api-Key`. The dashboard is in `src/frontend/`.
+Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`.
+
+### Dashboard sign-in (Google)
+
+The dashboard signs in with Google and the API issues a cookie session (`samobot.session`: HttpOnly, SameSite=Lax, 8 hours sliding, Secure outside Development).
+Set these in `.env`:
+
+| Variable | Meaning |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | OAuth client ID (Web application). The dashboard origin must be an authorised JavaScript origin. |
+| `AUTH_ALLOWED_EMAILS` | Comma-separated emails that may sign in. |
+| `AUTH_ALLOWED_DOMAINS` | Comma-separated domains (matched against the verified `hd` claim or the email domain). |
+| `CORS_ORIGIN` | Dashboard origin, default `http://localhost:5173`. |
+
+Both lists empty means nobody can sign in (the API logs a warning at startup; the API key still works). Config keys: `Google:ClientId`, `Auth:AllowedEmails`, `Auth:AllowedDomains`.
+`http://localhost:5173` talking to `http://localhost:5080` is same-site (ports do not matter), so the Lax cookie works in dev over plain http.
+Frontend contract: `fetch(..., { credentials: 'include' })`; send `X-Requested-With: samobot` on every POST/PUT/PATCH/DELETE (cookie sessions only; `/auth/google` is exempt); SignalR uses the same cookie. Unauthenticated calls return 401, never a redirect.
 
 Tests:
 
