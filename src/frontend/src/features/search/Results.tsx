@@ -20,7 +20,7 @@ function Hit({ hit }: { hit: SearchHitDto }) {
   return (
     <li className="flex flex-col gap-1.5 border-b py-5 first:pt-0 last:border-b-0 last:pb-0">
       <h3 className="m-0 text-lg font-semibold leading-6">
-        <Link className="underline-offset-4 hover:underline" to={`/sites/${hit.host}/pages/${hit.pageId}`}>
+        <Link className="underline-offset-4 hover:underline" to={`/sites/${encodeURIComponent(hit.host)}/pages/${hit.pageId}`}>
           {hit.title || hit.url}
         </Link>
       </h3>
