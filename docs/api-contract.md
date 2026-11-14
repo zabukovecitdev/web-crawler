@@ -34,4 +34,4 @@ Notes
 - Percentiles use `percentile_cont` over `UrlFetches.ResponseTimeMs`. `requests` counts rows of `UrlFetches`; `pages` counts `DiscoveredUrls` rows with a fetch.
 - A site's `status`: `Crawling` if a Running job has its host; `Paused` if its newest job is Paused; `Crawled` if it has fetches; else `Never`.
 - Seed URL rules for `POST /crawl-jobs`: absolute `http` or `https` only; reject loopback, private, link-local and metadata addresses (SSRF).
-- `snippet` is plain text plus `<mark>`/`</mark>`; the client must not use `dangerouslySetInnerHTML`.
+- `snippet` is plain text plus `<mark>`/`</mark>`. The server entity-encodes `& < > " '` in the text (`&amp; &lt; &gt; &quot; &#39;`); the client splits on the mark tags, decodes those five entities in each text part, and must not use `dangerouslySetInnerHTML`.
