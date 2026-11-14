@@ -24,7 +24,7 @@ Transport notes:
 | `POST /api/v1/hosts/explain` | `{ url }` | `ExplainDto` |
 | `GET /api/v1/pages/{id}` | | `PageDetail` |
 | `GET /api/v1/pages/{id}/content` | | raw stored body, `text/plain`, size-capped, `404` if not stored; sent with `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and an inline `Content-Disposition` |
-| `GET /api/v1/search?q&host&limit&offset` | | `SearchResponse` |
+| `GET /api/v1/search?q&host&limit&offset` | | `SearchResponse` (one document per URL, in the Meilisearch index `pages`; the old `parsed_documents` index can be deleted with `curl -X DELETE -H "Authorization: Bearer $MEILI_MASTER_KEY" http://localhost:7700/indexes/parsed_documents`) |
 | `GET /api/v1/crawl-jobs?limit` | | `CrawlJobDto[]` |
 | `GET /api/v1/crawl-jobs/{id}` | | `CrawlJobDto` |
 | `POST /api/v1/crawl-jobs` | `CreateCrawlJobRequest` | `201 CrawlJobDto` |
