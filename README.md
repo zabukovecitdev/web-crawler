@@ -57,6 +57,33 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 A worker that dies leaves a lease. When the lease ends, the next claim takes the row again.
 A job is complete when no URL is in flight, no URL waits for its first fetch or a retry, and no page waits for the parser.
 
+## Network safety (SSRF)
+
+Seed URLs are checked as text (`SeedUrlValidator`). The real defence runs at connect time, because a public name can
+resolve to a private address (DNS rebinding) and a redirect can point at one.
+
+- **Connect check:** the clients of the fetcher and of robots.txt use `SafeConnect`, a `SocketsHttpHandler.ConnectCallback`.
+  It resolves all addresses, drops those that `IpAddressPolicy` denies (private, loopback, link-local and metadata,
+  CGNAT, multicast, reserved, documentation, and IPv6 forms that embed such an IPv4 address) and connects to the first
+  allowed one. No allowed address gives `BlockedAddressException`. Every redirect hop opens its own connection, so every
+  hop is checked. A new HTTP client for the open web must be added with `AddSafeHttpClient`.
+- **Blocked URLs** end as `Disabled` with the reason `blocked-address`: no retry, no recrawl. The job progress counts them
+  as skipped, not failed.
+- **Address cache:** a successful lookup stores the allowed addresses in `Hosts.ResolvedAddresses` and `ResolvedAt`
+  (`IHostAddressCache`, with an in-memory layer in front). While `ResolvedAt` is younger than `Crawler:DnsCacheMinutes`
+  (default 60, 0 turns it off) a connect uses the cached addresses and asks no DNS. Every cached address is checked with
+  `IpAddressPolicy` again on every use. When no cached address connects, the host is resolved once more, the cache is
+  updated and the connect is retried. When DNS gives only denied addresses, the cache is cleared and the connect is
+  blocked. The connection is made by IP, but the request URL is never rewritten, so the Host header and the TLS server
+  name stay the host name. The cache key is the DNS name; a name with no `Hosts` row is cached in memory only.
+- **Browser rendering:** Chrome connects over CDP and cannot use the callback. Every request of the page (navigation,
+  redirects, sub-resources) is routed through Playwright, and its host must resolve only to allowed addresses. Chrome
+  resolves the name again itself, so a short rebinding window remains. Run Chrome in a network that cannot reach
+  private ranges.
+- **Configuration:** `Crawler:AllowPrivateAddresses` (default false; development and tests only, logs a startup warning),
+  `Crawler:UseProxy` (default false; a proxy would hide the target from the connect check),
+  `Crawler:DnsCacheMinutes` (default 60).
+
 ## Design decisions
 
 - PostgreSQL replaces RabbitMQ, Redis and Neo4j. One system holds all state, and one transaction records each result.
