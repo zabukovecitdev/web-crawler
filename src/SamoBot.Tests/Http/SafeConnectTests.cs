@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Options;
 using SamoBot.Adapters.Http;
 using SamoBot.Core.Common;
+using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Http;
 
@@ -32,7 +33,7 @@ public class SafeConnectTests
     }
 
     private static SafeConnect Build(IDnsResolver dns, ISocketConnector connector, bool allowPrivate = false) =>
-        new(new SafeResolver(dns, Options.Create(new CrawlerNetworkOptions { AllowPrivateAddresses = allowPrivate })), connector);
+        new(new SafeResolver(dns, new FakeHostAddressCache(), Options.Create(new CrawlerNetworkOptions { AllowPrivateAddresses = allowPrivate }), TimeProvider.System), connector);
 
     private static DnsEndPoint Context(string host, int port = 443) => new(host, port);
 
