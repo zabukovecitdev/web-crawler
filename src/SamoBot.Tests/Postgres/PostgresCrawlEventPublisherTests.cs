@@ -13,7 +13,7 @@ public class PostgresCrawlEventPublisherTests(PostgresFixture postgres) : IAsync
     public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
-    public async Task PublishStoresTheEventAndNotifiesListenersWithTheEnvelope()
+    public async Task PublishStoresTheEventAndNotifiesListenersWithTheFlatEvent()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await using var listener = await postgres.DataSource.OpenConnectionAsync();
@@ -31,9 +31,32 @@ public class PostgresCrawlEventPublisherTests(PostgresFixture postgres) : IAsync
         ((string)stored.EventType).Should().Be("FetchCompleted");
         received.Should().NotBeNull();
         using var envelope = JsonDocument.Parse(received!);
-        envelope.RootElement.GetProperty("crawlJobId").GetInt32().Should().Be(job);
-        envelope.RootElement.GetProperty("eventId").GetInt64().Should().Be((long)stored.Id);
-        envelope.RootElement.GetProperty("eventType").GetString().Should().Be("FetchCompleted");
-        envelope.RootElement.GetProperty("payload").GetProperty("url").GetString().Should().Be("https://a.example/");
+        var root = envelope.RootElement;
+        root.GetProperty("crawlJobId").GetInt32().Should().Be(job);
+        root.GetProperty("id").GetInt64().Should().Be((long)stored.Id);
+        root.GetProperty("eventType").GetString().Should().Be("FetchCompleted");
+        root.GetProperty("url").GetString().Should().Be("https://a.example/");
+        root.GetProperty("at").GetDateTimeOffset().Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(1));
+        root.TryGetProperty("payload", out _).Should().BeFalse();
+        root.TryGetProperty("eventId", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PublishStoresAnOversizedEventButSendsNoNotification()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        await using var listener = await postgres.DataSource.OpenConnectionAsync();
+        var received = new List<string>();
+        listener.Notification += (_, args) => received.Add(args.Payload);
+        await using (var listen = new Npgsql.NpgsqlCommand($"LISTEN {PostgresCrawlEventPublisher.Channel}", listener))
+        {
+            await listen.ExecuteNonQueryAsync();
+        }
+
+        await new PostgresCrawlEventPublisher(postgres.DataSource).Publish(job, "FetchStarted", new { url = new string('a', 9000) }, default);
+        await listener.WaitAsync(TimeSpan.FromSeconds(1));
+
+        received.Should().BeEmpty();
+        (await PostgresTestData.Scalar<int>(postgres.DataSource, """SELECT count(*)::int FROM "CrawlJobEvents" """)).Should().Be(1);
     }
 }

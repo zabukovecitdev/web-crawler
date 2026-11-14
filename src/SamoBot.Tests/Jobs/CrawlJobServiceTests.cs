@@ -124,8 +124,61 @@ public class CrawlJobServiceTests
     [Fact]
     public async Task CreateKeepsANonDefaultPortInTheAllowedHost()
     {
-        var result = await _service.Create(Request("http://localhost:5000/start"), default);
+        var result = await _service.Create(Request("http://example.com:5000/start"), default);
 
-        result.Value.AllowedHosts.Should().Equal("localhost:5000");
+        result.Value.AllowedHosts.Should().Equal("example.com:5000");
+    }
+
+    [Theory]
+    [InlineData("http://localhost/")]
+    [InlineData("http://169.254.169.254/")]
+    [InlineData("https://user:pw@a.example/")]
+    [InlineData("ftp://a.example/")]
+    public async Task CreateRejectsUnsafeSeedsWithoutStoringAnything(string seed)
+    {
+        var result = await _service.Create(Request("https://ok.example/", seed), default);
+
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle().Which.Message.Should().StartWith("Seed URL 2:");
+        _events.Published.Should().BeEmpty();
+        _jobs.Saved.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAndStartAddsSeedsAndPublishesCreatedThenStarted()
+    {
+        var result = await _service.CreateAndStart(Request("https://a.example/"), default);
+
+        result.IsSuccess.Should().BeTrue();
+        _frontier.AddedSeeds.Should().ContainSingle();
+        _events.Published.Select(e => e.EventType).Should().Equal(CrawlEventTypes.JobCreated, CrawlEventTypes.JobStarted);
+    }
+
+    [Fact]
+    public async Task CreateAndStartWithUnsafeSeedStartsNothing()
+    {
+        var result = await _service.CreateAndStart(Request("http://10.0.0.1/"), default);
+
+        result.IsFailed.Should().BeTrue();
+        _frontier.AddedSeeds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ActionsOnAMissingJobFailWithAJobNotFoundError()
+    {
+        (await _service.Start(99, default)).HasError<JobNotFoundError>().Should().BeTrue();
+        (await _service.Pause(99, default)).HasError<JobNotFoundError>().Should().BeTrue();
+        (await _service.Cancel(99, default)).HasError<JobNotFoundError>().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AnInvalidTransitionIsNotAJobNotFoundError()
+    {
+        AddJob(CrawlJobStatus.Pending);
+
+        var result = await _service.Pause(5, default);
+
+        result.IsFailed.Should().BeTrue();
+        result.HasError<JobNotFoundError>().Should().BeFalse();
     }
 }
