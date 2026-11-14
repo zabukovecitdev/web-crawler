@@ -76,7 +76,7 @@ internal static class AnalyticsSql
 
     /// <summary>
     /// Buckets are UTC. The series runs from the first bucket of the window to the bucket of @To, one row per bucket,
-    /// with zero where nothing was fetched. For the all range it starts at the oldest fetch, cut to @Floor.
+    /// with zero where nothing was fetched. The first bucket starts at the truncated hour or day but counts only fetches from @From. For the all range it starts at the oldest fetch, cut to @Floor.
     /// </summary>
     public const string Timeseries = $"""
         WITH base AS (
@@ -91,7 +91,7 @@ internal static class AnalyticsSql
         counts AS (
             SELECT date_trunc(@Unit, f."FetchedAt" AT TIME ZONE 'UTC') AS "Bucket", count(*) AS "Requests"
             {Source}
-            WHERE f."FetchedAt" >= (SELECT "First" AT TIME ZONE 'UTC' FROM bounds) AND {ForHost}
+            WHERE f."FetchedAt" >= (SELECT "First" AT TIME ZONE 'UTC' FROM bounds) AND {InWindow} AND {ForHost}
             GROUP BY 1
         )
         SELECT (g."Bucket" AT TIME ZONE 'UTC') AS "Bucket", COALESCE(c."Requests", 0) AS "Requests"

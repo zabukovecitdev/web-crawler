@@ -193,4 +193,20 @@ public class PostgresAnalyticsTests(PostgresFixture postgres) : IAsyncLifetime
         week.Should().HaveCount(8);
         week.Should().OnlyContain(p => p.Requests == 0);
     }
+
+    [Fact]
+    public async Task TheFirstBucketCountsOnlyFetchesFromTheStartOfTheWindow()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        var url = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/1");
+        await Fetch(url, TimeSpan.FromHours(24) + TimeSpan.FromMinutes(20), 200);
+        await Fetch(url, TimeSpan.FromHours(23) + TimeSpan.FromMinutes(50), 200);
+
+        var points = await Analytics.Timeseries(AnalyticsRange.Day, null, AnalyticsBucket.Hour, default);
+        var overview = await Analytics.Overview(AnalyticsRange.Day, default);
+
+        points[0].Bucket.Should().Be(new DateTimeOffset(2026, 1, 9, 12, 0, 0, TimeSpan.Zero));
+        points[0].Requests.Should().Be(1);
+        points.Sum(p => p.Requests).Should().Be(overview.Requests);
+    }
 }
