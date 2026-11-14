@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using SamoBot.Adapters.Http;
 using SamoBot.Core.Domain;
+using SamoBot.Core.Parsing;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Browser;
@@ -109,7 +110,8 @@ public sealed partial class BrowserFetcher(
             StatusCode = response?.Status ?? 0,
             ContentType = "text/html; charset=utf-8",
             Content = Encoding.UTF8.GetBytes(html),
-            ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds
+            ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
+            XRobotsTag = response is null ? null : XRobotsTag.Join(await response.HeaderValuesAsync(XRobotsTag.HeaderName))
         };
     }
 

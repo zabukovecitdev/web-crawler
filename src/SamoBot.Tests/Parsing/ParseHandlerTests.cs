@@ -65,6 +65,34 @@ public class ParseHandlerTests
         queue.Completed.Single().Links.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData("nofollow")]
+    [InlineData("noindex, nofollow")]
+    [InlineData("none")]
+    [InlineData("samobot: nofollow")]
+    public async Task HandleWithNoFollowInTheXRobotsTagHeaderFollowsNoLinksButStoresThem(string header)
+    {
+        var (queue, handler) = Build(Page());
+
+        await handler.Handle(Fetch with { XRobotsTag = header }, default);
+
+        var completed = queue.Completed.Single();
+        completed.Links.Should().BeEmpty();
+        completed.PageLinks.Select(l => l.ToUrl).Should().Equal("https://a.example/about", "https://other.example/");
+    }
+
+    [Theory]
+    [InlineData("noindex")]
+    [InlineData("googlebot: nofollow")]
+    public async Task HandleWithAnXRobotsTagThatDoesNotForbidFollowingFollowsTheLinks(string header)
+    {
+        var (queue, handler) = Build(Page());
+
+        await handler.Handle(Fetch with { XRobotsTag = header }, default);
+
+        queue.Completed.Single().Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    }
+
     [Fact]
     public async Task HandleSkipsLinksMarkedRelNoFollowButStillStoresThem()
     {

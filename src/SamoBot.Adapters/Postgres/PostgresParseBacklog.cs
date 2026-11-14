@@ -26,10 +26,10 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
             UPDATE "{TableNames.UrlFetches}" f
             SET "LeaseUntil" = @Now + make_interval(secs => @LeaseSeconds)
             FROM picked p WHERE p."Id" = f."Id"
-            RETURNING f."Id", f."DiscoveredUrlId", f."ObjectName"
+            RETURNING f."Id", f."DiscoveredUrlId", f."ObjectName", f."XRobotsTag"
         )
         SELECT l."Id" AS "FetchId", u."Id" AS "UrlId", u."CrawlJobId", u."Url", u."Depth", l."ObjectName",
-               j."AllowedHosts", j."MaxDepth"
+               j."AllowedHosts", j."MaxDepth", l."XRobotsTag"
         FROM leased l
         JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = l."DiscoveredUrlId"
         JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId"

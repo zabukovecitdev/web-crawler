@@ -11,4 +11,7 @@ public sealed record FetchToParse
     public required string ObjectName { get; init; }
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
+
+    /// <summary>The X-Robots-Tag header of the fetch, one value per line. Null without the header.</summary>
+    public string? XRobotsTag { get; init; }
 }

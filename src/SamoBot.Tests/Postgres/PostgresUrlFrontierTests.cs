@@ -150,6 +150,18 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheXRobotsTagOfACompletedFetchReachesTheParser()
+    {
+        var url = await ClaimOne("https://a.example/");
+        var update = new Succeeded(TimeSpan.FromDays(1)).ToUpdate(url, TestData.Now);
+
+        await Frontier().Complete(url, update, Fetch() with { XRobotsTag = "noindex\nsamobot: nofollow" }, default);
+
+        var claimed = await new PostgresParseBacklog(postgres.DataSource, _time).Claim(10, TimeSpan.FromMinutes(5), default);
+        claimed.Should().ContainSingle().Which.XRobotsTag.Should().Be("noindex\nsamobot: nofollow");
+    }
+
+    [Fact]
     public async Task CompleteOfADisabledUrlWithoutFetchStoresReasonAndNoNextCrawl()
     {
         var url = await ClaimOne("https://a.example/");

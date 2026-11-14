@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using SamoBot.Adapters.Browser;
 using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
+using SamoBot.Core.Parsing;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Http;
@@ -76,9 +77,14 @@ public sealed class HttpFetcher(
             Content = content,
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
             RedirectLocation = response.Headers.Location?.OriginalString,
-            RetryAfter = RetryAfter(response)
+            RetryAfter = RetryAfter(response),
+            XRobotsTag = RobotsTag(response)
         };
     }
+
+    /// <summary>The raw X-Robots-Tag values. NonValidated keeps each header line whole, crawler name prefix included.</summary>
+    private static string? RobotsTag(HttpResponseMessage response) =>
+        response.Headers.NonValidated.TryGetValues(XRobotsTag.HeaderName, out var values) ? XRobotsTag.Join(values) : null;
 
     /// <summary>Retry-After is delta seconds or an HTTP date. A date in the past gives zero.</summary>
     private TimeSpan? RetryAfter(HttpResponseMessage response)

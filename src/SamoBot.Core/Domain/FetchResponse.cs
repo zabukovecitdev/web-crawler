@@ -14,6 +14,9 @@ public sealed record FetchResponse
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
 
+    /// <summary>The X-Robots-Tag header values, one per line (see <see cref="Parsing.XRobotsTag"/>). Null without the header.</summary>
+    public string? XRobotsTag { get; init; }
+
     /// <summary>The wait that a Retry-After header asked for (delta seconds, or the date minus now). Null without the header.</summary>
     public TimeSpan? RetryAfter { get; init; }
 

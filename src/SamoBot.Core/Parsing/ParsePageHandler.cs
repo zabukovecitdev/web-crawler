@@ -1,3 +1,4 @@
+using SamoBot.Core.Crawling;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -5,7 +6,7 @@ namespace SamoBot.Core.Parsing;
 
 /// <summary>
 /// Parses one stored fetch and hands the page and its in-scope links to the parse queue.
-/// A page-level robots nofollow drops every link; a link-level rel="nofollow" drops that link.
+/// A page-level nofollow (robots meta tag or X-Robots-Tag header) drops every link; a link-level rel="nofollow" drops that link.
 /// </summary>
 public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser parser, IParseBacklog queue)
 {
@@ -23,7 +24,7 @@ public sealed class ParsePageHandler(IContentStore contentStore, IHtmlParser par
 
     private static IReadOnlyList<NewUrl> LinksToFollow(FetchToParse fetch, ParsedPage page)
     {
-        if (page.RobotsDirectives.ForbidsFollow)
+        if (page.RobotsDirectives.ForbidsFollow || XRobotsTag.ForbidsFollow(fetch.XRobotsTag, RobotsGate.UserAgent))
         {
             return [];
         }

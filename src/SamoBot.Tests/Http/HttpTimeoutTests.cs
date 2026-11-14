@@ -191,4 +191,15 @@ public class HttpTimeoutTests
         download.IsSuccess.Should().BeTrue();
         download.Content.Should().HaveCount(9);
     }
+
+    [Fact]
+    public async Task XRobotsTagHeadersFromTheWireAreKeptOnePerLine()
+    {
+        await using var server = LoopbackServer.Fast(
+            "<html>ok</html>", extraHeaders: "X-Robots-Tag: noindex\r\nX-Robots-Tag: samobot: noarchive, nofollow\r\n");
+
+        var response = await Fetcher().Fetch(Url(server), default);
+
+        response.XRobotsTag.Should().Be("noindex\nsamobot: noarchive, nofollow");
+    }
 }

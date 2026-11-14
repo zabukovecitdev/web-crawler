@@ -151,4 +151,26 @@ public class HttpFetcherTests
 
         response.RetryAfter.Should().BeNull();
     }
+
+    [Fact]
+    public async Task FetchReadsEveryXRobotsTagHeaderWhole()
+    {
+        var response = await Fetcher(_ =>
+        {
+            var page = Html(HttpStatusCode.OK);
+            page.Headers.TryAddWithoutValidation("X-Robots-Tag", "noindex");
+            page.Headers.TryAddWithoutValidation("X-Robots-Tag", "googlebot: noindex, nofollow");
+            return page;
+        }).Fetch(TestData.Url(), default);
+
+        response.XRobotsTag.Should().Be("noindex\ngooglebot: noindex, nofollow");
+    }
+
+    [Fact]
+    public async Task FetchWithoutXRobotsTagHasNone()
+    {
+        var response = await Fetcher(_ => Html(HttpStatusCode.OK)).Fetch(TestData.Url(), default);
+
+        response.XRobotsTag.Should().BeNull();
+    }
 }
