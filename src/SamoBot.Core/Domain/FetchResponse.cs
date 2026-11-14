@@ -29,8 +29,7 @@ public sealed record FetchResponse
         }
 
         var mediaType = ContentType.Split(';')[0].Trim();
-        return mediaType.Equals("text/html", StringComparison.OrdinalIgnoreCase)
-               || mediaType.Equals("application/xhtml+xml", StringComparison.OrdinalIgnoreCase);
+        return StoredMediaTypes.IsStored(mediaType);
     }
 
     private bool LooksLikeHtml()

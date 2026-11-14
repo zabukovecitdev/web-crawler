@@ -20,6 +20,7 @@ public static class PostgresServiceCollectionExtensions
         services.AddSingleton(NpgsqlDataSource.Create(options.ConnectionString));
         services.AddSingleton<ISiteReader, PostgresSiteReader>();
         services.AddSingleton<IPageReader, PostgresPageReader>();
+        services.AddSingleton<IAnalyticsReader, PostgresAnalyticsReader>();
         return services;
     }
 }
