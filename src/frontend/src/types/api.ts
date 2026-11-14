@@ -66,6 +66,17 @@ export type PageDetail = PageSummary & {
   usedJsRendering: boolean
   fetches: FetchRecordDto[]
   parsed: ParsedPageDto | null
+  /** The earliest page that linked to this one; null for seed URLs. */
+  foundOn: { pageId: number; url: string } | null
+}
+export type PageLinkDirection = 'out' | 'in'
+export type PageLinkDto = {
+  url: string
+  text: string | null
+  internal: boolean
+  noFollow: boolean
+  pageId: number | null
+  statusCode: number | null
 }
 export type ParsedPageDto = {
   title: string

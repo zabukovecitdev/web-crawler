@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiFetch, apiFetchResponse, queryString } from '@/lib/api'
-import type { Page, PageDetail, PageSummary } from '@/types/api'
+import type { Page, PageDetail, PageLinkDirection, PageLinkDto, PageSummary } from '@/types/api'
 import { hostPath, retryUnlessMissing } from './sites-api'
 
 export type PageState = 'all' | 'ok' | 'redirect' | 'error'
@@ -36,6 +36,22 @@ export function usePageContent(id: number, enabled: boolean) {
     queryKey: ['page-content', id],
     queryFn: () => fetchContent(id),
     enabled,
+    retry: retryUnlessMissing,
+  })
+}
+
+export const LINKS_PAGE_SIZE = 50
+
+export function pageLinksPath(id: number, direction: PageLinkDirection, offset: number): string {
+  return `/api/v1/pages/${id}/links${queryString({ direction, limit: LINKS_PAGE_SIZE, offset })}`
+}
+
+/** One page of links on this page (out) or to this page (in). */
+export function usePageLinks(id: number, direction: PageLinkDirection, offset: number) {
+  return useQuery({
+    queryKey: ['page-links', id, direction, offset],
+    queryFn: () => apiFetch<Page<PageLinkDto>>(pageLinksPath(id, direction, offset)),
+    placeholderData: keepPreviousData,
     retry: retryUnlessMissing,
   })
 }

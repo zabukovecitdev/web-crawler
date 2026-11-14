@@ -1,5 +1,6 @@
-import type { ContentState, PageDetail, PageSummary, ParsedPageDto } from '@/types/api'
+import type { ContentState, PageDetail, PageLinkDirection, PageLinkDto, PageSummary, ParsedPageDto } from '@/types/api'
 import { MINUTE, ago } from '../util'
+import { inLinks, outLinks, type LinkPeer } from './links'
 import { SITES } from './sites'
 
 type Template = {
@@ -68,11 +69,45 @@ const PARSED: ParsedPageDto = {
     { level: 2, text: 'Crawl delay' },
     { level: 2, text: 'Page limits' },
   ],
-  linkCount: 64,
-  internalLinkCount: 52,
+  linkCount: 0,
+  internalLinkCount: 0,
   imageCount: 3,
   jsonLdBlocks: 1,
   openGraph: { 'og:title': 'Configuration reference', 'og:type': 'article' },
+}
+
+function peersOf(host: string, except: number): LinkPeer[] {
+  return pagesOf(host)
+    .filter((p) => p.id % 100 !== except)
+    .map((p) => ({ id: p.id, url: p.url, code: p.statusCode ?? 0 }))
+}
+
+/** Links on or to a page, or null when the page does not exist. Only parsed pages store outgoing links. */
+export function pageLinks(id: number, direction: PageLinkDirection): PageLinkDto[] | null {
+  const site = SITES[Math.floor(id / 100)]
+  const template = TEMPLATES.find((t) => t.n === id % 100)
+  if (!site || !template) {
+    return null
+  }
+  const peers = peersOf(site.host, template.n)
+  if (direction === 'in') {
+    return inLinks(peers.slice(0, 4))
+  }
+  return template.state.startsWith('Parsed') ? outLinks(peers) : []
+}
+
+function parsedOf(title: string, url: string, out: PageLinkDto[]): ParsedPageDto {
+  return {
+    ...PARSED,
+    title,
+    canonical: url,
+    linkCount: out.length,
+    internalLinkCount: out.filter((l) => l.internal).length,
+  }
+}
+
+function foundOn(host: string, n: number): PageDetail['foundOn'] {
+  return n === 2 ? null : { pageId: pageId(host, 2), url: `https://${host}${TEMPLATES[1].path}` }
 }
 
 export function pageDetail(id: number): PageDetail | null {
@@ -83,6 +118,7 @@ export function pageDetail(id: number): PageDetail | null {
   }
   const base = summary(site.host, template)
   const stored = template.state.startsWith('Parsed')
+  const out = pageLinks(id, 'out') ?? []
   return {
     ...base,
     host: site.host,
@@ -94,6 +130,7 @@ export function pageDetail(id: number): PageDetail | null {
       { fetchedAt: ago(template.n * MINUTE), statusCode: template.code, contentType: template.type, contentLength: template.length, responseTimeMs: template.ms, finalUrl: null },
       { fetchedAt: ago(26 * 60 * MINUTE), statusCode: template.code, contentType: template.type, contentLength: template.length, responseTimeMs: template.ms + 30, finalUrl: null },
     ],
-    parsed: stored ? { ...PARSED, title: template.title, canonical: base.url } : null,
+    foundOn: foundOn(site.host, template.n),
+    parsed: stored ? parsedOf(template.title, base.url, out) : null,
   }
 }
