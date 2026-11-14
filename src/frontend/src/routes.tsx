@@ -1,15 +1,25 @@
+import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnalyticsPage } from '@/features/analytics/AnalyticsPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
-import { CrawlDetailPage } from '@/features/crawl/CrawlDetailPage'
-import { CrawlsPage } from '@/features/crawl/CrawlsPage'
-import { SearchPage } from '@/features/search/SearchPage'
-import { PageDetailPage } from '@/features/sites/PageDetailPage'
-import { SiteDetailPage } from '@/features/sites/SiteDetailPage'
-import { SitemapPage } from '@/features/sites/SitemapPage'
-import { SitesPage } from '@/features/sites/SitesPage'
+
+const AnalyticsPage = lazy(() =>
+  import('@/features/analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
+)
+const CrawlDetailPage = lazy(() =>
+  import('@/features/crawl/CrawlDetailPage').then((m) => ({ default: m.CrawlDetailPage })),
+)
+const CrawlsPage = lazy(() => import('@/features/crawl/CrawlsPage').then((m) => ({ default: m.CrawlsPage })))
+const SearchPage = lazy(() => import('@/features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
+const PageDetailPage = lazy(() =>
+  import('@/features/sites/PageDetailPage').then((m) => ({ default: m.PageDetailPage })),
+)
+const SiteDetailPage = lazy(() =>
+  import('@/features/sites/SiteDetailPage').then((m) => ({ default: m.SiteDetailPage })),
+)
+const SitemapPage = lazy(() => import('@/features/sites/SitemapPage').then((m) => ({ default: m.SitemapPage })))
+const SitesPage = lazy(() => import('@/features/sites/SitesPage').then((m) => ({ default: m.SitesPage })))
 
 export function AppRoutes() {
   return (
