@@ -1,5 +1,6 @@
 import type { ContentStatus, CrawlEvent, CrawlJobDto, CrawlProgress } from '@/types/api'
 import { ago, HOUR, MINUTE } from '../util'
+
 import { LIVE_JOB_ID } from './sites'
 
 export const JOBS: CrawlJobDto[] = [
@@ -84,6 +85,12 @@ export function completedEvent(jobId: number, i: number): CrawlEvent {
   }
 }
 
-export function recentEvents(jobId: number): (CrawlEvent & { id: number })[] {
-  return Array.from({ length: ROWS.length }, (_, i) => ({ ...completedEvent(jobId, i), id: i + 1 }))
+/** Past requests, oldest id first; the newest one finished 1.5 s ago. */
+export function recentEvents(jobId: number, after = 0): (CrawlEvent & { id: number })[] {
+  const events = Array.from({ length: ROWS.length }, (_, i) => ({
+    ...completedEvent(jobId, i),
+    at: ago((ROWS.length - i) * 1500),
+    id: i + 1,
+  }))
+  return events.filter((event) => event.id > after)
 }
