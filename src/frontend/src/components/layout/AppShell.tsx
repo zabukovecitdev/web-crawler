@@ -1,50 +1,75 @@
-import { Activity, LayoutDashboard, ListTree, Shield } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { cn } from '@/lib/utils'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Led } from '@/components/shared/Led'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@/components/ui/sidebar'
+import { NAV_ITEMS, isActive } from './nav'
+import { UserBlock } from './UserBlock'
+import { useLiveCrawls } from './useLiveCrawls'
 
-const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/jobs', label: 'Crawl jobs', icon: ListTree },
-  { to: '/compliance', label: 'Compliance', icon: Shield },
-]
+function Brand() {
+  return (
+    <Link to="/" className="flex items-center gap-2 px-2 text-lg font-semibold tracking-tight">
+      <i aria-hidden="true" className="size-2.5 rounded-[2px] bg-primary" />
+      SamoBot
+    </Link>
+  )
+}
 
+function Nav() {
+  const { pathname } = useLocation()
+  const live = useLiveCrawls()
+
+  return (
+    <SidebarMenu className="flex-row flex-wrap gap-0.5 md:flex-col" aria-label="Main">
+      {NAV_ITEMS.map((item) => (
+        <SidebarMenuItem key={item.to}>
+          <SidebarMenuButton asChild isActive={isActive(item, pathname)} className="h-10 px-3 text-[15px]">
+            <NavLink to={item.to} aria-current={isActive(item, pathname) ? 'page' : undefined}>
+              <item.icon strokeWidth={1.5} />
+              {item.label}
+              {item.to === '/crawls' && live > 0 ? (
+                <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[11px]">
+                  <Led />
+                  {live} live
+                </span>
+              ) : null}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  )
+}
+
+/** Graphite sidebar on desktop; stacks above the content on phones. */
 export function AppShell() {
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-56 flex-col border-r border-[var(--color-border)] bg-[var(--color-muted)]/40">
-        <div className="flex h-14 items-center gap-2 border-b border-[var(--color-border)] px-4">
-          <Activity className="size-5" />
-          <span className="font-semibold">SamoBot</span>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1 p-3">
-          {nav.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-white text-[var(--color-foreground)] shadow-sm'
-                    : 'text-[var(--color-muted-foreground)] hover:bg-white/60 hover:text-[var(--color-foreground)]',
-                )
-              }
-            >
-              <Icon className="size-4" />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-14 items-center border-b border-[var(--color-border)] px-6">
-          <span className="text-sm text-[var(--color-muted-foreground)]">Crawl dashboard</span>
-        </header>
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <SidebarProvider className="flex-wrap content-start items-stretch bg-background md:content-stretch">
+      <Sidebar
+        collapsible="none"
+        className="h-auto w-full gap-6 border-r border-sidebar-border p-4 md:sticky md:top-0 md:h-svh md:w-[232px] md:shrink-0"
+      >
+        <SidebarHeader className="p-0">
+          <Brand />
+        </SidebarHeader>
+        <SidebarContent className="flex-none md:flex-1">
+          <Nav />
+        </SidebarContent>
+        <SidebarFooter className="p-0">
+          <UserBlock />
+        </SidebarFooter>
+      </Sidebar>
+      <main className="flex min-w-0 flex-[999_1_560px] flex-col gap-6 px-4 pb-12 pt-6 md:px-10 md:pt-8">
+        <Outlet />
+      </main>
+    </SidebarProvider>
   )
 }
