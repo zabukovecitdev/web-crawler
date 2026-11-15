@@ -192,4 +192,50 @@ public class SitemapParserTests
 
         result.Entries.Single().LastModified.Should().BeNull();
     }
+
+    [Fact]
+    public void ParseGivesNullForAnEmptyFile() => SitemapParser.Parse([], Host).Should().BeNull();
+
+    [Fact]
+    public void ParseReadsAPlainFileOfExactlyTheCompressedLimit()
+    {
+        var xml = Encoding.UTF8.GetBytes(SitemapXml.UrlSet("https://a.example/big"));
+        var padded = new byte[SitemapLimits.MaxCompressedBytes];
+        Array.Fill(padded, (byte)' ');
+        xml.CopyTo(padded, 0);
+
+        SitemapParser.Parse(padded, Host)!.Entries.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void ParseRejectsAValidSitemapOverTheCompressedLimit()
+    {
+        var xml = Encoding.UTF8.GetBytes(SitemapXml.UrlSet("https://a.example/big"));
+        var padded = new byte[SitemapLimits.MaxCompressedBytes + 1];
+        Array.Fill(padded, (byte)' ');
+        xml.CopyTo(padded, 0);
+
+        SitemapParser.Parse(padded, Host).Should().BeNull();
+    }
+
+    [Fact]
+    public void ParseKeepsThePageLocationWhenAnImageExtensionFollows()
+    {
+        const string xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+              <url>
+                <loc>https://a.example/page</loc>
+                <lastmod>2024-05-01</lastmod>
+                <changefreq>weekly</changefreq>
+                <image:image><image:loc>https://a.example/picture.jpg</image:loc></image:image>
+              </url>
+            </urlset>
+            """;
+
+        var entry = Parse(xml)!.Entries.Single();
+
+        entry.Loc.Should().Be("https://a.example/page");
+        entry.LastModified.Should().Be(new DateTimeOffset(2024, 5, 1, 0, 0, 0, TimeSpan.Zero));
+    }
 }

@@ -71,4 +71,49 @@ public class RobotsGateTests
         allowed.Should().BeTrue();
         source.Downloads.Should().Be(1);
     }
+
+    [Fact]
+    public async Task IsAllowedKeepsTheRulesInMemoryAfterTheFirstLookup()
+    {
+        var gate = Gate(Rules(BlockPrivate), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/one"), default);
+        await gate.IsAllowed(TestData.Url("https://a.example/two"), default);
+
+        source.Downloads.Should().Be(1);
+        _store.GetCalls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task IsAllowedKeepsTheRulesOfEachHostApart()
+    {
+        _store.Seed(new RobotsRules("b.example", "User-agent: *\nDisallow:\n", _time.GetUtcNow(), _time.GetUtcNow().AddHours(24)));
+        var gate = Gate(Rules(BlockPrivate), out _);
+
+        (await gate.IsAllowed(TestData.Url("https://a.example/private"), default)).Should().BeFalse();
+        (await gate.IsAllowed(TestData.Url("https://b.example/private"), default)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task IsAllowedDownloadsAgainWhenStoredRulesExpireNow()
+    {
+        _store.Seed(Rules(BlockPrivate, hours: 0));
+        var gate = Gate(Rules("User-agent: *\nDisallow:\n"), out var source);
+
+        (await gate.IsAllowed(TestData.Url("https://a.example/private"), default)).Should().BeTrue();
+        source.Downloads.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task IsAllowedDoesNotKeepRulesThatAreAlreadyExpired(int hours)
+    {
+        var gate = Gate(Rules(BlockPrivate, hours), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/one"), default);
+        await gate.IsAllowed(TestData.Url("https://a.example/two"), default);
+
+        source.Downloads.Should().Be(2);
+    }
 }

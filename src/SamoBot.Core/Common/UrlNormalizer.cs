@@ -6,14 +6,9 @@ namespace SamoBot.Core.Common;
 public static class UrlNormalizer
 {
     // Note: This URL normalization could be done with some sort of pipeline which can be easily extended and configured
+    // Every utm_ parameter is tracking, see IsTrackingParameter. The set ignores case.
     private static readonly HashSet<string> TrackingParameters = new(StringComparer.OrdinalIgnoreCase)
     {
-        "utm_source",
-        "utm_medium",
-        "utm_campaign",
-        "utm_term",
-        "utm_content",
-        "utm_id",
         "fbclid",
         "gclid",
         "igshid",
@@ -32,7 +27,6 @@ public static class UrlNormalizer
         "trk_info",
         "ncid",
         "clickid",
-        "clickId",
         "click_id",
         "affiliate",
         "affiliateId",
@@ -82,11 +76,7 @@ public static class UrlNormalizer
             Fragment = string.Empty
         };
 
-        if (IsDefaultPort(builder))
-        {
-            builder.Port = -1;
-        }
-
+        // builder.Uri drops the default port of the scheme by itself.
         // Keep trailing slashes as-is for web crawler accuracy
         // Some sites treat /page and /page/ as different resources
         if (!string.IsNullOrEmpty(builder.Query))
@@ -96,10 +86,6 @@ public static class UrlNormalizer
 
         return builder.Uri;
     }
-
-    private static bool IsDefaultPort(UriBuilder builder) =>
-        (builder.Scheme == "http" && builder.Port == 80) ||
-        (builder.Scheme == "https" && builder.Port == 443);
 
     private static string SortQuery(string query, bool removeTracking)
     {

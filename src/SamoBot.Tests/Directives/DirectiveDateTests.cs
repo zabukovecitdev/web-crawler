@@ -25,4 +25,45 @@ public class DirectiveDateTests
     [InlineData("soon")]
     [InlineData("31/31/2026")]
     public void RejectsWhatIsNotADate(string? text) => DirectiveDate.TryParse(text, out _).Should().BeFalse();
+
+    [Theory]
+    [InlineData("UTC", 0)]
+    [InlineData("GMT", 0)]
+    [InlineData("UT", 0)]
+    [InlineData("Z", 0)]
+    [InlineData("EST", -5)]
+    [InlineData("EDT", -4)]
+    [InlineData("CST", -6)]
+    [InlineData("CDT", -5)]
+    [InlineData("MST", -7)]
+    [InlineData("MDT", -6)]
+    [InlineData("PST", -8)]
+    [InlineData("PDT", -7)]
+    [InlineData("CET", 1)]
+    [InlineData("CEST", 2)]
+    [InlineData("pst", -8)]
+    public void ReadsTheOffsetOfEachZoneName(string zone, int hours)
+    {
+        DirectiveDate.TryParse($"25 Jun 2010 15:00:00 {zone}", out var value).Should().BeTrue();
+        value.Should().Be(new DateTimeOffset(2010, 6, 25, 15, 0, 0, TimeSpan.FromHours(hours)));
+        value.Offset.Should().Be(TimeSpan.FromHours(hours));
+    }
+
+    [Theory]
+    [InlineData("Friday, 25-Jun-10 15:00:00 EST", 15)]
+    [InlineData("Fri, 25 Jun 2010 15:00:00 EST", 15)]
+    [InlineData("25 Jun 2010 15:00:00 EST", 15)]
+    [InlineData("5 Jun 2010 15:00:00 EST", 15)]
+    [InlineData("25 Jun 2010 EST", 0)]
+    [InlineData("5 Jun 2010 EST", 0)]
+    [InlineData("2010-06-25T15:00:00 EST", 15)]
+    [InlineData("2010-06-25 15:00:00 EST", 15)]
+    [InlineData("2010-06-25 EST", 0)]
+    public void ReadsEachFormatWithAZoneName(string text, int hour)
+    {
+        DirectiveDate.TryParse(text, out var value).Should().BeTrue();
+        value.Offset.Should().Be(TimeSpan.FromHours(-5));
+        value.Hour.Should().Be(hour);
+        value.Month.Should().Be(6);
+    }
 }

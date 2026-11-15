@@ -15,8 +15,12 @@ public sealed record InFlightHold(TimeSpan Duration)
             return new InFlightHold(cap);
         }
 
-        var longest = requestTimeout >= browserTotalTimeout ? requestTimeout : browserTotalTimeout;
-        var hold = longest + (margin > TimeSpan.Zero ? margin : TimeSpan.Zero);
-        return new InFlightHold(hold <= cap ? hold : cap);
+        var longest = Max(requestTimeout, browserTotalTimeout);
+        var hold = longest + Max(margin, TimeSpan.Zero);
+        return new InFlightHold(Min(hold, cap));
     }
+
+    private static TimeSpan Max(TimeSpan a, TimeSpan b) => TimeSpan.FromTicks(Math.Max(a.Ticks, b.Ticks));
+
+    private static TimeSpan Min(TimeSpan a, TimeSpan b) => TimeSpan.FromTicks(Math.Min(a.Ticks, b.Ticks));
 }
