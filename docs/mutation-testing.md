@@ -1,14 +1,15 @@
 # Mutation testing
 
 Stryker.NET mutates `SamoBot.Core` and runs the unit tests (`Category!=Integration`) against each mutant.
-Config: `src/SamoBot.Tests/stryker-config.json`. CI: `.github/workflows/mutation.yml` (weekly in full,
-on pull requests only for files changed against the base branch). The run fails below a score of 75 %.
+Config: `src/SamoBot.Tests/stryker-config.json`. CI: `.github/workflows/mutation.yml` runs it weekly and on
+demand and uploads the HTML report. It is report only: no score fails the run, and it does not run on pull requests.
+Run it by hand after changing core logic (politeness, robots, URL normalization, sitemaps, directives).
 
 ```bash
 dotnet tool restore
 cd src/SamoBot.Tests
-dotnet tool run dotnet-stryker                       # everything, about 6 minutes on 4 cores
-dotnet tool run dotnet-stryker --since:origin/main   # changed files only
+dotnet tool run dotnet-stryker                       # about 6 minutes on 4 cores
+dotnet tool run dotnet-stryker --since:origin/main   # only files changed against main
 ```
 
 The report is written to `src/SamoBot.Tests/StrykerOutput/<timestamp>/reports/mutation-report.html`.
@@ -18,7 +19,7 @@ The report is written to `src/SamoBot.Tests/StrykerOutput/<timestamp>/reports/mu
 Score **79.17 %**: 796 killed, 6 timeout, 188 survived, 23 not covered (155 compile errors and
 173 ignored mutants are not counted).
 
-Gaps worth closing first:
+Gaps found then:
 
 | File | Undetected | What the survivors show |
 |---|---|---|
@@ -31,3 +32,18 @@ Gaps worth closing first:
 
 Most of the remaining survivors are in `Domain` records (`SearchHit`, `PageToIndex`, `PageDetail`,
 `ParsedPage`), which are data carriers with little logic.
+
+## After closing the high-value gaps (2026-11-15)
+
+Score **84.67 %**: 828 killed, 6 timeout, 130 survived, 21 not covered. Tests were added for the sitemap size
+cap, robots.txt caching, sitemap size boundaries and extensions, and every zone name and format of directive dates.
+`InFlightHold` and `UrlNormalizer` lost code that could not change any result.
+
+The survivors left in those files change nothing a test can observe, so they are accepted:
+
+- `SitemapParser`: the reader settings and checks are layered (the defaults of .NET are already safe, and the
+  size cap and the byte limit back each other up), so removing one layer alone changes no result.
+- `DirectiveDate`: `UTC` and `GMT` are also understood by `DateTimeOffset.TryParse`; `AssumeUniversal` only
+  matters on a machine whose local zone is not UTC.
+- `RobotsGate`: `&&` to `||` in the cache check gives the same result for every value.
+- `CappedReadStream`: the exception message and `base.Dispose`.
