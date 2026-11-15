@@ -6,5 +6,4 @@ public sealed record ParsedLink
     public string LinkText { get; init; } = string.Empty;
     public string Rel { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
-    public bool IsNoFollow { get; init; }
 }

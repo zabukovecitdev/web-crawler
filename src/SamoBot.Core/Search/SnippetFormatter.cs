@@ -15,11 +15,42 @@ public static class SnippetFormatter
     private const string Close = "</mark>";
 
     /// <summary>Picks the first text that contains a match, else the first non-empty text, and formats it.</summary>
-    public static string Pick(params string?[] highlighted)
+    public static string Pick(params string?[] highlighted) => PickWithin(null, highlighted);
+
+    /// <summary>
+    /// Like <see cref="Pick(string?[])"/>, with at most <paramref name="maxLength"/> visible characters (the site's
+    /// max-snippet; 0 for nosnippet gives an empty snippet). Null means no limit.
+    /// </summary>
+    public static string PickWithin(int? maxLength, params string?[] highlighted)
     {
         var chosen = highlighted.FirstOrDefault(text => text is not null && text.Contains(HighlightStart))
                      ?? highlighted.FirstOrDefault(text => !string.IsNullOrWhiteSpace(text));
-        return Format(chosen);
+        return Format(maxLength is { } limit ? Limit(chosen, limit) : chosen);
+    }
+
+    /// <summary>Cuts highlighted text after <paramref name="maxLength"/> visible characters; the highlight markers do not count.</summary>
+    public static string? Limit(string? highlighted, int maxLength)
+    {
+        if (highlighted is null || maxLength <= 0)
+        {
+            return maxLength <= 0 ? null : highlighted;
+        }
+
+        var visible = 0;
+        for (var i = 0; i < highlighted.Length; i++)
+        {
+            if (highlighted[i] is HighlightStart or HighlightEnd)
+            {
+                continue;
+            }
+
+            if (++visible > maxLength)
+            {
+                return highlighted[..i];
+            }
+        }
+
+        return highlighted;
     }
 
     public static string Format(string? highlighted)

@@ -7,7 +7,11 @@ using SamoBot.Core.Ports;
 namespace SamoBot.Adapters.Search;
 
 /// <summary>The Meilisearch index of parsed pages. It writes with <see cref="ISearchIndex"/> and reads with <see cref="ISearchQuery"/>.</summary>
-public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<MeilisearchOptions> options, MeilisearchSettings settings) : ISearchIndex, ISearchQuery
+public sealed class MeilisearchIndex(
+    MeilisearchClient client,
+    IOptions<MeilisearchOptions> options,
+    MeilisearchSettings settings,
+    TimeProvider timeProvider) : ISearchIndex, ISearchQuery
 {
     private Meilisearch.Index Index => client.Index(options.Value.IndexName);
 
@@ -21,19 +25,38 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
         await settings.Ensure(ct);
         var documents = LatestPerUrl(pages).Select(ToDocument).ToList();
         var accepted = await Index.AddDocumentsAsync(documents, primaryKey: "id", cancellationToken: ct);
-        var task = await client.WaitForTaskAsync(accepted.TaskUid, cancellationToken: ct);
-        if (task.Status == TaskInfoStatus.Failed)
+        await Wait(accepted.TaskUid, "indexing", ct);
+    }
+
+    public async Task Remove(IReadOnlyList<int> discoveredUrlIds, CancellationToken ct)
+    {
+        if (discoveredUrlIds.Count == 0)
         {
-            var message = task.Error is not null && task.Error.TryGetValue("message", out var text) ? text : "unknown error";
-            throw new InvalidOperationException($"Meilisearch indexing failed: {message}");
+            return;
         }
+
+        await settings.Ensure(ct);
+        var ids = discoveredUrlIds.Distinct().Select(id => id.ToString(CultureInfo.InvariantCulture));
+        var accepted = await Index.DeleteDocumentsAsync(ids, ct);
+        await Wait(accepted.TaskUid, "removing documents", ct);
     }
 
     public async Task<IReadOnlyList<SearchHit>> Search(string text, int limit, CancellationToken ct)
     {
         await settings.Ensure(ct);
-        var result = await Index.SearchAsync<SearchHit>(text, new SearchQuery { Limit = limit }, ct);
+        var query = new SearchQuery { Limit = limit, Filter = MeilisearchSettings.AvailableFilter(timeProvider.GetUtcNow()) };
+        var result = await Index.SearchAsync<SearchHit>(text, query, ct);
         return result.Hits.ToList();
+    }
+
+    private async Task Wait(int taskUid, string action, CancellationToken ct)
+    {
+        var task = await client.WaitForTaskAsync(taskUid, cancellationToken: ct);
+        if (task.Status == TaskInfoStatus.Failed)
+        {
+            var message = task.Error is not null && task.Error.TryGetValue("message", out var text) ? text : "unknown error";
+            throw new InvalidOperationException($"Meilisearch {action} failed: {message}");
+        }
     }
 
     /// <summary>A recrawl parses the same URL again. Only the newest parsed document of each URL is sent, because the document id is the URL id.</summary>
@@ -54,6 +77,8 @@ public sealed class MeilisearchIndex(MeilisearchClient client, IOptions<Meilisea
         Author = page.Author,
         Language = page.Language,
         Canonical = page.Canonical,
-        BodyText = page.BodyText
+        BodyText = page.BodyText,
+        IndexUntil = page.Policy.IndexUntil?.ToUnixTimeSeconds() ?? SearchHit.NoEnd,
+        SnippetMaxLength = page.Policy.SnippetMaxLength ?? -1
     };
 }

@@ -16,7 +16,7 @@ internal static class ParsedPageMapper
         Description = row.Description ?? string.Empty,
         Language = row.Language ?? string.Empty,
         Canonical = row.Canonical ?? string.Empty,
-        RobotsDirectives = RobotsContent(row.RobotsDirectives),
+        RobotsDirectives = Directives(row),
         BodyText = row.BodyText ?? string.Empty,
         WordCount = WordCount(row.BodyText),
         Headings = Headings(row.Headings),
@@ -33,7 +33,16 @@ internal static class ParsedPageMapper
     private static List<PageHeading> Headings(string? json) =>
         (Read<List<ParsedHeading>>(json) ?? []).Select(h => new PageHeading(h.Level, h.Text)).ToList();
 
-    private static string RobotsContent(string? json) => Read<RobotsDirectives>(json)?.Content ?? string.Empty;
+    /// <summary>
+    /// The directives that applied, with their source. Pages parsed before policies were stored show the robots meta
+    /// content that was stored then.
+    /// </summary>
+    private static string Directives(PageRow row) =>
+        row.Policy is not null
+            ? string.Join(", ", PagePolicyJson.Read(row.Policy).Directives)
+            : Read<LegacyRobotsDirectives>(row.RobotsDirectives)?.Content ?? string.Empty;
+
+    private sealed record LegacyRobotsDirectives(string Content);
 
     private static int ArrayLength(string? json) => Read<List<JsonElement>>(json)?.Count ?? 0;
 

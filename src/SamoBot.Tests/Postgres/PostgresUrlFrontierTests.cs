@@ -150,15 +150,34 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TheXRobotsTagOfACompletedFetchReachesTheParser()
+    public async Task TheKeptResponseHeadersOfACompletedFetchReachTheParser()
     {
         var url = await ClaimOne("https://a.example/");
         var update = new Succeeded(TimeSpan.FromDays(1)).ToUpdate(url, TestData.Now);
+        var headers = new ResponseHeaders(
+        [
+            new KeyValuePair<string, IReadOnlyList<string>>("X-Robots-Tag", ["noindex", "samobot: nofollow"]),
+            new KeyValuePair<string, IReadOnlyList<string>>("Link", ["</main>; rel=canonical"])
+        ]);
 
-        await Frontier().Complete(url, update, Fetch() with { XRobotsTag = "noindex\nsamobot: nofollow" }, default);
+        await Frontier().Complete(url, update, Fetch() with { ResponseHeaders = headers }, default);
 
         var claimed = await new PostgresParseBacklog(postgres.DataSource, _time).Claim(10, TimeSpan.FromMinutes(5), default);
-        claimed.Should().ContainSingle().Which.XRobotsTag.Should().Be("noindex\nsamobot: nofollow");
+        var kept = claimed.Should().ContainSingle().Subject.ResponseHeaders;
+        kept.Values("x-robots-tag").Should().Equal("noindex", "samobot: nofollow");
+        kept.Values("link").Should().Equal("</main>; rel=canonical");
+    }
+
+    [Fact]
+    public async Task AFetchWithoutKeptHeadersStoresNullAndReadsAsNone()
+    {
+        var url = await ClaimOne("https://a.example/");
+
+        await Frontier().Complete(url, new Succeeded(TimeSpan.FromDays(1)).ToUpdate(url, TestData.Now), Fetch(), default);
+
+        (await PostgresTestData.Scalar<string?>(postgres.DataSource, """SELECT "ResponseHeaders" FROM "UrlFetches" """)).Should().BeNull();
+        var claimed = await new PostgresParseBacklog(postgres.DataSource, _time).Claim(10, TimeSpan.FromMinutes(5), default);
+        claimed.Single().ResponseHeaders.IsEmpty.Should().BeTrue();
     }
 
     [Fact]

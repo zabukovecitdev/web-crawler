@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SamoBot.Core.Crawling;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
@@ -17,6 +18,7 @@ public static class CoreServiceCollectionExtensions
         services.AddMemoryCache();
 
         return services
+            .AddCrawlDirectives()
             .AddCrawling()
             .AddParsing()
             .AddIndexing()

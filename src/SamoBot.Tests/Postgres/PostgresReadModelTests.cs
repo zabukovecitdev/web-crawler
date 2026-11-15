@@ -1,5 +1,6 @@
 using FluentAssertions;
 using SamoBot.Adapters.Postgres;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Tests.Fakes;
 
@@ -204,13 +205,20 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task FindContentObjectNameReturnsTheNewestStoredBodyOrNull()
+    public async Task FindStoredCopyReturnsTheNewestStoredBodyWithItsPolicyOrNull()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
-        var (stored, _) = await Fetched(job, "https://a.example/s", 200, 10, objectName: "bodies/s");
+        var (stored, storedFetch) = await Fetched(job, "https://a.example/s", 200, 10, objectName: "bodies/s");
+        var (noArchive, noArchiveFetch) = await Fetched(job, "https://a.example/a", 200, 10, objectName: "bodies/a");
         var (notStored, _) = await Fetched(job, "https://a.example/n", 200, 10, objectName: null);
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Policy") VALUES (@id, 'A', '{"archive":false}') RETURNING "Id" """,
+            new { id = noArchiveFetch });
 
-        (await Pages.FindContentObjectName(stored, default)).Should().Be("bodies/s");
-        (await Pages.FindContentObjectName(notStored, default)).Should().BeNull();
+        (await Pages.FindStoredCopy(stored, default)).Should().Be(new StoredCopy("bodies/s", PagePolicy.Default));
+        (await Pages.FindStoredCopy(noArchive, default))!.Policy.Archive.Should().BeFalse();
+        (await Pages.FindStoredCopy(notStored, default)).Should().BeNull();
+        storedFetch.Should().BePositive();
     }
 }

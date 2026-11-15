@@ -12,6 +12,6 @@ public sealed record FetchToParse
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
 
-    /// <summary>The X-Robots-Tag header of the fetch, one value per line. Null without the header.</summary>
-    public string? XRobotsTag { get; init; }
+    /// <summary>The response headers kept with the fetch (see <see cref="Directives.ResponseHeaderSelection"/>).</summary>
+    public ResponseHeaders ResponseHeaders { get; init; } = ResponseHeaders.None;
 }

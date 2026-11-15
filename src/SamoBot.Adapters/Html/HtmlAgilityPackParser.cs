@@ -25,7 +25,8 @@ public sealed class HtmlAgilityPackParser : IHtmlParser
             BodyText = PageText.BodyText(document),
             Links = PageReferences.Links(document),
             Images = PageReferences.Images(document),
-            RobotsDirectives = StructuredData.Robots(document),
+            BaseHref = PageMetadata.BaseHref(document),
+            MetaTags = PageMetadata.MetaTags(document),
             OpenGraphData = StructuredData.OpenGraph(document),
             TwitterCardData = StructuredData.TwitterCard(document),
             JsonLdData = StructuredData.JsonLd(document)

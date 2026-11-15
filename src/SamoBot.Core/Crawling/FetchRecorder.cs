@@ -52,6 +52,6 @@ public sealed class FetchRecorder(
         ResponseTimeMs = response.ResponseTimeMs,
         ObjectName = objectName,
         FinalUrl = url.Url,
-        XRobotsTag = response.XRobotsTag
+        ResponseHeaders = response.ResponseHeaders
     };
 }

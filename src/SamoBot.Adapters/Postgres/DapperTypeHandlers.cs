@@ -2,10 +2,12 @@ using System.Data;
 using System.Text.Json;
 using Dapper;
 using SamoBot.Core.Common;
+using SamoBot.Core.Directives;
+using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Maps a JSON text column to a list of strings. Dapper keeps the handlers in global state.</summary>
+/// <summary>Maps JSON text columns to their types: string lists, kept response headers and page policies. Dapper keeps the handlers in global state.</summary>
 internal static class DapperTypeHandlers
 {
     private static readonly Lock Gate = new();
@@ -21,6 +23,8 @@ internal static class DapperTypeHandlers
             }
 
             SqlMapper.AddTypeHandler(new JsonStringListHandler());
+            SqlMapper.AddTypeHandler(new ResponseHeadersHandler());
+            SqlMapper.AddTypeHandler(new PagePolicyHandler());
             _registered = true;
         }
     }
@@ -32,5 +36,22 @@ internal static class DapperTypeHandlers
 
         public override IReadOnlyList<string> Parse(object value) =>
             JsonSerializer.Deserialize<List<string>>(value.ToString() ?? "[]", JsonDefaults.Options) ?? [];
+    }
+
+    private sealed class ResponseHeadersHandler : SqlMapper.TypeHandler<ResponseHeaders>
+    {
+        public override void SetValue(IDbDataParameter parameter, ResponseHeaders? value) =>
+            parameter.Value = (object?)ResponseHeadersJson.Write(value) ?? DBNull.Value;
+
+        public override ResponseHeaders Parse(object value) => ResponseHeadersJson.Read(value.ToString());
+    }
+
+    /// <summary>A missing or unreadable policy (a page parsed before policies were stored) is the default policy.</summary>
+    private sealed class PagePolicyHandler : SqlMapper.TypeHandler<PagePolicy>
+    {
+        public override void SetValue(IDbDataParameter parameter, PagePolicy? value) =>
+            parameter.Value = JsonSerializer.Serialize(value ?? PagePolicy.Default, JsonDefaults.Options);
+
+        public override PagePolicy Parse(object value) => PagePolicyJson.Read(value.ToString());
     }
 }

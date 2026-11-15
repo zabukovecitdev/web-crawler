@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using SamoBot.Adapters.Http;
 using SamoBot.Core.Domain;
-using SamoBot.Core.Parsing;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Browser;
@@ -13,6 +13,7 @@ namespace SamoBot.Adapters.Browser;
 public sealed partial class BrowserFetcher(
     IOptions<ChromeRenderingOptions> options,
     SafeResolver resolver,
+    ResponseHeaderSelection keptHeaders,
     TimeProvider timeProvider,
     ILogger<BrowserFetcher> logger) : IFetcher, IAsyncDisposable
 {
@@ -111,7 +112,9 @@ public sealed partial class BrowserFetcher(
             ContentType = "text/html; charset=utf-8",
             Content = Encoding.UTF8.GetBytes(html),
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
-            XRobotsTag = response is null ? null : XRobotsTag.Join(await response.HeaderValuesAsync(XRobotsTag.HeaderName))
+            ResponseHeaders = response is null
+                ? ResponseHeaders.None
+                : await keptHeaders.CollectAsync(async name => (IEnumerable<string>?)await response.HeaderValuesAsync(name))
         };
     }
 

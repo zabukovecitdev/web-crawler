@@ -13,7 +13,7 @@ public sealed class PostgresIndexBacklog(NpgsqlDataSource dataSource, TimeProvid
                COALESCE(d."Title", '') AS "Title", COALESCE(d."Description", '') AS "Description",
                COALESCE(d."Keywords", '') AS "Keywords", COALESCE(d."Author", '') AS "Author",
                COALESCE(d."Language", '') AS "Language", COALESCE(d."Canonical", '') AS "Canonical",
-               COALESCE(d."BodyText", '') AS "BodyText"
+               COALESCE(d."BodyText", '') AS "BodyText", d."Policy"
         FROM "{TableNames.ParsedDocuments}" d
         JOIN "{TableNames.UrlFetches}" f ON f."Id" = d."UrlFetchId"
         JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = f."DiscoveredUrlId"
@@ -25,6 +25,8 @@ public sealed class PostgresIndexBacklog(NpgsqlDataSource dataSource, TimeProvid
     private const string MarkSql = $"""
         UPDATE "{TableNames.ParsedDocuments}" SET "IndexedAt" = @Now WHERE "Id" = ANY(@PageIds)
         """;
+
+    static PostgresIndexBacklog() => DapperTypeHandlers.Register();
 
     public async Task<IReadOnlyList<PageToIndex>> Claim(int batchSize, CancellationToken ct)
     {

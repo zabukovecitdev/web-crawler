@@ -11,9 +11,14 @@ export function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404
 }
 
-/** Retry transient errors, but never a 404. */
+/** A 403: the request is refused for good, such as a stored copy the site asked not to show. */
+export function isForbidden(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403
+}
+
+/** Retry transient errors, but never a 404 or a 403. */
 export function retryUnlessMissing(count: number, error: unknown): boolean {
-  return !isNotFound(error) && count < 2
+  return !isNotFound(error) && !isForbidden(error) && count < 2
 }
 
 export function useSites(params: SitesQuery) {

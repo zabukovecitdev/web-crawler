@@ -57,9 +57,11 @@ public sealed class PostgresPageReader(NpgsqlDataSource dataSource) : IPageReade
         return new PagedResult<PageLinkItem>(total, rows.ToList());
     }
 
-    public async Task<string?> FindContentObjectName(int id, CancellationToken ct)
+    public async Task<StoredCopy?> FindStoredCopy(int id, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
-        return await connection.ExecuteScalarAsync<string?>(new CommandDefinition(PageSql.ContentObjectName, new { Id = id }, cancellationToken: ct));
+        var row = await connection.QuerySingleOrDefaultAsync<(string ObjectName, string? Policy)?>(
+            new CommandDefinition(PageSql.StoredCopy, new { Id = id }, cancellationToken: ct));
+        return row is { } found ? new StoredCopy(found.ObjectName, PagePolicyJson.Read(found.Policy)) : null;
     }
 }

@@ -12,6 +12,8 @@ namespace SamoBot.Api.Controllers;
 [Authorize]
 public sealed class PagesController(IPageReader pages, IContentStore contentStore) : ControllerBase
 {
+    public const string NoArchiveMessage = "The site asked crawlers not to show a stored copy of this page (noarchive).";
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<PageDetail>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -43,18 +45,25 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return links is null ? NotFound() : Ok(links);
     }
 
+    /// <summary>The stored body of a page as text. 403 when the site asked for no stored copy to be shown (noarchive).</summary>
     [HttpGet("{id:int}/content")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetContent(int id, CancellationToken ct)
     {
-        var objectName = await pages.FindContentObjectName(id, ct);
-        if (objectName is null)
+        var copy = await pages.FindStoredCopy(id, ct);
+        if (copy is null)
         {
             return NotFound();
         }
 
-        await using var stream = await contentStore.Load(objectName, ct);
+        if (!copy.Policy.Archive)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails { Status = StatusCodes.Status403Forbidden, Title = NoArchiveMessage });
+        }
+
+        await using var stream = await contentStore.Load(copy.ObjectName, ct);
         var content = await StoredContent.Read(stream, StoredContent.MaxBytes, ct);
         SetContentHeaders(id, content.Truncated);
         return File(content.Bytes, "text/plain; charset=utf-8");

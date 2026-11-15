@@ -18,18 +18,13 @@ internal static class PageReferences
             .Where(image => !string.IsNullOrWhiteSpace(image.Src))
             .ToList();
 
-    private static ParsedLink ToLink(HtmlNode anchor)
-    {
-        var rel = anchor.GetAttributeValue("rel", string.Empty);
-        return new ParsedLink
+    private static ParsedLink ToLink(HtmlNode anchor) => new()
         {
             Url = anchor.GetAttributeValue("href", string.Empty),
             LinkText = PageText.Clean(anchor.InnerText),
-            Rel = rel,
-            Title = anchor.GetAttributeValue("title", string.Empty),
-            IsNoFollow = rel.Contains("nofollow", StringComparison.OrdinalIgnoreCase)
+            Rel = anchor.GetAttributeValue("rel", string.Empty),
+            Title = anchor.GetAttributeValue("title", string.Empty)
         };
-    }
 
     private static ParsedImage ToImage(HtmlNode image) => new()
     {

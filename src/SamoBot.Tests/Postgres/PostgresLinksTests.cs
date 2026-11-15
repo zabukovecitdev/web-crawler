@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using SamoBot.Adapters.Postgres;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Parsing;
 using SamoBot.Tests.Fakes;
@@ -44,7 +45,7 @@ public class PostgresLinksTests(PostgresFixture postgres) : IAsyncLifetime
             """UPDATE "UrlFetches" SET "ParsedAt" = NULL, "LeaseUntil" = NULL WHERE "DiscoveredUrlId" = @urlId RETURNING "Id" """,
             new { urlId });
         var fetch = (await Queue().Claim(100, Lease, default)).Single(f => f.UrlId == urlId);
-        await Queue().Complete(fetch, new ParsedPage { Title = "T" }, [], links, default);
+        await Queue().Complete(fetch, new ParseResult(new ParsedPage { Title = "T" }, PagePolicy.Default, [], links), default);
     }
 
     private Task<IReadOnlyList<string>> StoredTargets(int urlId) =>
@@ -107,9 +108,12 @@ public class PostgresLinksTests(PostgresFixture postgres) : IAsyncLifetime
     [Fact]
     public async Task ATargetOverTheLimitIsSkippedByThePreparer()
     {
+        var page = new Uri("https://a.example/");
         var links = PageLinkPreparer.Prepare(
-            new Uri("https://a.example/"),
-            [new ParsedLink { Url = "/" + new string('a', PageLinkPreparer.MaxUrlLength) }, new ParsedLink { Url = "/ok" }]);
+            page,
+            page,
+            [new ParsedLink { Url = "/" + new string('a', PageLinkPreparer.MaxUrlLength) }, new ParsedLink { Url = "/ok" }],
+            _ => false);
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var home = await Page(job, "https://a.example/");
 

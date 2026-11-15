@@ -51,6 +51,42 @@ public class SearchTests
         SnippetFormatter.Pick(null, null).Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData(null, "<mark>hit</mark> in a long body")]
+    [InlineData(5, "<mark>hit</mark> i")]
+    [InlineData(2, "<mark>hi</mark>")]
+    [InlineData(0, "")]
+    public void PickWithinCutsAfterTheVisibleCharactersOfTheLimit(int? limit, string expected) =>
+        SnippetFormatter.PickWithin(limit, $"{S}hit{E} in a long body").Should().Be(expected);
+
+    [Fact]
+    public void TheSearchFilterHidesExpiredPagesAndAddsTheHost()
+    {
+        var now = DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);
+
+        MeilisearchPageSearch.Filter(null, now).Should().Be("indexUntil > 1800000000");
+        MeilisearchPageSearch.Filter("a.example", now).Should().Be("indexUntil > 1800000000 AND host = \"a.example\"");
+    }
+
+    [Fact]
+    public void TheSearchDocumentCarriesTheEndOfIndexingAndTheSnippetLimit()
+    {
+        var until = DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);
+        var limited = new PageToIndex
+        {
+            PageId = 1, UrlFetchId = 2, DiscoveredUrlId = 3,
+            Policy = Core.Directives.PagePolicy.Default with { IndexUntil = until, SnippetMaxLength = 0 }
+        };
+
+        var document = MeilisearchIndex.ToDocument(limited);
+        var plain = MeilisearchIndex.ToDocument(new PageToIndex { PageId = 1, UrlFetchId = 2, DiscoveredUrlId = 3 });
+
+        document.IndexUntil.Should().Be(1_800_000_000);
+        document.SnippetMaxLength.Should().Be(0);
+        plain.IndexUntil.Should().Be(SearchHit.NoEnd);
+        plain.SnippetMaxLength.Should().Be(-1);
+    }
+
     [Fact]
     public void ValidRequestIsTrimmedAndTheHostLowerCased()
     {

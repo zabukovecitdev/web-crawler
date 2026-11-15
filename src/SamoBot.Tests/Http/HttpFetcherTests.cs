@@ -14,6 +14,7 @@ public class HttpFetcherTests
             new HttpClient(new StubHttpHandler(respond)),
             Options.Create(new ChromeRenderingOptions { Enabled = chromeEnabled, CdpEndpoint = chromeEnabled ? "http://chrome:9222" : null }),
             Options.Create(new CrawlerNetworkOptions()),
+            TestDirectives.Headers,
             TimeProvider.System);
 
     private static HttpResponseMessage Html(HttpStatusCode status, string body = "<html></html>") => new(status)
@@ -112,6 +113,7 @@ public class HttpFetcherTests
             new HttpClient(new StubHttpHandler(respond)),
             Options.Create(new ChromeRenderingOptions()),
             Options.Create(new CrawlerNetworkOptions()),
+            TestDirectives.Headers,
             new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now));
 
     [Fact]
@@ -153,24 +155,28 @@ public class HttpFetcherTests
     }
 
     [Fact]
-    public async Task FetchReadsEveryXRobotsTagHeaderWhole()
+    public async Task FetchKeepsTheHeadersTheDirectivesReadWholeAndDropsTheRest()
     {
         var response = await Fetcher(_ =>
         {
             var page = Html(HttpStatusCode.OK);
             page.Headers.TryAddWithoutValidation("X-Robots-Tag", "noindex");
             page.Headers.TryAddWithoutValidation("X-Robots-Tag", "googlebot: noindex, nofollow");
+            page.Headers.TryAddWithoutValidation("Link", "<https://a.example/main>; rel=\"canonical\"");
+            page.Headers.TryAddWithoutValidation("Set-Cookie", "session=secret");
             return page;
         }).Fetch(TestData.Url(), default);
 
-        response.XRobotsTag.Should().Be("noindex\ngooglebot: noindex, nofollow");
+        response.ResponseHeaders.Values("x-robots-tag").Should().Equal("noindex", "googlebot: noindex, nofollow");
+        response.ResponseHeaders.Values("Link").Should().Equal("<https://a.example/main>; rel=\"canonical\"");
+        response.ResponseHeaders.Values("Set-Cookie").Should().BeEmpty();
     }
 
     [Fact]
-    public async Task FetchWithoutXRobotsTagHasNone()
+    public async Task FetchWithoutDirectiveHeadersKeepsNone()
     {
         var response = await Fetcher(_ => Html(HttpStatusCode.OK)).Fetch(TestData.Url(), default);
 
-        response.XRobotsTag.Should().BeNull();
+        response.ResponseHeaders.IsEmpty.Should().BeTrue();
     }
 }

@@ -24,7 +24,7 @@ Transport notes:
 | `POST /api/v1/hosts/explain` | `{ url }` | `ExplainDto` |
 | `GET /api/v1/pages/{id}` | | `PageDetail` |
 | `GET /api/v1/pages/{id}/links?direction=out\|in&limit&offset` | | `Page<PageLinkDto>` = `{ total, items: [{ url, text, internal, noFollow, pageId, statusCode }] }`; `direction` defaults to `out`; `limit` 1 to 200 (default 50), `offset` 0 to 100000; `400` for a bad direction or offset, `404` for an unknown page |
-| `GET /api/v1/pages/{id}/content` | | raw stored body, `text/plain`, size-capped, `404` if not stored; sent with `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and an inline `Content-Disposition` |
+| `GET /api/v1/pages/{id}/content` | | raw stored body, `text/plain`, size-capped, `404` if not stored, `403` (problem details) when the page's policy forbids a stored copy (`noarchive`); sent with `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and an inline `Content-Disposition` |
 | `GET /api/v1/search?q&host&limit&offset` | | `SearchResponse` (one document per URL, in the Meilisearch index `pages`; the old `parsed_documents` index can be deleted with `curl -X DELETE -H "Authorization: Bearer $MEILI_MASTER_KEY" http://localhost:7700/indexes/parsed_documents`) |
 | `GET /api/v1/crawl-jobs?limit` | | `CrawlJobDto[]` |
 | `GET /api/v1/crawl-jobs/{id}` | | `CrawlJobDto` |

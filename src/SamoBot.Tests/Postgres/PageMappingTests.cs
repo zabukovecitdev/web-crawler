@@ -49,4 +49,16 @@ public class PageMappingTests
         parsed.RobotsDirectives.Should().Be("noindex");
         ParsedPageMapper.Map(new PageRow { Headings = "not json" }, new LinkCounts(0, 0)).Headings.Should().BeEmpty();
     }
+
+    [Fact]
+    public void TheDirectivesOfAStoredPolicyAreShownInsteadOfTheOldRobotsContent()
+    {
+        var row = new PageRow
+        {
+            RobotsDirectives = """{"content":"old"}""",
+            Policy = """{"index":false,"directives":["noindex (meta robots)","nofollow (X-Robots-Tag)"]}"""
+        };
+
+        ParsedPageMapper.Map(row, new LinkCounts(0, 0)).RobotsDirectives.Should().Be("noindex (meta robots), nofollow (X-Robots-Tag)");
+    }
 }

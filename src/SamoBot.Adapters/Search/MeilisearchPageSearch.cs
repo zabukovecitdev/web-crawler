@@ -7,7 +7,11 @@ using SamoBot.Core.Search;
 namespace SamoBot.Adapters.Search;
 
 /// <summary>The dashboard search over the Meilisearch index: highlighted snippets, a host filter and the match count per host.</summary>
-public sealed class MeilisearchPageSearch(MeilisearchClient client, IOptions<MeilisearchOptions> options, MeilisearchSettings settings) : ISearchPages
+public sealed class MeilisearchPageSearch(
+    MeilisearchClient client,
+    IOptions<MeilisearchOptions> options,
+    MeilisearchSettings settings,
+    TimeProvider timeProvider) : ISearchPages
 {
     private const int CropWords = 30;
 
@@ -24,15 +28,20 @@ public sealed class MeilisearchPageSearch(MeilisearchClient client, IOptions<Mei
     /// <summary>The host list ignores the host filter, so the dashboard can still offer the other hosts.</summary>
     private async Task<IReadOnlyList<HostCount>> AllHosts(string text, CancellationToken ct)
     {
-        var query = new Meilisearch.SearchQuery { Limit = 0, Facets = [MeilisearchSettings.HostAttribute] };
+        var query = new Meilisearch.SearchQuery
+        {
+            Limit = 0,
+            Facets = [MeilisearchSettings.HostAttribute],
+            Filter = MeilisearchSettings.AvailableFilter(timeProvider.GetUtcNow())
+        };
         return FacetHosts(await Index.SearchAsync<IndexedHit>(text, query, ct));
     }
 
-    private static Meilisearch.SearchQuery Query(SearchRequest request) => new()
+    private Meilisearch.SearchQuery Query(SearchRequest request) => new()
     {
         Limit = request.Limit,
         Offset = request.Offset,
-        Filter = request.Host is null ? null : HostFilter(request.Host),
+        Filter = Filter(request.Host, timeProvider.GetUtcNow()),
         Facets = [MeilisearchSettings.HostAttribute],
         AttributesToHighlight = ["bodyText", "description"],
         AttributesToCrop = ["bodyText", "description"],
@@ -40,6 +49,10 @@ public sealed class MeilisearchPageSearch(MeilisearchClient client, IOptions<Mei
         HighlightPreTag = SnippetFormatter.HighlightStart.ToString(),
         HighlightPostTag = SnippetFormatter.HighlightEnd.ToString()
     };
+
+    /// <summary>Pages past their unavailable_after date never match; the host filter is added when one is asked for.</summary>
+    public static string Filter(string? host, DateTimeOffset now) =>
+        host is null ? MeilisearchSettings.AvailableFilter(now) : $"{MeilisearchSettings.AvailableFilter(now)} AND {HostFilter(host)}";
 
     /// <summary>The filter value is a quoted string, so a backslash or a quote in a host cannot end it early.</summary>
     public static string HostFilter(string host) =>
@@ -55,7 +68,7 @@ public sealed class MeilisearchPageSearch(MeilisearchClient client, IOptions<Mei
         hit.Host,
         hit.Url,
         hit.Title,
-        SnippetFormatter.Pick(hit.Formatted?.BodyText, hit.Formatted?.Description),
+        SnippetFormatter.PickWithin(hit.SnippetMaxLength < 0 ? null : hit.SnippetMaxLength, hit.Formatted?.BodyText, hit.Formatted?.Description),
         hit.Language,
         hit.FetchedAt);
 }

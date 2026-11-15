@@ -37,7 +37,7 @@ internal static class PageSql
 
     public const string Find = $"""
         SELECT {SummaryColumns},
-               d."Description", d."Language", d."Canonical", d."RobotsDirectives", d."BodyText", d."Headings", d."Images",
+               d."Description", d."Language", d."Canonical", d."RobotsDirectives", d."Policy", d."BodyText", d."Headings", d."Images",
                d."OpenGraphData", d."JsonLdData"
         {From}
         WHERE u."Id" = @Id
@@ -104,11 +104,12 @@ internal static class PageSql
 
     public const string CountOutgoingLinks = $"""SELECT count(*)::int FROM "{TableNames.Links}" WHERE "FromUrlId" = @Id""";
 
-    public const string ContentObjectName = $"""
-        SELECT "ObjectName"
-        FROM "{TableNames.UrlFetches}"
-        WHERE "DiscoveredUrlId" = @Id AND "ObjectName" IS NOT NULL
-        ORDER BY "FetchedAt" DESC, "Id" DESC
+    public const string StoredCopy = $"""
+        SELECT f."ObjectName", d."Policy"
+        FROM "{TableNames.UrlFetches}" f
+        LEFT JOIN "{TableNames.ParsedDocuments}" d ON d."UrlFetchId" = f."Id"
+        WHERE f."DiscoveredUrlId" = @Id AND f."ObjectName" IS NOT NULL
+        ORDER BY f."FetchedAt" DESC, f."Id" DESC
         LIMIT 1
         """;
 }

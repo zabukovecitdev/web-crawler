@@ -44,13 +44,14 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
-    public async Task HandleRecordsTheXRobotsTagHeaderWithTheFetch()
+    public async Task HandleRecordsTheKeptResponseHeadersWithTheFetch()
     {
-        var handler = Handler(new FakeFetcher(response: TestData.Response(200) with { XRobotsTag = "nofollow" }));
+        var headers = TestDirectives.Header("X-Robots-Tag", "nofollow");
+        var handler = Handler(new FakeFetcher(response: TestData.Response(200) with { ResponseHeaders = headers }));
 
         await handler.Handle(TestData.Url(), default);
 
-        _frontier.Completed.Single().Fetch!.XRobotsTag.Should().Be("nofollow");
+        _frontier.Completed.Single().Fetch!.ResponseHeaders.Should().BeSameAs(headers);
     }
 
     [Fact]

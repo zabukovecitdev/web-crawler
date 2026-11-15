@@ -1,6 +1,8 @@
+using SamoBot.Core.Directives;
+
 namespace SamoBot.Core.Domain;
 
-/// <summary>The search document of a parsed page. The property names match the Meilisearch index.</summary>
+/// <summary>A parsed page that waits for the search index, with the policy that decides whether it is indexed.</summary>
 public sealed record PageToIndex
 {
     public required int PageId { get; init; }
@@ -17,4 +19,6 @@ public sealed record PageToIndex
     public string Language { get; init; } = string.Empty;
     public string Canonical { get; init; } = string.Empty;
     public string BodyText { get; init; } = string.Empty;
+    /// <summary>What the site allows for the page. Pages parsed before policies were stored have the default policy.</summary>
+    public PagePolicy Policy { get; init; } = PagePolicy.Default;
 }

@@ -5,128 +5,204 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Parsing;
 
+/// <summary>The parse handler with the crawl directives exactly as production composes them.</summary>
 public class ParseHandlerTests
 {
-    private static readonly FetchToParse Fetch = new()
-    {
-        FetchId = 1,
-        UrlId = 2,
-        CrawlJobId = 7,
-        Url = "https://a.example/x",
-        Depth = 0,
-        ObjectName = "page-1",
-        AllowedHosts = ["a.example"]
-    };
+    private static readonly FetchToParse Fetch = TestDirectives.Fetch("https://a.example/x", depth: 0) with { MaxDepth = 5 };
 
-    private static ParsedPage Page(bool noFollow = false) => new()
+    private static ParsedPage Page(params MetaTag[] meta) => new()
     {
         Title = "T",
         Links = [new ParsedLink { Url = "/about" }, new ParsedLink { Url = "https://other.example/" }],
-        RobotsDirectives = new RobotsDirectives { NoFollow = noFollow }
+        MetaTags = meta
     };
 
-    private static (FakeParseBacklog Queue, ParsePageHandler Handler) Build(ParsedPage page)
+    private static (FakeParseBacklog Queue, ParsePageHandler Handler) Build(ParsedPage page, FetchToParse? fetch = null)
     {
         var store = new FakeContentStore();
         store.Put("page-1", "<html></html>");
-        var queue = new FakeParseBacklog(Fetch);
-        return (queue, new ParsePageHandler(store, new FakeHtmlParser(page), queue));
+        var queue = new FakeParseBacklog(fetch ?? Fetch);
+        var handler = new ParsePageHandler(
+            store, new FakeHtmlParser(page), queue, TestDirectives.Contexts, TestDirectives.Policies, TestDirectives.Links);
+        return (queue, handler);
+    }
+
+    private static async Task<CompletedParse> Run(ParsedPage page, FetchToParse? fetch = null)
+    {
+        var (queue, handler) = Build(page, fetch);
+        await handler.Handle(fetch ?? Fetch, default);
+        return queue.Completed.Should().ContainSingle().Subject;
     }
 
     [Fact]
     public async Task HandleResolvesAndFiltersLinksThenCompletes()
     {
-        var (queue, handler) = Build(Page());
+        var completed = await Run(Page());
 
-        await handler.Handle(Fetch, default);
-
-        var completed = queue.Completed.Should().ContainSingle().Subject;
         completed.Page.Title.Should().Be("T");
         completed.Links.Should().Equal(new NewUrl(7, "https://a.example/about", "https://a.example/about", "a.example", 1));
-    }
-
-    [Fact]
-    public async Task HandlePassesEveryLinkOfThePageToStoreEvenWhenTheJobFollowsNone()
-    {
-        var (queue, handler) = Build(Page(noFollow: true));
-
-        await handler.Handle(Fetch, default);
-
-        queue.Completed.Single().PageLinks.Select(l => l.ToUrl).Should().Equal("https://a.example/about", "https://other.example/");
-    }
-
-    [Fact]
-    public async Task HandleWithNoFollowDirectivePassesEmptyLinkList()
-    {
-        var (queue, handler) = Build(Page(noFollow: true));
-
-        await handler.Handle(Fetch, default);
-
-        queue.Completed.Single().Links.Should().BeEmpty();
+        completed.Policy.FollowLinks.Should().BeTrue();
+        completed.Policy.Index.Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("nofollow")]
-    [InlineData("noindex, nofollow")]
-    [InlineData("none")]
-    [InlineData("samobot: nofollow")]
-    public async Task HandleWithNoFollowInTheXRobotsTagHeaderFollowsNoLinksButStoresThem(string header)
+    [InlineData("robots", "nofollow")]
+    [InlineData("robots", "none")]
+    [InlineData("ROBOTS", "NoIndex, NoFollow")]
+    [InlineData("samobot", "nofollow")]
+    public async Task APageLevelNoFollowFollowsNoLinksButStoresThemAll(string name, string content)
     {
-        var (queue, handler) = Build(Page());
+        var completed = await Run(Page(new MetaTag(name, content)));
 
-        await handler.Handle(Fetch with { XRobotsTag = header }, default);
-
-        var completed = queue.Completed.Single();
         completed.Links.Should().BeEmpty();
         completed.PageLinks.Select(l => l.ToUrl).Should().Equal("https://a.example/about", "https://other.example/");
     }
 
     [Theory]
-    [InlineData("noindex")]
-    [InlineData("googlebot: nofollow")]
-    public async Task HandleWithAnXRobotsTagThatDoesNotForbidFollowingFollowsTheLinks(string header)
+    [InlineData("googlebot", "nofollow")]
+    [InlineData("robots", "noindex")]
+    [InlineData("robots", "nonexistent-directive")]
+    public async Task AMetaTagThatDoesNotForbidFollowingFollowsTheLinks(string name, string content)
     {
-        var (queue, handler) = Build(Page());
+        var completed = await Run(Page(new MetaTag(name, content)));
 
-        await handler.Handle(Fetch with { XRobotsTag = header }, default);
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    }
 
-        queue.Completed.Single().Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    [Theory]
+    [InlineData("nofollow")]
+    [InlineData("samobot: nofollow")]
+    [InlineData("googlebot: noindex, samobot: none")]
+    public async Task AnXRobotsTagNoFollowFollowsNoLinks(string header)
+    {
+        var fetch = Fetch with { ResponseHeaders = TestDirectives.Header("X-Robots-Tag", header) };
+
+        var completed = await Run(Page(), fetch);
+
+        completed.Links.Should().BeEmpty();
+        completed.PageLinks.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task HandleSkipsLinksMarkedRelNoFollowButStillStoresThem()
+    public async Task AnXRobotsTagForAnotherCrawlerIsIgnored()
+    {
+        var fetch = Fetch with { ResponseHeaders = TestDirectives.Header("X-Robots-Tag", "googlebot: nofollow") };
+
+        var completed = await Run(Page(), fetch);
+
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    }
+
+    [Fact]
+    public async Task LinksWithANoFollowRelValueAreStoredButNotQueued()
     {
         var page = new ParsedPage
         {
-            Title = "T",
             Links =
             [
                 new ParsedLink { Url = "/about" },
-                new ParsedLink { Url = "/login", Rel = "nofollow", IsNoFollow = true },
-                new ParsedLink { Url = "/ads", Rel = "sponsored nofollow", IsNoFollow = true }
+                new ParsedLink { Url = "/login", Rel = "nofollow" },
+                new ParsedLink { Url = "/ad", Rel = "noopener SPONSORED" },
+                new ParsedLink { Url = "/comment", Rel = "ugc" },
+                new ParsedLink { Url = "/next", Rel = "next noopener" }
             ]
         };
-        var (queue, handler) = Build(page);
 
-        await handler.Handle(Fetch, default);
+        var completed = await Run(page);
 
-        var completed = queue.Completed.Single();
-        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about");
-        completed.PageLinks.Where(l => l.NoFollow).Select(l => l.ToUrl).Should().Equal("https://a.example/login", "https://a.example/ads");
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about", "https://a.example/next");
+        completed.PageLinks.Where(l => l.NoFollow).Select(l => l.ToUrl)
+            .Should().Equal("https://a.example/login", "https://a.example/ad", "https://a.example/comment");
     }
 
     [Fact]
-    public async Task HandleFollowsTargetLinkedBothWithAndWithoutNoFollow()
+    public async Task ATargetLinkedBothWithAndWithoutNoFollowIsFollowed()
+    {
+        var page = new ParsedPage { Links = [new ParsedLink { Url = "/about", Rel = "nofollow" }, new ParsedLink { Url = "/about" }] };
+
+        var completed = await Run(page);
+
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+    }
+
+    [Fact]
+    public async Task RelativeLinksResolveAgainstTheBaseHref()
+    {
+        var page = new ParsedPage { BaseHref = "/docs/", Links = [new ParsedLink { Url = "guide.html" }, new ParsedLink { Url = "/top" }] };
+
+        var completed = await Run(page);
+
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/docs/guide.html", "https://a.example/top");
+        completed.PageLinks.Select(l => l.ToUrl).Should().Equal("https://a.example/docs/guide.html", "https://a.example/top");
+    }
+
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("")]
+    public async Task ABaseHrefThatIsNotHttpIsIgnored(string baseHref)
+    {
+        var page = new ParsedPage { BaseHref = baseHref, Links = [new ParsedLink { Url = "guide.html" }] };
+
+        var completed = await Run(page);
+
+        completed.Links.Select(l => l.Url).Should().Equal("https://a.example/guide.html");
+    }
+
+    [Fact]
+    public async Task AMetaRefreshIsQueuedLikeARedirectEvenWhenLinksAreNotFollowed()
     {
         var page = new ParsedPage
         {
-            Links = [new ParsedLink { Url = "/about", IsNoFollow = true }, new ParsedLink { Url = "/about" }]
+            MetaTags = [new MetaTag("refresh", "0; url=/moved", HttpEquiv: true), new MetaTag("robots", "nofollow")],
+            Links = [new ParsedLink { Url = "/about" }]
         };
-        var (queue, handler) = Build(page);
 
-        await handler.Handle(Fetch, default);
+        var completed = await Run(page, Fetch with { Depth = 2 });
 
-        queue.Completed.Single().Links.Select(l => l.Url).Should().Equal("https://a.example/about");
+        completed.Links.Should().Equal(new NewUrl(7, "https://a.example/moved", "https://a.example/moved", "a.example", 2));
+    }
+
+    [Fact]
+    public async Task ACanonicalThatNamesAnotherPageIsQueuedAndKeepsThisPageOutOfTheIndex()
+    {
+        var page = new ParsedPage { Canonical = "/main?utm_source=x", Links = [new ParsedLink { Url = "/main" }] };
+
+        var completed = await Run(page);
+
+        completed.Page.Canonical.Should().Be("https://a.example/main");
+        completed.Policy.Index.Should().BeFalse();
+        completed.Links.Should().ContainSingle().Which.Should().Be(new NewUrl(7, "https://a.example/main", "https://a.example/main", "a.example", 0));
+    }
+
+    [Fact]
+    public async Task ACanonicalThatNamesThePageItselfChangesNothing()
+    {
+        var completed = await Run(new ParsedPage { Canonical = "https://A.example/x#top" });
+
+        completed.Page.Canonical.Should().Be("https://a.example/x");
+        completed.Policy.Index.Should().BeTrue();
+        completed.Links.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ACanonicalFromTheLinkHeaderIsUsedWhenTheHtmlNamesNone()
+    {
+        var fetch = Fetch with { ResponseHeaders = TestDirectives.Header("Link", "</print>; rel=\"alternate\", </main>; rel=\"canonical\"") };
+
+        var completed = await Run(new ParsedPage(), fetch);
+
+        completed.Page.Canonical.Should().Be("https://a.example/main");
+        completed.Policy.Index.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TheDirectivesThatAppliedAreKeptForDisplay()
+    {
+        var fetch = Fetch with { ResponseHeaders = TestDirectives.Header("X-Robots-Tag", "noarchive") };
+
+        var completed = await Run(Page(new MetaTag("robots", "noindex")), fetch);
+
+        completed.Policy.Directives.Should().Equal("noindex (meta robots)", "noarchive (X-Robots-Tag)");
     }
 
     [Fact]

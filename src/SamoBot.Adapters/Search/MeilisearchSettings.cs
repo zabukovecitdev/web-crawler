@@ -10,6 +10,11 @@ namespace SamoBot.Adapters.Search;
 public sealed class MeilisearchSettings(MeilisearchClient client, IOptions<MeilisearchOptions> options) : IDisposable
 {
     public const string HostAttribute = "host";
+    public const string IndexUntilAttribute = "indexUntil";
+
+    /// <summary>Hides pages past their unavailable_after date: they stay in the index until the next crawl removes them.</summary>
+    public static string AvailableFilter(DateTimeOffset now) =>
+        $"{IndexUntilAttribute} > {now.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private volatile bool _applied;
@@ -43,7 +48,7 @@ public sealed class MeilisearchSettings(MeilisearchClient client, IOptions<Meili
         var settings = new Settings
         {
             SearchableAttributes = ["title", "description", "keywords", "bodyText"],
-            FilterableAttributes = [HostAttribute]
+            FilterableAttributes = [HostAttribute, IndexUntilAttribute]
         };
 
         var accepted = await client.Index(options.Value.IndexName).UpdateSettingsAsync(settings, ct);

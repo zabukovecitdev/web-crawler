@@ -10,5 +10,5 @@ public sealed record FetchRecord
     public long? ResponseTimeMs { get; init; }
     public string? ObjectName { get; init; }
     public string? FinalUrl { get; init; }
-    public string? XRobotsTag { get; init; }
+    public ResponseHeaders ResponseHeaders { get; init; } = ResponseHeaders.None;
 }

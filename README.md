@@ -192,6 +192,37 @@ If a worker dies, the hold expires by itself and the URL lease recovers the URL.
 The URL itself keeps its retry rules (`OutcomeClassifier`, `BackoffPolicy`); the host pacing only decides when the host is claimed again.
 `Crawler:MaxAdaptiveDelaySeconds` and `Crawler:InFlightMarginSeconds` are the settings of this section.
 
+## Crawl directives (what sites allow)
+
+Everything a site says about how it may be crawled is decided in `src/SamoBot.Core/Directives`. The parser and the fetchers
+only extract raw data (meta tags, `<base href>`, canonical, `rel` values, and the response headers the directives ask for);
+the directives interpret it and produce a `PagePolicy` per page, which is stored with the parsed page and enforced downstream.
+
+| Signal | Where it is handled | Effect |
+|---|---|---|
+| `<meta name="robots">`, `<meta name="samobot">` (any case) | `Sources/MetaRobotsTagSource` | directives for the rules |
+| `X-Robots-Tag` header, with `samobot:` / other-crawler scoping | `Sources/XRobotsTagSource` | directives for the rules |
+| `nofollow`, `none` | `Rules/NoFollowRule` | no links of the page are queued |
+| `noindex`, `none` | `Rules/NoIndexRule` | kept out of search, removed if indexed before |
+| `nosnippet`, `max-snippet: N` | `Rules/NoSnippetRule`, `Rules/MaxSnippetRule` | search snippet hidden or cut to N characters |
+| `noarchive` | `Rules/NoArchiveRule` | `GET /pages/{id}/content` answers `403` |
+| `unavailable_after: DATE` | `Rules/UnavailableAfterRule` | hidden from search from that time (search filter on `indexUntil`) |
+| canonical naming another page | `Canonical/*`, `Rules/NonCanonicalPageRule`, `Links/CanonicalTargetSource` | the copy is not indexed; the canonical URL is queued |
+| `rel="nofollow"` / `"sponsored"` / `"ugc"` on a link | `Links/RelLinkRule` | that link is stored but not queued |
+| `<meta http-equiv="refresh" content="N; url=...">` | `Links/MetaRefreshSource` | target queued like a redirect (same depth, even with nofollow) |
+| `<base href>` | `PageContextFactory` | relative links, canonical and refresh targets resolve against it |
+
+The strictest value wins when sources disagree. **To change behaviour, add or remove a class in `AddCrawlDirectives`**
+(`DirectivesServiceCollectionExtensions.cs`); nothing else changes:
+
+- a new place directives come from: implement `IRobotsDirectiveSource` (and `IResponseHeaderConsumer` if it reads a header:
+  the fetchers then keep that header automatically);
+- a new directive or signal: implement `IPagePolicyRule`, or derive from `DirectiveRule("name")`;
+- a new per-link rule: implement `ILinkFollowRule`; which `rel` values block is an argument of `RelLinkRule`;
+- a new redirect-like target: implement `IRedirectSource`; a new canonical source: implement `ICanonicalSource`.
+
+A new kind of decision (a new `PagePolicy` property) also needs the place that enforces it, such as the indexer or the API.
+
 ## Design decisions
 
 - PostgreSQL replaces RabbitMQ, Redis and Neo4j. One system holds all state, and one transaction records each result.

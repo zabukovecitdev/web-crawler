@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using SamoBot.Adapters.Postgres;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Tests.Fakes;
 
@@ -85,7 +86,7 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         var page = new ParsedPage { Title = "Hello", BodyText = "Body", Links = [new ParsedLink { Url = "/x" }] };
         var links = new[] { new NewUrl(job, "https://a.example/x", "https://a.example/x", "a.example", 1) };
 
-        await Queue().Complete(fetch, page, links, [], default);
+        await Queue().Complete(fetch, new ParseResult(page, PagePolicy.Default, links, []), default);
 
         var doc = await PostgresTestData.Row(postgres.DataSource, """SELECT * FROM "ParsedDocuments" WHERE "UrlFetchId" = @id""", new { id = fetch.FetchId });
         ((string)doc.Title).Should().Be("Hello");
@@ -106,12 +107,44 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         var fetch = (await Queue().Claim(10, Lease, default)).Single();
         var page = new ParsedPage { Title = new string('t', 900), Language = "en-US-x-very-long" };
 
-        await Queue().Complete(fetch, page, [], [], default);
-        await Queue().Complete(fetch, page, [], [], default);
+        await Queue().Complete(fetch, new ParseResult(page, PagePolicy.Default, [], []), default);
+        await Queue().Complete(fetch, new ParseResult(page, PagePolicy.Default, [], []), default);
 
         var count = await PostgresTestData.Scalar<long>(postgres.DataSource, """SELECT count(*) FROM "ParsedDocuments" """);
         var title = await PostgresTestData.Scalar<string>(postgres.DataSource, """SELECT "Title" FROM "ParsedDocuments" """);
         count.Should().Be(1);
         title.Should().HaveLength(500);
+    }
+
+    [Fact]
+    public async Task ThePolicyIsStoredWithThePageAndReachesTheIndexBacklog()
+    {
+        var (_, urlId) = await JobWithUrl();
+        await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
+        var fetch = (await Queue().Claim(10, Lease, default)).Single();
+        var policy = PagePolicy.Default with
+        {
+            Index = false, Archive = false, SnippetMaxLength = 20, IndexUntil = TestData.Now.AddDays(3), Directives = ["noindex (meta robots)"]
+        };
+
+        await Queue().Complete(fetch, new ParseResult(new ParsedPage { Title = "T" }, policy, [], []), default);
+
+        var pending = await new PostgresIndexBacklog(postgres.DataSource, _time).Claim(10, default);
+        pending.Single().Policy.Should().BeEquivalentTo(policy);
+    }
+
+    [Fact]
+    public async Task APageParsedBeforePoliciesHasTheDefaultPolicyInTheIndexBacklog()
+    {
+        var (_, urlId) = await JobWithUrl();
+        var fetchId = await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "ParsedAt") VALUES (@fetchId, 'Old', now()) RETURNING "Id" """,
+            new { fetchId });
+
+        var pending = await new PostgresIndexBacklog(postgres.DataSource, _time).Claim(10, default);
+
+        pending.Single().Policy.Should().Be(PagePolicy.Default);
     }
 }
