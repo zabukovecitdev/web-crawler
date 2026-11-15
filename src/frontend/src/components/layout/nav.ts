@@ -9,9 +9,9 @@ export type NavItem = {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Sites', icon: Globe, match: ['/sites'] },
+  { to: '/', label: 'Crawls', icon: Activity, match: ['/crawls'] },
+  { to: '/sites', label: 'Sites', icon: Globe, match: ['/sites'] },
   { to: '/search', label: 'Search', icon: Search, match: ['/search'] },
-  { to: '/crawls', label: 'Crawls', icon: Activity, match: ['/crawls'] },
   { to: '/analytics', label: 'Analytics', icon: BarChart3, match: ['/analytics'] },
 ]
 

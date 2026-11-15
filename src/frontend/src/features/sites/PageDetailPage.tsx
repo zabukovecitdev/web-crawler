@@ -16,7 +16,7 @@ function Heading({ page, host }: { page: PageDetail; host: string }) {
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-2">
         <p className="label">
-          <Link to="/" className="text-inherit no-underline hover:underline">Sites</Link> /{' '}
+          <Link to="/sites" className="text-inherit no-underline hover:underline">Sites</Link> /{' '}
           <Link to={`/sites/${encodeURIComponent(host)}`} className="text-inherit no-underline hover:underline">
             {host}
           </Link>{' '}

@@ -90,7 +90,7 @@ public sealed class CrawlJob
 
         if (Status is CrawlJobStatus.Cancelled && !wholeJob)
         {
-            return Result.Fail("This crawl was cancelled. Recrawl the whole job to run it again.");
+            return Result.Fail("This crawl was cancelled. Start a new crawl for this link, or recrawl the whole job.");
         }
 
         if (Status is not (CrawlJobStatus.Running or CrawlJobStatus.Paused))

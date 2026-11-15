@@ -52,7 +52,7 @@ function SiteHeading({ site }: { site: SiteDetail }) {
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-2">
         <p className="label">
-          <Link to="/" className="text-inherit no-underline hover:underline">
+          <Link to="/sites" className="text-inherit no-underline hover:underline">
             Sites
           </Link>{' '}
           / Site
@@ -88,7 +88,7 @@ export function SiteFrame({ host, children }: Props) {
   if (site.isError) {
     return isNotFound(site.error) ? (
       <EmptyState title="Site not found">
-        No crawl has seen {host} yet. <Link to="/">Back to sites</Link>
+        No crawl has seen {host} yet. <Link to="/sites">Back to sites</Link>
       </EmptyState>
     ) : (
       <ErrorState error={site.error} onRetry={() => void site.refetch()} />

@@ -4,10 +4,11 @@ import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatNumber } from '@/lib/format'
-import type { CrawlJobDto, JobLinkFilter } from '@/types/api'
+import type { CrawlJobDto, JobLinkDto, JobLinkFilter } from '@/types/api'
 import { Pager } from '../sites/Pager'
 import { useDebounced } from '../sites/useDebounced'
 import { JobLinksTable } from './JobLinksTable'
+import { NewCrawlForLinkDialog } from './NewCrawlForLinkDialog'
 import { crawlKeys, errorMessage, fetchLinks, recrawlLink } from './crawl-api'
 import { pendingLinks } from './link-format'
 
@@ -84,6 +85,9 @@ export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
   const [offset, setOffset] = useState(0)
   const links = useLinks(job, filter, search, offset)
   const recrawl = useRecrawlLink(job.id)
+  const [asNewCrawl, setAsNewCrawl] = useState<JobLinkDto | null>(null)
+  // A cancelled crawl is not run again for one link: offer a new crawl of that link instead.
+  const onRecrawl = (link: JobLinkDto) => (job.status === 'Cancelled' ? setAsNewCrawl(link) : recrawl.mutate(link.id))
   const restart = <T,>(set: (value: T) => void) => (value: T) => {
     set(value)
     setOffset(0)
@@ -101,10 +105,11 @@ export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
       {links.data?.items.length === 0 ? <EmptyState title="No links match">Choose another filter or clear the search.</EmptyState> : null}
       {links.data && links.data.items.length > 0 ? (
         <>
-          <JobLinksTable links={links.data.items} busy={recrawl.isPending} onRecrawl={(linkId) => recrawl.mutate(linkId)} />
+          <JobLinksTable links={links.data.items} busy={recrawl.isPending} onRecrawl={onRecrawl} />
           <Pager total={links.data.total} offset={offset} limit={PAGE_SIZE} shown={links.data.items.length} onChange={setOffset} />
         </>
       ) : null}
+      <NewCrawlForLinkDialog job={job} link={asNewCrawl} onClose={() => setAsNewCrawl(null)} />
     </div>
   )
 }

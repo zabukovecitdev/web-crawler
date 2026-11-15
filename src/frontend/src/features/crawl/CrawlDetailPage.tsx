@@ -26,7 +26,7 @@ function CrawlHeader({ job, progress, live }: HeaderProps) {
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="flex min-w-0 flex-col gap-2">
         <p className="label">
-          <Link to="/crawls" className="hover:underline">
+          <Link to="/" className="hover:underline">
             Crawls
           </Link>{' '}
           / Job #{job.id}

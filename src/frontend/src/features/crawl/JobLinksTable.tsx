@@ -8,7 +8,7 @@ import { LinkStepPips } from './LinkStepPips'
 import { formatClock } from './crawl-format'
 import { linkLook } from './link-format'
 
-type RowProps = { link: JobLinkDto; busy: boolean; onRecrawl: (linkId: number) => void }
+type RowProps = { link: JobLinkDto; busy: boolean; onRecrawl: (link: JobLinkDto) => void }
 
 function pathOf(url: string): string {
   try {
@@ -46,7 +46,7 @@ function LinkRow({ link, busy, onRecrawl }: RowProps) {
         {retryNote(link)}
       </TableCell>
       <TableCell className={`${TD} whitespace-nowrap text-right`}>
-        <Button variant="outline" size="sm" disabled={busy || !link.canRecrawl} onClick={() => onRecrawl(link.id)}>
+        <Button variant="outline" size="sm" disabled={busy || !link.canRecrawl} onClick={() => onRecrawl(link)}>
           Recrawl
         </Button>
       </TableCell>
@@ -54,7 +54,7 @@ function LinkRow({ link, busy, onRecrawl }: RowProps) {
   )
 }
 
-type Props = { links: JobLinkDto[]; busy: boolean; onRecrawl: (linkId: number) => void }
+type Props = { links: JobLinkDto[]; busy: boolean; onRecrawl: (link: JobLinkDto) => void }
 
 /** One row for each link: its state, the page it leads to, the four steps, the reason in words, and a recrawl. */
 export function JobLinksTable({ links, busy, onRecrawl }: Props) {

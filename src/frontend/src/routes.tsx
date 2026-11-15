@@ -27,7 +27,8 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route path="/" element={<SitesPage />} />
+          <Route path="/" element={<CrawlsPage />} />
+          <Route path="/sites" element={<SitesPage />} />
           <Route path="/sites/:host" element={<SiteDetailPage />} />
           <Route path="/sites/:host/pages/:id" element={<PageDetailPage />} />
           <Route path="/sites/:host/sitemap" element={<SitemapPage />} />
