@@ -48,8 +48,8 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
 
     private const string InsertFetchSql = $"""
         INSERT INTO "{TableNames.UrlFetches}"
-            ("DiscoveredUrlId", "FetchedAt", "StatusCode", "ContentType", "ContentLength", "ResponseTimeMs", "ObjectName", "FinalUrl")
-        VALUES (@UrlId, @FetchedAt, @StatusCode, @ContentType, @ContentLength, @ResponseTimeMs, @ObjectName, @FinalUrl)
+            ("DiscoveredUrlId", "FetchedAt", "StatusCode", "ContentType", "ContentLength", "ResponseTimeMs", "ObjectName", "FinalUrl", "ResponseHeaders")
+        VALUES (@UrlId, @FetchedAt, @StatusCode, @ContentType, @ContentLength, @ResponseTimeMs, @ObjectName, @FinalUrl, @ResponseHeaders::text)
         RETURNING "Id"
         """;
 
@@ -157,7 +157,8 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             fetch.ContentLength,
             fetch.ResponseTimeMs,
             fetch.ObjectName,
-            fetch.FinalUrl
+            fetch.FinalUrl,
+            ResponseHeaders = ResponseHeadersJson.Write(fetch.ResponseHeaders)
         };
         return connection.ExecuteScalarAsync<int>(new CommandDefinition(InsertFetchSql, parameters, transaction, cancellationToken: ct));
     }

@@ -11,4 +11,7 @@ public sealed record FetchToParse
     public required string ObjectName { get; init; }
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
+
+    /// <summary>The response headers kept with the fetch (see <see cref="Directives.ResponseHeaderSelection"/>).</summary>
+    public ResponseHeaders ResponseHeaders { get; init; } = ResponseHeaders.None;
 }

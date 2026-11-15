@@ -16,6 +16,9 @@ public class HtmlAgilityPackParserTests
           <meta name="keywords" content="a, b">
           <meta name="author" content="Ann">
           <meta name="robots" content="noindex, nofollow">
+          <meta NAME="SamoBot" content="noarchive">
+          <meta http-equiv="refresh" content="5; url=/next">
+          <base href="/docs/">
           <link rel="canonical" href="https://a.example/canonical">
           <meta property="og:title" content="OG title">
           <meta name="twitter:card" content="summary">
@@ -64,7 +67,7 @@ public class HtmlAgilityPackParserTests
         var page = Parse(Page);
 
         page.Links.Should().ContainSingle().Which.Should().BeEquivalentTo(
-            new ParsedLink { Url = "/about", LinkText = "About us", Rel = "nofollow", Title = "About us", IsNoFollow = true });
+            new ParsedLink { Url = "/about", LinkText = "About us", Rel = "nofollow", Title = "About us" });
         page.Images.Should().ContainSingle().Which.Should().BeEquivalentTo(
             new ParsedImage { Src = "/logo.png", Alt = "Logo", Width = "10", Height = "20" });
     }
@@ -74,14 +77,22 @@ public class HtmlAgilityPackParserTests
     {
         var page = Parse(Page);
 
-        page.RobotsDirectives.NoIndex.Should().BeTrue();
-        page.RobotsDirectives.NoFollow.Should().BeTrue();
-        page.RobotsDirectives.ForbidsFollow.Should().BeTrue();
-        page.RobotsDirectives.NoArchive.Should().BeFalse();
+        page.MetaTags.Should().Contain(new MetaTag("robots", "noindex, nofollow"))
+            .And.Contain(new MetaTag("SamoBot", "noarchive"))
+            .And.Contain(new MetaTag("refresh", "5; url=/next", HttpEquiv: true))
+            .And.Contain(new MetaTag("description", "A page"));
+        page.BaseHref.Should().Be("/docs/");
         page.OpenGraphData.Should().Contain("og:title", "OG title");
         page.TwitterCardData.Should().Contain("twitter:card", "summary");
         page.JsonLdData.Should().Equal("""{"@type":"Thing"}""");
     }
+
+    [Theory]
+    [InlineData("""<link rel="Canonical" href="/a">""")]
+    [InlineData("""<link rel="alternate canonical" href="/a">""")]
+    [InlineData("""<link href="/a" rel="canonical"><link rel="canonical" href="/b">""")]
+    public void ParseFindsTheCanonicalLinkWhateverTheCaseOrOtherRelValues(string head) =>
+        Parse($"<html><head>{head}</head></html>").Canonical.Should().Be("/a");
 
     [Fact]
     public void ParseOfAnEmptyDocumentReturnsEmptyValues()
@@ -91,6 +102,7 @@ public class HtmlAgilityPackParserTests
         page.Title.Should().BeEmpty();
         page.Links.Should().BeEmpty();
         page.BodyText.Should().BeEmpty();
-        page.RobotsDirectives.ForbidsFollow.Should().BeFalse();
+        page.MetaTags.Should().BeEmpty();
+        page.BaseHref.Should().BeEmpty();
     }
 }

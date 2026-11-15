@@ -8,10 +8,11 @@ public class PageLinkPreparerTests
 {
     private static readonly Uri Page = new("https://a.example/x");
 
-    private static IReadOnlyList<PageLink> Prepare(params ParsedLink[] links) => PageLinkPreparer.Prepare(Page, links);
+    private static IReadOnlyList<PageLink> Prepare(params ParsedLink[] links) =>
+        PageLinkPreparer.Prepare(Page, Page, links, link => link.Rel == "nofollow");
 
     private static ParsedLink Link(string url, string text = "", bool noFollow = false) =>
-        new() { Url = url, LinkText = text, IsNoFollow = noFollow };
+        new() { Url = url, LinkText = text, Rel = noFollow ? "nofollow" : string.Empty };
 
     [Fact]
     public void LinksUseTheSameNormalizationAsTheFrontier()
@@ -66,9 +67,17 @@ public class PageLinkPreparerTests
     }
 
     [Fact]
-    public void NoFollowIsCopied()
+    public void NoFollowIsWhatTheGivenRuleSays()
     {
-        Prepare(Link("/a", noFollow: true)).Single().NoFollow.Should().BeTrue();
+        Prepare(Link("/a", noFollow: true), Link("/b")).Select(l => l.NoFollow).Should().Equal(true, false);
+    }
+
+    [Fact]
+    public void TargetsResolveAgainstTheBaseUrlButInternalMeansTheAuthorityOfThePage()
+    {
+        var prepared = PageLinkPreparer.Prepare(new Uri("https://cdn.example/docs/"), Page, [Link("guide")], _ => false);
+
+        prepared.Single().Should().Be(new PageLink("https://cdn.example/docs/guide", "cdn.example", null, false, false));
     }
 
     [Fact]

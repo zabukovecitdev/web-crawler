@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SamoBot.Api.Contracts;
 using SamoBot.Api.Controllers;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 using SamoBot.Tests.Fakes;
@@ -11,7 +12,7 @@ namespace SamoBot.Tests.Api;
 
 public class PagesControllerTests
 {
-    private sealed class FakePageReader(string? objectName, PagedResult<PageLinkItem>? links = null) : IPageReader
+    private sealed class FakePageReader(string? objectName, PagedResult<PageLinkItem>? links = null, PagePolicy? policy = null) : IPageReader
     {
         public LinkQuery? LastLinkQuery { get; private set; }
 
@@ -26,7 +27,8 @@ public class PagesControllerTests
 
         public Task<PageDetail?> FindPage(int id, CancellationToken ct) => throw new NotSupportedException();
 
-        public Task<string?> FindContentObjectName(int id, CancellationToken ct) => Task.FromResult(objectName);
+        public Task<StoredCopy?> FindStoredCopy(int id, CancellationToken ct) =>
+            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, policy ?? PagePolicy.Default));
     }
 
     private static PagesController Controller(string? objectName, FakeContentStore store, FakePageReader? reader = null) =>
@@ -50,6 +52,19 @@ public class PagesControllerTests
         headers["Content-Security-Policy"].ToString().Should().Be("default-src 'none'; sandbox");
         headers["Content-Disposition"].ToString().Should().StartWith("inline").And.Contain("page-7.txt");
         headers[StoredContent.TruncatedHeader].ToString().Should().Be("false");
+    }
+
+    [Fact]
+    public async Task ContentOfANoArchivePageIsForbiddenAndNotLoaded()
+    {
+        var store = new FakeContentStore();
+        var reader = new FakePageReader("obj", policy: PagePolicy.Default with { Archive = false });
+
+        var result = await Controller("obj", store, reader).GetContent(7, default);
+
+        var refused = result.Should().BeOfType<ObjectResult>().Subject;
+        refused.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        refused.Value.Should().BeOfType<ProblemDetails>().Which.Title.Should().Be(PagesController.NoArchiveMessage);
     }
 
     [Fact]

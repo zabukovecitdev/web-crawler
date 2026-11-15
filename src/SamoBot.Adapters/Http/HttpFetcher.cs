@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using SamoBot.Adapters.Browser;
 using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Http;
@@ -10,12 +11,14 @@ namespace SamoBot.Adapters.Http;
 /// Downloads a URL with a plain HTTP request. It does not follow redirects. The frontier decides what to do with them.
 /// A network error or a timeout gives status code 0. The fetcher does not throw for them.
 /// A <see cref="RequestDeadline"/> limits the time to the first byte and the total time, the body read included.
-/// A cancellation by the caller (shutdown) is not a timeout and still throws.
+/// A cancellation by the caller (shutdown) is not a timeout and still throws. The response headers that the crawl directives
+/// read (<see cref="ResponseHeaderSelection"/>) are kept raw: NonValidated keeps each header value whole.
 /// </summary>
 public sealed class HttpFetcher(
     HttpClient httpClient,
     IOptions<ChromeRenderingOptions> chrome,
     IOptions<CrawlerNetworkOptions> network,
+    ResponseHeaderSelection keptHeaders,
     TimeProvider timeProvider) : IFetcher
 {
     public const string UserAgent = "SamoBot/1.0 (+https://github.com/zabukovecitdev/web-crawler)";
@@ -76,7 +79,8 @@ public sealed class HttpFetcher(
             Content = content,
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
             RedirectLocation = response.Headers.Location?.OriginalString,
-            RetryAfter = RetryAfter(response)
+            RetryAfter = RetryAfter(response),
+            ResponseHeaders = keptHeaders.Collect(name => response.Headers.NonValidated.TryGetValues(name, out var values) ? values : null)
         };
     }
 

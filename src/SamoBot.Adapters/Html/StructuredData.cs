@@ -3,23 +3,9 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>Machine-readable data of a page: robots meta, Open Graph, Twitter cards and JSON-LD.</summary>
+/// <summary>Machine-readable data of a page: Open Graph, Twitter cards and JSON-LD.</summary>
 internal static class StructuredData
 {
-    public static RobotsDirectives Robots(HtmlDocument document)
-    {
-        var content = PageMetadata.Attribute(document, "//meta[@name='robots']", "content");
-        return new RobotsDirectives
-        {
-            Content = content,
-            NoIndex = Has(content, "noindex"),
-            NoFollow = Has(content, "nofollow"),
-            NoArchive = Has(content, "noarchive"),
-            NoSnippet = Has(content, "nosnippet"),
-            None = Has(content, "none")
-        };
-    }
-
     public static IReadOnlyDictionary<string, string> OpenGraph(HtmlDocument document) =>
         MetaPairs(document, "//meta[starts-with(@property, 'og:')]", "property");
 
@@ -48,6 +34,4 @@ internal static class StructuredData
 
         return pairs;
     }
-
-    private static bool Has(string content, string directive) => content.Contains(directive, StringComparison.OrdinalIgnoreCase);
 }

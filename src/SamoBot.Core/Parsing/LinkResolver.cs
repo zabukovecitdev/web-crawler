@@ -13,6 +13,9 @@ public static class LinkResolver
             .Distinct()
             .ToList();
 
+    /// <summary>The normalized form of an absolute URL, or null when it is not http or https.</summary>
+    public static string? Normalize(Uri url) => ResolveOne(url, url.AbsoluteUri);
+
     /// <summary>The absolute, normalized http or https URL of a link, or null when it is not one.</summary>
     public static string? ResolveOne(Uri pageUrl, string href)
     {

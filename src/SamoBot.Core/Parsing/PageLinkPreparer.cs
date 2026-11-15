@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Parsing;
@@ -17,7 +18,11 @@ public static partial class PageLinkPreparer
 
     public const int MaxAnchorLength = 200;
 
-    public static IReadOnlyList<PageLink> Prepare(Uri pageUrl, IEnumerable<ParsedLink> links)
+    /// <summary>The links of the page, resolved against its base URL. <paramref name="isNoFollow"/> marks the links the crawler does not follow.</summary>
+    public static IReadOnlyList<PageLink> Prepare(PageContext page, Func<ParsedLink, bool> isNoFollow) =>
+        Prepare(page.BaseUrl, page.PageUrl, page.Page.Links, isNoFollow);
+
+    public static IReadOnlyList<PageLink> Prepare(Uri baseUrl, Uri pageUrl, IEnumerable<ParsedLink> links, Func<ParsedLink, bool> isNoFollow)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var result = new List<PageLink>();
@@ -28,7 +33,7 @@ public static partial class PageLinkPreparer
                 break;
             }
 
-            var prepared = Build(pageUrl, link);
+            var prepared = Build(baseUrl, pageUrl, link, isNoFollow);
             if (prepared is not null && seen.Add(prepared.ToUrl))
             {
                 result.Add(prepared);
@@ -38,21 +43,21 @@ public static partial class PageLinkPreparer
         return result;
     }
 
-    private static PageLink? Build(Uri pageUrl, ParsedLink link)
+    private static PageLink? Build(Uri baseUrl, Uri pageUrl, ParsedLink link, Func<ParsedLink, bool> isNoFollow)
     {
         if (link.Url.AsSpan().TrimStart().StartsWith("#"))
         {
             return null;
         }
 
-        var target = LinkResolver.ResolveOne(pageUrl, link.Url);
+        var target = LinkResolver.ResolveOne(baseUrl, link.Url);
         if (target is null || target.Length > MaxUrlLength)
         {
             return null;
         }
 
         var host = new Uri(target).Authority;
-        return new PageLink(target, host, Anchor(link.LinkText), string.Equals(host, pageUrl.Authority, StringComparison.OrdinalIgnoreCase), link.IsNoFollow);
+        return new PageLink(target, host, Anchor(link.LinkText), string.Equals(host, pageUrl.Authority, StringComparison.OrdinalIgnoreCase), isNoFollow(link));
     }
 
     private static string? Anchor(string text)

@@ -14,6 +14,9 @@ public sealed record FetchResponse
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
 
+    /// <summary>The response headers the directive sources asked for (see <see cref="Directives.ResponseHeaderSelection"/>).</summary>
+    public ResponseHeaders ResponseHeaders { get; init; } = ResponseHeaders.None;
+
     /// <summary>The wait that a Retry-After header asked for (delta seconds, or the date minus now). Null without the header.</summary>
     public TimeSpan? RetryAfter { get; init; }
 

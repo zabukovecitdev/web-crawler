@@ -7,7 +7,7 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The parse work queue. A fetch is claimed with a lease. One transaction stores the page, its links and the parsed mark.</summary>
+/// <summary>The parse work queue. A fetch is claimed with a lease. One transaction stores the page with its policy, its links and the parsed mark.</summary>
 public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IParseBacklog
 {
     private const string ClaimSql = $"""
@@ -26,10 +26,10 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
             UPDATE "{TableNames.UrlFetches}" f
             SET "LeaseUntil" = @Now + make_interval(secs => @LeaseSeconds)
             FROM picked p WHERE p."Id" = f."Id"
-            RETURNING f."Id", f."DiscoveredUrlId", f."ObjectName"
+            RETURNING f."Id", f."DiscoveredUrlId", f."ObjectName", f."ResponseHeaders"
         )
         SELECT l."Id" AS "FetchId", u."Id" AS "UrlId", u."CrawlJobId", u."Url", u."Depth", l."ObjectName",
-               j."AllowedHosts", j."MaxDepth"
+               j."AllowedHosts", j."MaxDepth", l."ResponseHeaders"
         FROM leased l
         JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = l."DiscoveredUrlId"
         JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId"
@@ -38,15 +38,15 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
     private const string UpsertPageSql = $"""
         INSERT INTO "{TableNames.ParsedDocuments}"
             ("UrlFetchId", "Title", "Description", "Keywords", "Author", "Language", "Canonical", "BodyText",
-             "Headings", "Images", "RobotsDirectives", "OpenGraphData", "TwitterCardData", "JsonLdData", "ParsedAt", "IndexedAt")
+             "Headings", "Images", "Policy", "OpenGraphData", "TwitterCardData", "JsonLdData", "ParsedAt", "IndexedAt")
         VALUES
             (@FetchId, @Title, @Description, @Keywords, @Author, @Language, @Canonical, @BodyText,
-             @Headings, @Images, @RobotsDirectives, @OpenGraphData, @TwitterCardData, @JsonLdData, @Now, NULL)
+             @Headings, @Images, @Policy, @OpenGraphData, @TwitterCardData, @JsonLdData, @Now, NULL)
         ON CONFLICT ("UrlFetchId") DO UPDATE SET
             "Title" = EXCLUDED."Title", "Description" = EXCLUDED."Description", "Keywords" = EXCLUDED."Keywords",
             "Author" = EXCLUDED."Author", "Language" = EXCLUDED."Language", "Canonical" = EXCLUDED."Canonical",
             "BodyText" = EXCLUDED."BodyText", "Headings" = EXCLUDED."Headings", "Images" = EXCLUDED."Images",
-            "RobotsDirectives" = EXCLUDED."RobotsDirectives", "OpenGraphData" = EXCLUDED."OpenGraphData",
+            "Policy" = EXCLUDED."Policy", "RobotsDirectives" = NULL, "OpenGraphData" = EXCLUDED."OpenGraphData",
             "TwitterCardData" = EXCLUDED."TwitterCardData", "JsonLdData" = EXCLUDED."JsonLdData",
             "ParsedAt" = EXCLUDED."ParsedAt", "IndexedAt" = NULL
         """;
@@ -54,6 +54,9 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
     private const string MarkParsedSql = $"""
         UPDATE "{TableNames.UrlFetches}" SET "ParsedAt" = @Now, "LeaseUntil" = NULL WHERE "Id" = @FetchId
         """;
+
+    /// <summary>A canonical URL longer than the column is dropped, not cut: a cut URL would point somewhere else.</summary>
+    private const int MaxCanonicalLength = 2048;
 
     static PostgresParseBacklog() => DapperTypeHandlers.Register();
 
@@ -65,37 +68,41 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
         return fetches.ToList();
     }
 
-    public async Task Complete(FetchToParse fetch, ParsedPage page, IReadOnlyList<NewUrl> links, IReadOnlyList<PageLink> pageLinks, CancellationToken ct)
+    public async Task Complete(FetchToParse fetch, ParseResult result, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
         var now = timeProvider.GetUtcNow();
 
-        await connection.ExecuteAsync(new CommandDefinition(UpsertPageSql, PageParameters(fetch, page, now), transaction, cancellationToken: ct));
-        await NewUrlInserter.Insert(connection, transaction, fetch.CrawlJobId, links, now, ct);
-        await PageLinkWriter.Replace(connection, transaction, fetch.UrlId, pageLinks, now, ct);
+        await connection.ExecuteAsync(new CommandDefinition(UpsertPageSql, PageParameters(fetch, result, now), transaction, cancellationToken: ct));
+        await NewUrlInserter.Insert(connection, transaction, fetch.CrawlJobId, result.NewUrls, now, ct);
+        await PageLinkWriter.Replace(connection, transaction, fetch.UrlId, result.PageLinks, now, ct);
         await connection.ExecuteAsync(new CommandDefinition(MarkParsedSql, new { fetch.FetchId, Now = now }, transaction, cancellationToken: ct));
         await transaction.CommitAsync(ct);
     }
 
-    private static object PageParameters(FetchToParse fetch, ParsedPage page, DateTimeOffset now) => new
+    private static object PageParameters(FetchToParse fetch, ParseResult result, DateTimeOffset now)
     {
-        fetch.FetchId,
-        Title = Truncate(page.Title, 500),
-        Description = Truncate(page.Description, 2000),
-        Keywords = Truncate(page.Keywords, 1000),
-        Author = Truncate(page.Author, 255),
-        Language = Truncate(page.Language, 10),
-        Canonical = Truncate(page.Canonical, 2048),
-        page.BodyText,
-        Headings = Json(page.Headings),
-        Images = Json(page.Images),
-        RobotsDirectives = Json(page.RobotsDirectives),
-        OpenGraphData = Json(page.OpenGraphData),
-        TwitterCardData = Json(page.TwitterCardData),
-        JsonLdData = Json(page.JsonLdData),
-        Now = now
-    };
+        var page = result.Page;
+        return new
+        {
+            fetch.FetchId,
+            Title = Truncate(page.Title, 500),
+            Description = Truncate(page.Description, 2000),
+            Keywords = Truncate(page.Keywords, 1000),
+            Author = Truncate(page.Author, 255),
+            Language = Truncate(page.Language, 10),
+            Canonical = page.Canonical.Length <= MaxCanonicalLength ? page.Canonical : string.Empty,
+            page.BodyText,
+            Headings = Json(page.Headings),
+            Images = Json(page.Images),
+            Policy = Json(result.Policy),
+            OpenGraphData = Json(page.OpenGraphData),
+            TwitterCardData = Json(page.TwitterCardData),
+            JsonLdData = Json(page.JsonLdData),
+            Now = now
+        };
+    }
 
     private static string Json<T>(T value) => JsonSerializer.Serialize(value, JsonDefaults.Options);
 

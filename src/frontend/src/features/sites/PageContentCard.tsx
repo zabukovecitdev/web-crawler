@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { errorMessage } from '@/lib/api'
 import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { CONTENT_LABELS } from './labels'
 import { PageLinksView } from './PageLinksView'
 import { Panel } from './Panel'
 import { usePageContent } from './pages-api'
+import { isForbidden } from './sites-api'
 
 type View = 'text' | 'html' | 'headings' | 'links'
 const VIEWS: View[] = ['text', 'html', 'headings', 'links']
@@ -46,7 +48,11 @@ function SourceView({ id }: { id: number }) {
     return <LoadingRows rows={6} />
   }
   if (content.isError) {
-    return <ErrorState error={content.error} onRetry={() => void content.refetch()} />
+    return isForbidden(content.error) ? (
+      <EmptyState title="Stored copy hidden">{errorMessage(content.error)}</EmptyState>
+    ) : (
+      <ErrorState error={content.error} onRetry={() => void content.refetch()} />
+    )
   }
   return (
     <div className="flex flex-col gap-3">

@@ -35,7 +35,7 @@ public class HttpTimeoutTests
     }
 
     private static HttpFetcher Fetcher(CrawlerNetworkOptions? limits = null, HttpClient? client = null) =>
-        new(client ?? Client(), Options.Create(new ChromeRenderingOptions()), Options.Create(limits ?? Limits()), TimeProvider.System);
+        new(client ?? Client(), Options.Create(new ChromeRenderingOptions()), Options.Create(limits ?? Limits()), TestDirectives.Headers, TimeProvider.System);
 
     private static HttpRobotsSource Robots() => new(Client(), Options.Create(Limits()), TimeProvider.System);
 
@@ -190,5 +190,16 @@ public class HttpTimeoutTests
 
         download.IsSuccess.Should().BeTrue();
         download.Content.Should().HaveCount(9);
+    }
+
+    [Fact]
+    public async Task XRobotsTagHeadersFromTheWireAreKeptOneValuePerHeader()
+    {
+        await using var server = LoopbackServer.Fast(
+            "<html>ok</html>", extraHeaders: "X-Robots-Tag: noindex\r\nX-Robots-Tag: samobot: noarchive, nofollow\r\n");
+
+        var response = await Fetcher().Fetch(Url(server), default);
+
+        response.ResponseHeaders.Values("X-Robots-Tag").Should().Equal("noindex", "samobot: noarchive, nofollow");
     }
 }
