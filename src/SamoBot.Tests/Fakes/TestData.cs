@@ -9,7 +9,6 @@ public static class TestData
     public static ClaimedUrl Url(
         string url = "https://a.example/x",
         int failCount = 0,
-        bool respectRobots = true,
         bool useJsRendering = false)
     {
         var uri = new Uri(url);
@@ -22,8 +21,7 @@ public static class TestData
             NormalizedUrl = url,
             Depth = 0,
             FailCount = failCount,
-            UseJsRendering = useJsRendering,
-            RespectRobots = respectRobots
+            UseJsRendering = useJsRendering
         };
     }
 

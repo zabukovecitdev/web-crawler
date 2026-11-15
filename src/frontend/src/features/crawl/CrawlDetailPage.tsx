@@ -1,12 +1,16 @@
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState, LoadingRows } from '@/components/shared/States'
+import { Panel } from '../sites/Panel'
 import type { CrawlJobDto, CrawlProgress } from '@/types/api'
 import { ConnectionIndicator } from './ConnectionIndicator'
 import { CrawlActions } from './CrawlActions'
 import { CurrentRequestCard } from './CurrentRequestCard'
 import { FinalSummary } from './FinalSummary'
+import { JobLinksPanel } from './JobLinksPanel'
 import { JobStatusBadge } from './JobStatusBadge'
+import { JobSteps } from './JobSteps'
 import { PolitenessCard } from './PolitenessCard'
+import { RecrawlActions } from './RecrawlActions'
 import { RequestLog } from './RequestLog'
 import { ResponseBar } from './ResponseBar'
 import { StatCards } from './StatCards'
@@ -34,7 +38,10 @@ function CrawlHeader({ job, progress, live }: HeaderProps) {
         </div>
         {live}
       </div>
-      {isFinished(progress.status) ? null : <CrawlActions jobId={job.id} host={job.host} status={progress.status} />}
+      <div className="flex flex-wrap items-start justify-end gap-3">
+        {isFinished(progress.status) ? null : <CrawlActions jobId={job.id} host={job.host} status={progress.status} />}
+        <RecrawlActions job={job} />
+      </div>
     </div>
   )
 }
@@ -60,6 +67,9 @@ function CrawlDetail({ jobId }: { jobId: number }) {
     <div className="flex flex-col gap-6">
       <CrawlHeader job={job.data} progress={progress} live={live} />
       {finished ? <FinalSummary progress={progress} host={job.data.host} elapsed={elapsedOf(progress, endedAt)} /> : null}
+      <Panel title="Progress" kicker="What happened so far">
+        <JobSteps job={{ ...job.data, status: progress.status }} />
+      </Panel>
       <StatCards progress={progress} endedAt={finished ? endedAt : null} />
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="order-last min-w-0 lg:order-first">
@@ -71,6 +81,9 @@ function CrawlDetail({ jobId }: { jobId: number }) {
           <ResponseBar counts={progress.statusCounts} />
         </div>
       </div>
+      <Panel title="Links" kicker="Every link of this crawl, and why it is where it is">
+        <JobLinksPanel job={{ ...job.data, status: progress.status }} />
+      </Panel>
     </div>
   )
 }

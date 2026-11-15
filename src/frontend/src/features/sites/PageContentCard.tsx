@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
+import { EmptyState } from '@/components/shared/States'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { errorMessage } from '@/lib/api'
 import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
+import { HtmlSource } from './HtmlSource'
 import { CONTENT_LABELS } from './labels'
 import { PageLinksView } from './PageLinksView'
 import { Panel } from './Panel'
-import { usePageContent } from './pages-api'
-import { isForbidden } from './sites-api'
 
 type View = 'text' | 'html' | 'headings' | 'links'
 const VIEWS: View[] = ['text', 'html', 'headings', 'links']
@@ -42,33 +40,9 @@ function HeadingsView({ parsed }: { parsed: ParsedPageDto }) {
   )
 }
 
-function SourceView({ id }: { id: number }) {
-  const content = usePageContent(id, true)
-  if (content.isPending) {
-    return <LoadingRows rows={6} />
-  }
-  if (content.isError) {
-    return isForbidden(content.error) ? (
-      <EmptyState title="Stored copy hidden">{errorMessage(content.error)}</EmptyState>
-    ) : (
-      <ErrorState error={content.error} onRetry={() => void content.refetch()} />
-    )
-  }
-  return (
-    <div className="flex flex-col gap-3">
-      {content.data.truncated ? (
-        <p role="note" className="m-0 text-[13px] text-muted-foreground">
-          The stored source is longer than the dashboard shows. This is the first part.
-        </p>
-      ) : null}
-      <pre className="well m-0 max-h-[420px]">{content.data.text}</pre>
-    </div>
-  )
-}
-
 function ViewBody({ view, page }: { view: View; page: PageDetail }) {
   if (view === 'html') {
-    return <SourceView id={page.id} />
+    return <HtmlSource page={page} />
   }
   if (view === 'links') {
     return <PageLinksView id={page.id} />
@@ -87,7 +61,7 @@ function ViewBody({ view, page }: { view: View; page: PageDetail }) {
 }
 
 export function PageContentCard({ page }: { page: PageDetail }) {
-  const [view, setView] = useState<View>('text')
+  const [view, setView] = useState<View>(page.parsed ? 'text' : 'html')
   const parsed = page.parsed
   const kicker = parsed
     ? `${formatNumber(parsed.wordCount)} words · ${formatNumber(parsed.bodyText.length)} characters`
@@ -97,7 +71,7 @@ export function PageContentCard({ page }: { page: PageDetail }) {
       <Tabs value={view} onValueChange={(v) => setView(v as View)}>
         <TabsList aria-label="Content view" className="h-auto flex-wrap">
           <TabsTrigger value="text">Text</TabsTrigger>
-          <TabsTrigger value="html">HTML source</TabsTrigger>
+          <TabsTrigger value="html">Downloaded HTML</TabsTrigger>
           <TabsTrigger value="headings">Headings {parsed ? parsed.headings.length : 0}</TabsTrigger>
           <TabsTrigger value="links">Links {parsed ? formatNumber(parsed.linkCount) : 0}</TabsTrigger>
         </TabsList>

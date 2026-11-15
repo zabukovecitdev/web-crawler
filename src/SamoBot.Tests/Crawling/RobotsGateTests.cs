@@ -25,15 +25,14 @@ public class RobotsGateTests
         new("a.example", content, _time.GetUtcNow(), _time.GetUtcNow().AddHours(hours));
 
     [Fact]
-    public async Task IsAllowedWhenRobotsAreNotRespectedReturnsTrueWithoutLookup()
+    public async Task IsAllowedAlwaysChecksRobots()
     {
         var gate = Gate(Rules(BlockPrivate), out var source);
 
-        var allowed = await gate.IsAllowed(TestData.Url("https://a.example/private", respectRobots: false), default);
+        var allowed = await gate.IsAllowed(TestData.Url("https://a.example/private"), default);
 
-        allowed.Should().BeTrue();
-        source.Downloads.Should().Be(0);
-        _store.GetCalls.Should().Be(0);
+        allowed.Should().BeFalse();
+        source.Downloads.Should().Be(1);
     }
 
     [Fact]

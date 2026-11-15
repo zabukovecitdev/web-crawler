@@ -13,7 +13,6 @@ public sealed class CrawlJob
     public int? MaxDepth { get; init; }
     public int? MaxUrls { get; init; }
     public bool UseJsRendering { get; init; }
-    public bool RespectRobots { get; init; } = true;
     public DateTimeOffset CreatedAt { get; init; }
 
     public CrawlJobStatus Status { get; private set; } = CrawlJobStatus.Pending;
@@ -39,7 +38,6 @@ public sealed class CrawlJob
             MaxDepth = request.MaxDepth,
             MaxUrls = request.MaxUrls,
             UseJsRendering = request.UseJsRendering,
-            RespectRobots = request.RespectRobots,
             CreatedAt = now,
             UpdatedAt = now
         });
@@ -77,6 +75,32 @@ public sealed class CrawlJob
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Opens the job for a recrawl. A finished job runs again; a running or paused job keeps its status. One link of a
+    /// cancelled job cannot be recrawled alone: running the job again would also fetch everything that was still queued.
+    /// </summary>
+    public Result Reopen(DateTimeOffset now, bool wholeJob)
+    {
+        if (Status is CrawlJobStatus.Draft or CrawlJobStatus.Pending)
+        {
+            return Result.Fail("The crawl has not started yet.");
+        }
+
+        if (Status is CrawlJobStatus.Cancelled && !wholeJob)
+        {
+            return Result.Fail("This crawl was cancelled. Recrawl the whole job to run it again.");
+        }
+
+        if (Status is not (CrawlJobStatus.Running or CrawlJobStatus.Paused))
+        {
+            Status = CrawlJobStatus.Running;
+            CompletedAt = null;
+        }
+
+        UpdatedAt = now;
+        return Result.Ok();
     }
 
     public void Complete(DateTimeOffset now)

@@ -52,7 +52,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
-            .WithExposedHeaders("X-Content-Truncated");
+            .WithExposedHeaders("X-Content-Truncated", "X-Content-Stored-Bytes");
     });
 });
 

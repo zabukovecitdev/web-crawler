@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useReducer, useRef, type Dispatch } from 'react'
 import { crawlKeys, fetchEvents, fetchJob, fetchProgress, type LiveEvent } from './crawl-api'
+import { pendingLinks } from './link-format'
 import { crawlReducer, initialCrawlState, isFinished, type CrawlAction } from './crawl-state'
 import { useCrawlStream } from './useCrawlStream'
 import { syncOnce, useEventSync } from './useEventSync'
@@ -24,10 +25,19 @@ function useInitialLoad(jobId: number, dispatch: Dispatch<CrawlAction>) {
   return progress
 }
 
+/** The job with its link counts. It is read again while links still move: parsing and indexing go on after the last fetch. */
+function useJob(jobId: number) {
+  return useQuery({
+    queryKey: crawlKeys.job(jobId),
+    queryFn: () => fetchJob(jobId),
+    refetchInterval: ({ state }) => (state.data && isFinished(state.data.status) && pendingLinks(state.data.links) === 0 ? false : 4000),
+  })
+}
+
 /** Initial state, then live events (socket) or polling (offline). Stops once the job has ended. */
 export function useCrawlData(jobId: number) {
   const [state, dispatch] = useReducer(crawlReducer, initialCrawlState)
-  const job = useQuery({ queryKey: crawlKeys.job(jobId), queryFn: () => fetchJob(jobId) })
+  const job = useJob(jobId)
   const progress = useInitialLoad(jobId, dispatch)
 
   const lastEventId = useRef(0)

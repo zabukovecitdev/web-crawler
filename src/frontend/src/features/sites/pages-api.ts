@@ -23,11 +23,13 @@ export function usePage(id: number, enabled = true) {
   })
 }
 
-export type PageContent = { text: string; truncated: boolean }
+/** storedBytes: the size of the whole stored body, or null when the server did not say. */
+export type PageContent = { text: string; truncated: boolean; storedBytes: number | null }
 
 async function fetchContent(id: number): Promise<PageContent> {
   const res = await apiFetchResponse(`/api/v1/pages/${id}/content`, { headers: { Accept: 'text/plain' } })
-  return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true' }
+  const stored = Number(res.headers.get('X-Content-Stored-Bytes') ?? NaN)
+  return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true', storedBytes: Number.isFinite(stored) ? stored : null }
 }
 
 /** The stored body, loaded only when `enabled`. Shown as text, never as HTML. */

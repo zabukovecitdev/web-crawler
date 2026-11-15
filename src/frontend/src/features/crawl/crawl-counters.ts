@@ -42,6 +42,7 @@ export function applyCompleted(progress: CrawlProgress, event: FetchCompletedEve
 
 const STATUS_BY_EVENT: Partial<Record<CrawlEvent['eventType'], CrawlJobStatus>> = {
   JobStarted: 'Running',
+  JobRecrawlRequested: 'Running',
   JobPaused: 'Paused',
   JobCancelled: 'Cancelled',
   JobCompleted: 'Completed',

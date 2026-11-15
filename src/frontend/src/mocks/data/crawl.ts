@@ -1,14 +1,16 @@
-import type { ContentStatus, CrawlEvent, CrawlJobDto, CrawlProgress } from '@/types/api'
+import type { ContentStatus, CrawlEvent, CrawlJobDto, CrawlProgress, JobLinkSummary } from '@/types/api'
 import { ago, HOUR, MINUTE } from '../util'
 
 import { LIVE_JOB_ID } from './sites'
 
+export const NO_LINKS: JobLinkSummary = { total: 0, queued: 0, fetching: 0, retrying: 0, parsing: 0, indexing: 0, indexed: 0, notIndexed: 0, skipped: 0, failed: 0, problems: [] }
+
 export const JOBS: CrawlJobDto[] = [
-  { id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, respectRobots: true, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null },
-  { id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, respectRobots: true, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR) },
-  { id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, respectRobots: true, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR) },
-  { id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, respectRobots: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR) },
-  { id: 38, status: 'Paused', host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, respectRobots: true, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null },
+  { id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null, links: NO_LINKS },
+  { id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR), links: NO_LINKS },
+  { id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR), links: NO_LINKS },
+  { id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR), links: NO_LINKS },
+  { id: 38, status: 'Paused', host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null, links: NO_LINKS },
 ]
 
 const RUNNING = {

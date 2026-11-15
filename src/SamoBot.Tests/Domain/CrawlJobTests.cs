@@ -92,4 +92,33 @@ public class CrawlJobTests
         job.Status.Should().Be(CrawlJobStatus.Completed);
         job.CompletedAt.Should().Be(Now.AddHours(2));
     }
+
+    [Fact]
+    public void ReopenKeepsAPausedJobPaused()
+    {
+        var job = new CrawlJob { SeedUrls = ["https://a.example/"] };
+        job.Start(Now);
+        job.Pause(Now);
+
+        job.Reopen(Now, wholeJob: true).IsSuccess.Should().BeTrue();
+
+        job.Status.Should().Be(CrawlJobStatus.Paused);
+    }
+
+    [Fact]
+    public void ReopenOfAJobThatNeverStartedFails() =>
+        new CrawlJob().Reopen(Now, wholeJob: true).IsFailed.Should().BeTrue();
+
+    [Fact]
+    public void ReopenOfACancelledJobRunsItAgainOnlyForTheWholeJob()
+    {
+        var job = new CrawlJob { SeedUrls = ["https://a.example/"] };
+        job.Start(Now);
+        job.Cancel(Now);
+
+        job.Reopen(Now, wholeJob: false).IsFailed.Should().BeTrue();
+        job.Reopen(Now, wholeJob: true).IsSuccess.Should().BeTrue();
+
+        (job.Status, job.CompletedAt).Should().Be((CrawlJobStatus.Running, null));
+    }
 }

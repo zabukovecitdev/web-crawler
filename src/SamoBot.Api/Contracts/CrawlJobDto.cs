@@ -12,12 +12,13 @@ public sealed record CrawlJobDto(
     int? MaxDepth,
     int? MaxUrls,
     bool UseJsRendering,
-    bool RespectRobots,
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
-    DateTimeOffset? CompletedAt)
+    DateTimeOffset? CompletedAt,
+    JobLinkSummary Links)
 {
-    public static CrawlJobDto From(CrawlJob job) => new(
+    /// <summary>A job without a summary (just created) has no links yet.</summary>
+    public static CrawlJobDto From(CrawlJob job, JobLinkSummary? links = null) => new(
         job.Id,
         job.Status.ToString(),
         HostOf(job),
@@ -25,10 +26,10 @@ public sealed record CrawlJobDto(
         job.MaxDepth,
         job.MaxUrls,
         job.UseJsRendering,
-        job.RespectRobots,
         job.CreatedAt,
         job.StartedAt,
-        job.CompletedAt);
+        job.CompletedAt,
+        links ?? JobLinkSummary.Empty);
 
     /// <summary>The host of the first seed URL.</summary>
     private static string HostOf(CrawlJob job)

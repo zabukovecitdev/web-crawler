@@ -10,7 +10,7 @@ namespace SamoBot.Adapters.Postgres;
 public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : ICrawlJobRepository
 {
     private const string Columns = """
-        "Id", "OwnerUserId", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering", "RespectRobots",
+        "Id", "OwnerUserId", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering",
         "CreatedAt", "Status", "UpdatedAt", "StartedAt", "CompletedAt"
         """;
 
@@ -20,10 +20,10 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
 
     private const string InsertSql = $"""
         INSERT INTO "{TableNames.CrawlJobs}"
-            ("OwnerUserId", "Status", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering", "RespectRobots",
+            ("OwnerUserId", "Status", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering",
              "CreatedAt", "UpdatedAt")
         VALUES
-            (@OwnerUserId, @Status, @SeedUrls, @AllowedHosts, @MaxDepth, @MaxUrls, @UseJsRendering, @RespectRobots,
+            (@OwnerUserId, @Status, @SeedUrls, @AllowedHosts, @MaxDepth, @MaxUrls, @UseJsRendering,
              @CreatedAt, @UpdatedAt)
         RETURNING "Id"
         """;
@@ -96,7 +96,6 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
         job.MaxDepth,
         job.MaxUrls,
         job.UseJsRendering,
-        job.RespectRobots,
         job.CreatedAt,
         job.UpdatedAt,
         job.StartedAt,

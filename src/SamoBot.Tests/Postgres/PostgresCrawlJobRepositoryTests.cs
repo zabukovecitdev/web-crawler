@@ -17,7 +17,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     private PostgresCrawlJobRepository Repository() => new(postgres.DataSource);
 
     private static CrawlJob NewJob() => CrawlJob.Create(
-        new NewCrawlJob("owner-1", ["https://a.example/", "https://b.example/x"], 3, 100, true, false),
+        new NewCrawlJob("owner-1", ["https://a.example/", "https://b.example/x"], 3, 100, true),
         TestData.Now).Value;
 
     [Fact]
@@ -32,7 +32,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
         job.OwnerUserId.Should().Be("owner-1");
         job.SeedUrls.Should().Equal("https://a.example/", "https://b.example/x");
         job.AllowedHosts.Should().Equal("a.example", "b.example");
-        (job.MaxDepth, job.MaxUrls, job.UseJsRendering, job.RespectRobots).Should().Be((3, 100, true, false));
+        (job.MaxDepth, job.MaxUrls, job.UseJsRendering).Should().Be((3, 100, true));
         job.Status.Should().Be(CrawlJobStatus.Pending);
         job.CreatedAt.Should().Be(TestData.Now);
     }

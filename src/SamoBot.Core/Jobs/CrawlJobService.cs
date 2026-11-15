@@ -82,6 +82,45 @@ public sealed class CrawlJobService(
     public Task<Result> Cancel(int id, CancellationToken ct) =>
         Change(id, (job, now) => job.Cancel(now), CrawlEventTypes.JobCancelled, ct);
 
+    /// <summary>
+    /// Queues links of the job again (one link, the failed links or all of them) and makes a finished job run again.
+    /// Fails when no link was queued. The result is the number of links that were queued.
+    /// </summary>
+    public async Task<Result<int>> Recrawl(int id, RequeueScope scope, CancellationToken ct)
+    {
+        var loaded = await Load(id, ct);
+        if (loaded.IsFailed)
+        {
+            return loaded.ToResult<int>();
+        }
+
+        var reopened = loaded.Value.Reopen(timeProvider.GetUtcNow(), wholeJob: scope.UrlId is null);
+        if (reopened.IsFailed)
+        {
+            return reopened.ToResult<int>();
+        }
+
+        var count = await frontier.Requeue(id, scope, ct);
+        if (count == 0)
+        {
+            return Result.Fail<int>(NothingToRecrawl(scope));
+        }
+
+        await jobs.Save(loaded.Value, ct);
+        await events.Publish(id, CrawlEventTypes.JobRecrawlRequested, new { count, failedOnly = scope.FailedOnly, urlId = scope.UrlId }, ct);
+        return Result.Ok(count);
+    }
+
+    private static string NothingToRecrawl(RequeueScope scope)
+    {
+        if (scope.UrlId is not null)
+        {
+            return "This link is not part of the crawl, or it is being fetched right now.";
+        }
+
+        return scope.FailedOnly ? "No link of this crawl has failed." : "This crawl has no links to fetch again.";
+    }
+
     private async Task<Result> Change(
         int id,
         Func<CrawlJob, DateTimeOffset, Result> transition,

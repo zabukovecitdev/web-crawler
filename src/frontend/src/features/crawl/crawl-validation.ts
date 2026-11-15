@@ -3,11 +3,10 @@ import type { CreateCrawlJobRequest } from '@/types/api'
 export type CrawlOptions = {
   maxDepth: string
   maxUrls: string
-  respectRobots: boolean
   useJsRendering: boolean
 }
 
-export const DEFAULT_OPTIONS: CrawlOptions = { maxDepth: '5', maxUrls: '5000', respectRobots: true, useJsRendering: false }
+export const DEFAULT_OPTIONS: CrawlOptions = { maxDepth: '5', maxUrls: '5000', useJsRendering: false }
 
 /** null when the address is fine, else a sentence to show under the field. */
 export function validateUrl(value: string): string | null {
@@ -49,7 +48,6 @@ export function buildRequest(url: string, options: CrawlOptions): CreateCrawlJob
     seedUrls: [url.trim()],
     maxDepth: numberOrUndefined(options.maxDepth),
     maxUrls: numberOrUndefined(options.maxUrls),
-    respectRobots: options.respectRobots,
     useJsRendering: options.useJsRendering,
     startImmediately: true,
   }

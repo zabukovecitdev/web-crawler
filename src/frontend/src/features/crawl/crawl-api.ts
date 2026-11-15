@@ -1,6 +1,6 @@
 import { apiFetch, queryString } from '@/lib/api'
 import { crawlJobsKey, fetchCrawlJobs } from '@/lib/crawl-jobs'
-import type { CrawlEvent, CrawlJobAction, CrawlJobDto, CrawlProgress, CreateCrawlJobRequest } from '@/types/api'
+import type { CrawlEvent, CrawlJobAction, CrawlJobDto, CrawlProgress, CreateCrawlJobRequest, JobLinkDto, JobLinkFilter, Page } from '@/types/api'
 
 export { errorMessage } from '@/lib/api'
 
@@ -8,6 +8,8 @@ export type StoredEvent = CrawlEvent & { id: number }
 
 /** A hub event: the server also sends the stored id (types/api.ts does not list it). The mock stream has none. */
 export type LiveEvent = CrawlEvent & { id?: number }
+
+export type LinksQuery = { filter: JobLinkFilter; query: string; limit: number; offset: number }
 
 const PAGE_SIZE = 200
 const MAX_PAGES = 5
@@ -18,6 +20,7 @@ export const crawlKeys = {
   job: (jobId: number) => ['crawl', 'job', jobId] as const,
   progress: (jobId: number) => ['crawl', 'job', jobId, 'progress'] as const,
   events: (jobId: number) => ['crawl', 'job', jobId, 'events'] as const,
+  links: (jobId: number, query: LinksQuery) => ['crawl', 'job', jobId, 'links', query] as const,
 }
 
 export const fetchJobs = fetchCrawlJobs
@@ -62,4 +65,14 @@ export function createJob(request: CreateCrawlJobRequest): Promise<CrawlJobDto> 
 
 export function sendAction(jobId: number, action: CrawlJobAction): Promise<void> {
   return apiFetch<void>(`${base(jobId)}/actions`, { method: 'POST', body: JSON.stringify({ action }) })
+}
+
+/** One page of the links of a job, each with its state, the reason and its steps. */
+export function fetchLinks(jobId: number, query: LinksQuery): Promise<Page<JobLinkDto>> {
+  return apiFetch<Page<JobLinkDto>>(`${base(jobId)}/links${queryString(query)}`)
+}
+
+/** Queues one link again. A finished job runs again until the link is done. */
+export function recrawlLink(jobId: number, linkId: number): Promise<void> {
+  return apiFetch<void>(`${base(jobId)}/links/${linkId}/recrawl`, { method: 'POST' })
 }
