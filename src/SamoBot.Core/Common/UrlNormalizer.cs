@@ -1,5 +1,4 @@
 using System.Web;
-using FluentResults;
 
 namespace SamoBot.Core.Common;
 
@@ -36,21 +35,6 @@ public static class UrlNormalizer
         "partner_id",
     };
 
-    public static Result<Uri> Clean(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return Result.Fail("Invalid URL");
-        }
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var cleanedUri))
-        {
-            return Result.Fail("Invalid URL");
-        }
-
-        return Result.Ok(cleanedUri.Normalize());
-    }
-
     public static bool TryClean(string url, out Uri? normalizedUrl)
     {
         if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
@@ -59,15 +43,11 @@ public static class UrlNormalizer
             return false;
         }
 
-        normalizedUrl = uri.NormalizeAndRemoveTracking();
+        normalizedUrl = Rebuild(uri);
         return true;
     }
 
-    private static Uri Normalize(this Uri uri) => Rebuild(uri, removeTracking: false);
-
-    private static Uri NormalizeAndRemoveTracking(this Uri uri) => Rebuild(uri, removeTracking: true);
-
-    private static Uri Rebuild(Uri uri, bool removeTracking)
+    private static Uri Rebuild(Uri uri)
     {
         var builder = new UriBuilder(uri)
         {
@@ -81,17 +61,17 @@ public static class UrlNormalizer
         // Some sites treat /page and /page/ as different resources
         if (!string.IsNullOrEmpty(builder.Query))
         {
-            builder.Query = SortQuery(builder.Query, removeTracking);
+            builder.Query = SortQuery(builder.Query);
         }
 
         return builder.Uri;
     }
 
-    private static string SortQuery(string query, bool removeTracking)
+    private static string SortQuery(string query)
     {
         var parameters = HttpUtility.ParseQueryString(query);
         var keys = parameters.AllKeys
-            .Where(key => key != null && !(removeTracking && IsTrackingParameter(key)))
+            .Where(key => key != null && !IsTrackingParameter(key))
             .OrderBy(key => key, StringComparer.InvariantCultureIgnoreCase);
 
         var normalized = HttpUtility.ParseQueryString(string.Empty);

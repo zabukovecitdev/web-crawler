@@ -1,5 +1,4 @@
 using FluentAssertions;
-using FluentResults;
 using SamoBot.Core.Common;
 
 namespace SamoBot.Tests;
@@ -189,15 +188,29 @@ public class TryCleanTests
     }
 
     [Fact]
-    public void TryCleanAndCleanShouldProduceSameResult()
+    public void TryCleanShouldSortQueryParametersCaseInsensitive()
     {
-        var url = "HTTPS://EXAMPLE.COM:443/path/?zebra=1&apple=2#fragment";
+        var result = UrlNormalizer.TryClean("http://example.com/path?Zebra=1&apple=2", out var cleanedUrl);
 
-        var tryResult = UrlNormalizer.TryClean(url, out var tryCleanedUrl);
-        var cleanResult = UrlNormalizer.Clean(url);
+        result.Should().BeTrue();
+        cleanedUrl!.Query.Should().Be("?apple=2&Zebra=1");
+    }
 
-        tryResult.Should().BeTrue();
-        cleanResult.IsSuccess.Should().BeTrue();
-        tryCleanedUrl!.AbsoluteUri.Should().Be(cleanResult.Value.AbsoluteUri);
+    [Fact]
+    public void TryCleanShouldPreserveQueryParameterValues()
+    {
+        var result = UrlNormalizer.TryClean("http://example.com/path?key2=value2&key1=value1", out var cleanedUrl);
+
+        result.Should().BeTrue();
+        cleanedUrl!.Query.Should().Be("?key1=value1&key2=value2");
+    }
+
+    [Fact]
+    public void TryCleanWithUrlContainingSpecialCharactersShouldPreserveThem()
+    {
+        var result = UrlNormalizer.TryClean("http://example.com/path?key=value%20with%20spaces&other=test", out var cleanedUrl);
+
+        result.Should().BeTrue();
+        cleanedUrl!.Query.Should().Be("?key=value+with+spaces&other=test");
     }
 }
