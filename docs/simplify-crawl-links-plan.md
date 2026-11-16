@@ -46,7 +46,7 @@ A link waits for a fetch when `Status = 'Idle' AND ("LastCrawlAt" IS NULL OR "Fa
 
 `LastFetchId` keeps pointing at the newest fetch for the whole life of the link, so the page screens never go blank. A requeue sets `"LastCrawlAt" = NULL` and leaves `"LastFetchId"` alone.
 
-The rule lives in **one** C# helper that the four queries use:
+The rule lives in **one** C# helper, used by the completion check and the progress counter. The state `CASE` spells out the same rule as two ordered branches (`Retrying`, then `Queued`):
 
 ```csharp
 // src/SamoBot.Adapters/Postgres/FrontierRules.cs
@@ -168,11 +168,9 @@ C1 after both tracks.
 - Check: frontend checks.
 
 **B2. Fix the Store step (F4).**
-- `link-format.ts` `jobSteps`: Store counts against the links that could be stored, `storable = fetched - links.failed - links.skipped`. Its status is `stepStatus(stored, storable, started)`. Leave the other three steps unchanged.
-- `link-format.test.ts`: add cases for `jobSteps`:
-  - mid-crawl, stored < storable → Store `active`;
-  - all storable stored and some skipped → Store `done` at 100 %;
-  - nothing fetched → Store `waiting`.
+- `link-format.ts` `jobSteps`: Store counts against every link that can still give a page, `storable = links.total - links.failed - links.skipped`, and its status is `stepStatus(stored, storable, started)`. Leave the other three steps unchanged.
+  - *Correction made while this plan ran:* the first version said `fetched - failed - skipped`. The crawler stores a page in the same step that fetches it, so that number always equals `stored`, and Store could never show as in progress.
+- `link-format.test.ts`: add cases for `jobSteps`: mid-crawl with links still queued → Store `active`; all storable stored and some skipped → Store `done` at 100 %; nothing fetched → Store `waiting`.
 - Check: frontend checks.
 
 **B3. One Run again menu; no cancelled-link dialog (F6, D4, D5).**
