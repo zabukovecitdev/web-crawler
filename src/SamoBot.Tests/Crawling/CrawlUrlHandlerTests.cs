@@ -158,7 +158,9 @@ public class CrawlUrlHandlerTests
         Json(_events.Published[0].Payload).Should().Be("""{"url":"https://a.example/x","depth":3}""");
         var completed = JsonSerializer.SerializeToElement(_events.Published[1].Payload, JsonDefaults.Options);
         completed.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
-            "url", "depth", "statusCode", "responseTimeMs", "contentType", "contentLength", "contentStatus", "delayMs", "outcome");
+            "pageId", "host", "url", "depth", "statusCode", "responseTimeMs", "contentType", "contentLength", "contentStatus", "delayMs", "outcome");
+        completed.GetProperty("pageId").GetInt32().Should().Be(url.Id);
+        completed.GetProperty("host").GetString().Should().Be(url.Host);
         completed.GetProperty("statusCode").GetInt32().Should().Be(200);
         completed.GetProperty("responseTimeMs").GetInt64().Should().Be(87);
         completed.GetProperty("contentLength").GetInt32().Should().Be(13);

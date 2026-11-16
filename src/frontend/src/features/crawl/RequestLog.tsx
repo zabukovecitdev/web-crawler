@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -9,7 +10,15 @@ function LogLine({ row }: { row: LogRow }) {
   return (
     <TableRow>
       <TableCell className="readout whitespace-nowrap text-muted-foreground">{formatClock(row.at)}</TableCell>
-      <TableCell className="readout max-w-[260px] break-all">{pathOf(row.url)}</TableCell>
+      <TableCell className="readout max-w-[260px] break-all">
+        {row.pagePath ? (
+          <Link to={row.pagePath} title={row.url} className="text-foreground underline-offset-4 hover:underline">
+            {pathOf(row.url)}
+          </Link>
+        ) : (
+          pathOf(row.url)
+        )}
+      </TableCell>
       <TableCell>
         <StatusBadge code={row.statusCode} />
       </TableCell>

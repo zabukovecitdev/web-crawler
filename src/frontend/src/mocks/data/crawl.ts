@@ -5,12 +5,27 @@ import { LIVE_JOB_ID } from './sites'
 
 export const NO_LINKS: JobLinkSummary = { total: 0, queued: 0, fetching: 0, retrying: 0, parsing: 0, indexing: 0, indexed: 0, notIndexed: 0, skipped: 0, failed: 0, problems: [] }
 
+function summary(parts: Partial<JobLinkSummary>): JobLinkSummary {
+  const merged = { ...NO_LINKS, ...parts }
+  const total = merged.queued + merged.fetching + merged.retrying + merged.parsing + merged.indexing + merged.indexed + merged.notIndexed + merged.skipped + merged.failed
+  return { ...merged, total }
+}
+
+const LIVE_LINKS = summary({
+  queued: 3420, fetching: 1, retrying: 2, parsing: 24, indexing: 11, indexed: 1150, notIndexed: 40, skipped: 70, failed: 7,
+  problems: [{ reason: 'ServerError', label: 'Server error (5xx)', count: 5 }, { reason: 'Timeout', label: 'Timed out', count: 4 }],
+})
+const DONE_LINKS = summary({ indexed: 3010, notIndexed: 64, skipped: 118, failed: 12, problems: [{ reason: 'NotFound', label: 'Not found (404)', count: 12 }] })
+const SMALL_DONE_LINKS = summary({ indexed: 412, notIndexed: 6, skipped: 21 })
+const CANCELLED_LINKS = summary({ queued: 640, indexed: 220, skipped: 14, failed: 2, problems: [{ reason: 'Timeout', label: 'Timed out', count: 2 }] })
+const PAUSED_LINKS = summary({ queued: 300, parsing: 12, indexed: 180, notIndexed: 3, skipped: 9 })
+
 export const JOBS: CrawlJobDto[] = [
-  { id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null, links: NO_LINKS },
-  { id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR), links: NO_LINKS },
-  { id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR), links: NO_LINKS },
-  { id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR), links: NO_LINKS },
-  { id: 38, status: 'Paused', host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null, links: NO_LINKS },
+  { id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null, links: LIVE_LINKS },
+  { id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR), links: DONE_LINKS },
+  { id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR), links: SMALL_DONE_LINKS },
+  { id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR), links: CANCELLED_LINKS },
+  { id: 38, status: 'Paused', host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null, links: PAUSED_LINKS },
 ]
 
 const RUNNING = {
@@ -75,6 +90,8 @@ export function completedEvent(jobId: number, i: number): CrawlEvent {
     crawlJobId: jobId,
     eventType: 'FetchCompleted',
     at: new Date().toISOString(),
+    pageId: 3,
+    host: 'docs.example.com',
     url: `https://docs.example.com${row.path}`,
     depth: 2,
     statusCode: row.statusCode,
