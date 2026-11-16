@@ -150,8 +150,6 @@ export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-f
 
 // --- Links of a crawl job: GET /crawl-jobs/{id}/links, POST /crawl-jobs/{id}/links/{linkId}/recrawl ---
 export type LinkState = 'Queued' | 'Fetching' | 'Retrying' | 'Parsing' | 'Indexing' | 'Indexed' | 'NotIndexed' | 'Skipped' | 'Failed'
-export type LinkStepStatus = 'Pending' | 'Waiting' | 'Active' | 'Done' | 'Skipped' | 'Failed'
-export type LinkSteps = { fetch: LinkStepStatus; store: LinkStepStatus; parse: LinkStepStatus; index: LinkStepStatus }
 export type JobLinkDto = {
   id: number
   url: string
@@ -160,7 +158,6 @@ export type JobLinkDto = {
   title: string | null
   state: LinkState
   reason: string // one sentence: why the link is in this state
-  steps: LinkSteps
   statusCode: number | null
   failCount: number
   lastCrawlAt: string | null

@@ -1,6 +1,6 @@
 import type { Tone } from '@/components/shared/status'
 import { formatNumber } from '@/lib/format'
-import type { CrawlJobDto, JobLinkSummary, LinkState, LinkStepStatus, LinkSteps } from '@/types/api'
+import type { CrawlJobDto, JobLinkSummary, LinkState } from '@/types/api'
 
 export type LinkLook = { tone: Tone; word: string; live: boolean }
 
@@ -19,28 +19,6 @@ const LINK_LOOKS: Record<LinkState, LinkLook> = {
 export function linkLook(state: LinkState): LinkLook {
   return LINK_LOOKS[state]
 }
-
-export type StepLook = { mark: string; word: string; className: string }
-
-const STEP_LOOKS: Record<LinkStepStatus, StepLook> = {
-  Pending: { mark: '·', word: 'not reached', className: 'text-ink-faint' },
-  Waiting: { mark: '…', word: 'waiting', className: 'bg-muted text-foreground' },
-  Active: { mark: '…', word: 'in progress', className: 'bg-led-soft text-led-ink' },
-  Done: { mark: '✓', word: 'done', className: 'bg-led-soft text-led-ink' },
-  Skipped: { mark: '–', word: 'skipped', className: 'bg-muted text-muted-foreground' },
-  Failed: { mark: '×', word: 'failed', className: 'bg-signal-100 text-signal-ink' },
-}
-
-export function stepLook(status: LinkStepStatus): StepLook {
-  return STEP_LOOKS[status]
-}
-
-export const STEP_NAMES: { key: keyof LinkSteps; label: string }[] = [
-  { key: 'fetch', label: 'Fetch' },
-  { key: 'store', label: 'Store' },
-  { key: 'parse', label: 'Parse' },
-  { key: 'index', label: 'Index' },
-]
 
 export type JobStep = { label: string; done: number; of: number; status: 'done' | 'active' | 'waiting'; note: string }
 

@@ -78,7 +78,7 @@ function Toolbar({ job, filter, search, onFilter, onSearch }: ToolbarProps) {
   )
 }
 
-/** The links of a job with their state and steps, filtered and paged, each with a recrawl button. */
+/** The links of a job with their state, filtered and paged, each with a recrawl button. */
 export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
   const [filter, setFilter] = useState<JobLinkFilter>('all')
   const [search, setSearch] = useState('')
