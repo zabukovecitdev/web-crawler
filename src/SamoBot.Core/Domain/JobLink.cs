@@ -69,25 +69,20 @@ public sealed record JobLinkQuery(JobLinkFilter Filter, string? Query, int Limit
 public sealed record LinkProblem(string Reason, string Label, int Count);
 
 /// <summary>The number of links of a job in each state, and why the failed ones failed.</summary>
-public sealed record JobLinkSummary(IReadOnlyDictionary<LinkState, int> Counts, IReadOnlyList<LinkProblem> Problems)
+public sealed record JobLinkSummary(
+    int Total,
+    int Queued,
+    int Fetching,
+    int Retrying,
+    int Parsing,
+    int Indexing,
+    int Indexed,
+    int NotIndexed,
+    int Skipped,
+    int Failed,
+    IReadOnlyList<LinkProblem> Problems)
 {
-    public static readonly JobLinkSummary Empty = new(new Dictionary<LinkState, int>(), []);
-
-    public int Total => Counts.Values.Sum();
-    public int Queued => Of(LinkState.Queued);
-    public int Fetching => Of(LinkState.Fetching);
-    public int Retrying => Of(LinkState.Retrying);
-    public int Parsing => Of(LinkState.Parsing);
-    public int Indexing => Of(LinkState.Indexing);
-    public int Indexed => Of(LinkState.Indexed);
-    public int NotIndexed => Of(LinkState.NotIndexed);
-    public int Skipped => Of(LinkState.Skipped);
-    public int Failed => Of(LinkState.Failed);
-
-    [JsonIgnore]
-    public IReadOnlyDictionary<LinkState, int> Counts { get; } = Counts;
-
-    private int Of(LinkState state) => Counts.GetValueOrDefault(state);
+    public static readonly JobLinkSummary Empty = new(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, []);
 }
 
 /// <summary>Which links a recrawl puts back in the queue: one link, the failed links, or every link of the job.</summary>

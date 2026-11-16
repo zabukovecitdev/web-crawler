@@ -105,6 +105,18 @@ public sealed class PostgresJobLinkReader(NpgsqlDataSource dataSource, TimeProvi
             .Select(group => new LinkProblem(group.Key, LinkReasons.Label(group.Key), group.Sum(row => row.Count)))
             .OrderByDescending(problem => problem.Count)
             .ToList();
-        return new JobLinkSummary(counts, problems);
+        int Count(LinkState state) => counts.GetValueOrDefault(state);
+        return new JobLinkSummary(
+            counts.Values.Sum(),
+            Count(LinkState.Queued),
+            Count(LinkState.Fetching),
+            Count(LinkState.Retrying),
+            Count(LinkState.Parsing),
+            Count(LinkState.Indexing),
+            Count(LinkState.Indexed),
+            Count(LinkState.NotIndexed),
+            Count(LinkState.Skipped),
+            Count(LinkState.Failed),
+            problems);
     }
 }
