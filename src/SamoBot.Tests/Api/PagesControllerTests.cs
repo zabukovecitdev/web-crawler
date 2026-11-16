@@ -28,7 +28,7 @@ public class PagesControllerTests
         public Task<PageDetail?> FindPage(int id, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<StoredCopy?> FindStoredCopy(int id, CancellationToken ct) =>
-            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, policy ?? PagePolicy.Default));
+            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, new Uri("https://example.com/page"), policy ?? PagePolicy.Default));
     }
 
     private static PagesController Controller(string? objectName, FakeContentStore store, FakePageReader? reader = null) =>
