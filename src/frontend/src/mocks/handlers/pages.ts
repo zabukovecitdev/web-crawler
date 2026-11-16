@@ -35,7 +35,7 @@ Set the crawl delay for each host in **milliseconds**. See the [crawl guide](htt
 | Delay | 1000 | ms |
 | Max delay | 30000 | ms |
 
-![Sample image](/vite.svg)
+![Sample image](${globalThis.location?.origin ?? 'http://localhost'}/vite.svg)
 
 \`\`\`json
 { "delayMs": 1000 }
