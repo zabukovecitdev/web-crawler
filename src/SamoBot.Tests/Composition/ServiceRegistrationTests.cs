@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SamoBot.Adapters;
+using SamoBot.Adapters.Markdown;
 using SamoBot.Core;
 using SamoBot.Core.Common;
 using SamoBot.Core.Crawling;
@@ -64,6 +65,14 @@ public class ServiceRegistrationTests
             var url = Fakes.TestData.Url(useJsRendering: useJs);
             fetchers.Count(fetcher => fetcher.Supports(url)).Should().Be(1);
         }
+    }
+
+    [Fact]
+    public async Task ResolveBuildsTheMarkdownConverter()
+    {
+        await using var provider = Build();
+
+        provider.GetRequiredService<IMarkdownConverter>().Should().BeOfType<ReverseMarkdownConverter>();
     }
 
     [Fact]
