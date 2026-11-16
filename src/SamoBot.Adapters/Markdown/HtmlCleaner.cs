@@ -27,9 +27,7 @@ internal static partial class HtmlCleaner
         document.LoadHtml(html);
         var baseUrl = BaseUrl(document, pageUrl);
         var root = Root(document);
-        RemoveNoise(root);
-        CleanImages(root, baseUrl);
-        CleanLinks(root, baseUrl);
+        CleanContent(root, baseUrl);
         return root.OuterHtml;
     }
 
@@ -52,12 +50,27 @@ internal static partial class HtmlCleaner
         return articles is { Count: 1 } ? articles[0] : node.SelectSingleNode("//body") ?? node;
     }
 
-    private static void RemoveNoise(HtmlNode root)
+    /// <summary>One walk over the tree: removes noise and cleans images. The anchors are cleaned after it, because an anchor is empty only once its images are known.</summary>
+    private static void CleanContent(HtmlNode root, Uri baseUrl)
     {
-        foreach (var node in root.Descendants().Where(IsNoise).ToList())
+        var anchors = new List<HtmlNode>();
+        foreach (var node in root.Descendants().ToList())
         {
-            node.Remove();
+            if (IsNoise(node))
+            {
+                node.Remove();
+            }
+            else if (node.Name == "img")
+            {
+                CleanImage(node, baseUrl);
+            }
+            else if (node.Name == "a")
+            {
+                anchors.Add(node);
+            }
         }
+
+        anchors.ForEach(anchor => CleanLink(anchor, baseUrl));
     }
 
     private static bool IsNoise(HtmlNode node) => node.NodeType switch
@@ -72,22 +85,19 @@ internal static partial class HtmlCleaner
         || string.Equals(node.GetAttributeValue("aria-hidden", string.Empty).Trim(), "true", StringComparison.OrdinalIgnoreCase)
         || DisplayNone().IsMatch(node.GetAttributeValue("style", string.Empty));
 
-    private static void CleanImages(HtmlNode root, Uri baseUrl)
+    private static void CleanImage(HtmlNode image, Uri baseUrl)
     {
-        foreach (var image in root.Descendants("img").ToList())
+        var source = ImageSource(image, baseUrl);
+        if (source is null)
         {
-            var source = ImageSource(image, baseUrl);
-            if (source is null)
-            {
-                image.Remove();
-                continue;
-            }
+            image.Remove();
+            return;
+        }
 
-            image.SetAttributeValue("src", source);
-            foreach (var attribute in ImageAttributesToDrop)
-            {
-                image.Attributes.Remove(attribute);
-            }
+        image.SetAttributeValue("src", source);
+        foreach (var attribute in ImageAttributesToDrop)
+        {
+            image.Attributes.Remove(attribute);
         }
     }
 
@@ -102,22 +112,19 @@ internal static partial class HtmlCleaner
         return source.Length > 0 && Uri.TryCreate(baseUrl, source, out var resolved) && IsWeb(resolved) ? resolved.AbsoluteUri : null;
     }
 
-    private static void CleanLinks(HtmlNode root, Uri baseUrl)
+    private static void CleanLink(HtmlNode anchor, Uri baseUrl)
     {
-        foreach (var anchor in root.Descendants("a").ToList())
+        var href = LinkTarget(anchor, baseUrl);
+        if (href is null)
         {
-            var href = LinkTarget(anchor, baseUrl);
-            if (href is null)
-            {
-                anchor.ParentNode.RemoveChild(anchor, keepGrandChildren: true);
-                continue;
-            }
+            anchor.ParentNode.RemoveChild(anchor, keepGrandChildren: true);
+            return;
+        }
 
-            anchor.SetAttributeValue("href", href);
-            if (IsEmpty(anchor))
-            {
-                anchor.Remove();
-            }
+        anchor.SetAttributeValue("href", href);
+        if (IsEmpty(anchor))
+        {
+            anchor.Remove();
         }
     }
 
