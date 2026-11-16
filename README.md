@@ -43,7 +43,7 @@ Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard i
 - **Allowlist changes:** the allowlist is checked on every request, so removing an account signs it out on its next call. `appsettings.json` changes are picked up at once; environment variables (compose) are read once, so restart the `api` container after editing `AUTH_ALLOWED_EMAILS` or `AUTH_ALLOWED_DOMAINS`. A session also ends 24 hours after sign-in.
 - **Swagger** is served only in Development (`dotnet run`). **Rate limit:** 300 requests per minute per user (`RateLimiting:PermitsPerMinute`), `429` with `Retry-After` above it; the live hub is exempt.
 - **Dashboard container:** nginx serves the built dashboard and forwards `/api` and `/hubs` to the API, so the browser sees one origin and needs no CORS. Vite builds `GOOGLE_CLIENT_ID` into the bundle: rebuild the image (`docker compose up --build frontend`) after you change it, and add `http://localhost:8081` to the authorised JavaScript origins of the Google client. The container has no API-key sign-in; use the Vite dev server for that (see below).
-- **Dashboard in dev:** with `dotnet run` the API listens on http://localhost:5288 and allows the origins in `appsettings.Development.json`; with compose it is http://localhost:5080 and allows `CORS_ORIGIN`.
+- **Dashboard in dev:** the API listens on http://localhost:5080 with both `dotnet run` and compose. With `dotnet run` it allows the origins in `appsettings.Development.json`; with compose it allows `CORS_ORIGIN`.
 
 ### JavaScript rendering
 
