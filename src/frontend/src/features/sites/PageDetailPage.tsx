@@ -2,8 +2,12 @@ import { Link, useParams } from 'react-router-dom'
 import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
+import { formatNumber } from '@/lib/format'
 import type { PageDetail } from '@/types/api'
 import { PageContentCard } from './PageContentCard'
+import { PageLinksView } from './PageLinksView'
+import { PageOutlineCard } from './PageOutlineCard'
+import { Panel } from './Panel'
 import { RecrawlPageButton } from './RecrawlPageButton'
 import { externalHref } from './external-url'
 import { CrawlMetadataCard, FetchHistoryCard, PageMetadataCard } from './PageMetaCards'
@@ -44,6 +48,11 @@ function Heading({ page, host }: { page: PageDetail; host: string }) {
   )
 }
 
+function linksKicker(page: PageDetail): string | undefined {
+  const parsed = page.parsed
+  return parsed ? `${formatNumber(parsed.linkCount)} on this page · ${formatNumber(parsed.internalLinkCount)} internal` : undefined
+}
+
 function PageNotFound({ host }: { host: string }) {
   return (
     <EmptyState title="Page not found">
@@ -78,10 +87,14 @@ export function PageDetailPage() {
         <PageContentCard page={page.data} />
         <div className="flex min-w-0 flex-col gap-6">
           <CrawlMetadataCard page={page.data} />
+          <PageOutlineCard parsed={page.data.parsed} />
           <PageMetadataCard parsed={page.data.parsed} />
           <FetchHistoryCard page={page.data} />
         </div>
       </div>
+      <Panel title="Links" kicker={linksKicker(page.data)}>
+        <PageLinksView id={page.data.id} />
+      </Panel>
     </div>
   )
 }

@@ -1,16 +1,13 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/shared/States'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { HtmlSource } from './HtmlSource'
+import { CONTENT_VIEWS, DEFAULT_CONTENT_VIEW, contentViewOf, type ContentView } from './content-views'
 import { CONTENT_LABELS } from './labels'
 import { MarkdownView } from './MarkdownView'
-import { PageLinksView } from './PageLinksView'
 import { Panel } from './Panel'
-
-type View = 'text' | 'markdown' | 'html' | 'headings' | 'links'
-const VIEWS: View[] = ['text', 'markdown', 'html', 'headings', 'links']
 
 function TextView({ parsed }: { parsed: ParsedPageDto }) {
   const paragraphs = parsed.bodyText.split(/\n{2,}/).filter((p) => p.trim() !== '')
@@ -25,31 +22,12 @@ function TextView({ parsed }: { parsed: ParsedPageDto }) {
   )
 }
 
-function HeadingsView({ parsed }: { parsed: ParsedPageDto }) {
-  if (parsed.headings.length === 0) {
-    return <p className="m-0 text-muted-foreground">This page has no headings.</p>
-  }
-  return (
-    <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-      {parsed.headings.map((h, i) => (
-        <li key={i} style={{ paddingLeft: `${(h.level - 1) * 16}px` }} className="flex items-baseline gap-3">
-          <span className="label w-6 shrink-0">H{h.level}</span>
-          <span>{h.text}</span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function ViewBody({ view, page }: { view: View; page: PageDetail }) {
-  if (view === 'markdown') {
-    return <MarkdownView id={page.id} />
+function ViewBody({ view, page }: { view: ContentView; page: PageDetail }) {
+  if (view === 'rendered' || view === 'markdown') {
+    return <MarkdownView id={page.id} mode={view} />
   }
   if (view === 'html') {
     return <HtmlSource page={page} />
-  }
-  if (view === 'links') {
-    return <PageLinksView id={page.id} />
   }
   if (!page.parsed) {
     return (
@@ -58,31 +36,43 @@ function ViewBody({ view, page }: { view: View; page: PageDetail }) {
       </EmptyState>
     )
   }
-  if (view === 'headings') {
-    return <HeadingsView parsed={page.parsed} />
-  }
   return <TextView parsed={page.parsed} />
 }
 
+/** The page body in one card: read it rendered (default), as Markdown, as the indexed plain text, or as the downloaded HTML. */
 export function PageContentCard({ page }: { page: PageDetail }) {
-  const [view, setView] = useState<View>(page.parsed ? 'text' : 'html')
+  const [params, setParams] = useSearchParams()
+  const view = contentViewOf(params.get('view'))
   const parsed = page.parsed
   const kicker = parsed
     ? `${formatNumber(parsed.wordCount)} words · ${formatNumber(parsed.bodyText.length)} characters`
     : undefined
+  const select = (next: string) =>
+    setParams(
+      (current) => {
+        const copy = new URLSearchParams(current)
+        if (next === DEFAULT_CONTENT_VIEW) {
+          copy.delete('view')
+        } else {
+          copy.set('view', next)
+        }
+        return copy
+      },
+      { replace: true },
+    )
   return (
     <Panel title="Content" kicker={kicker}>
-      <Tabs value={view} onValueChange={(v) => setView(v as View)}>
-        <TabsList aria-label="Content view" className="h-auto flex-wrap">
-          <TabsTrigger value="text">Text</TabsTrigger>
-          <TabsTrigger value="markdown">Markdown</TabsTrigger>
-          <TabsTrigger value="html">Downloaded HTML</TabsTrigger>
-          <TabsTrigger value="headings">Headings {parsed ? parsed.headings.length : 0}</TabsTrigger>
-          <TabsTrigger value="links">Links {parsed ? formatNumber(parsed.linkCount) : 0}</TabsTrigger>
+      <Tabs value={view} onValueChange={select}>
+        <TabsList aria-label="Show the content as" className="h-auto flex-wrap">
+          {CONTENT_VIEWS.map((v) => (
+            <TabsTrigger key={v.value} value={v.value}>
+              {v.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        {VIEWS.map((v) => (
-          <TabsContent key={v} value={v}>
-            <ViewBody view={v} page={page} />
+        {CONTENT_VIEWS.map((v) => (
+          <TabsContent key={v.value} value={v.value}>
+            <ViewBody view={v.value} page={page} />
           </TabsContent>
         ))}
       </Tabs>
