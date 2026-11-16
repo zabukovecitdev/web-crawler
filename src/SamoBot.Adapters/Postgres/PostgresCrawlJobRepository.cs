@@ -36,7 +36,7 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
 
     // A job is finished when no URL is in flight, no URL waits for its first fetch or for a retry,
     // and no fetched page waits for the parser. The parser can still add links to such a page.
-    private const string CompleteSql = $"""
+    private static readonly string CompleteSql = $"""
         UPDATE "{TableNames.CrawlJobs}" j
         SET "Status" = 'Completed', "CompletedAt" = @Now, "UpdatedAt" = @Now
         WHERE j."Status" = 'Running'
@@ -44,7 +44,7 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
               SELECT 1 FROM "{TableNames.DiscoveredUrls}" u
               WHERE u."CrawlJobId" = j."Id"
                 AND (u."Status" = 'InFlight'
-                     OR (u."Status" = 'Idle' AND (u."LastCrawlAt" IS NULL OR u."FailCount" > 0))))
+                     OR {FrontierRules.WaitingForFetch("u")}))
           AND NOT EXISTS (
               SELECT 1 FROM "{TableNames.UrlFetches}" f
               JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = f."DiscoveredUrlId"

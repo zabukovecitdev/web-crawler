@@ -180,4 +180,44 @@ public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
 
         (await jobs.CompleteFinishedJobs(TestData.Now, default)).Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task ARequeuedLinkKeepsItsLastFetchForThePageAndSiteScreens()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource, "Running");
+        var url = await Url(job, "page");
+        await Parsed(await Fetch(url), indexed: true);
+        var pages = new PostgresPageReader(postgres.DataSource);
+        var sites = new PostgresSiteReader(postgres.DataSource, SiteOverviewCache.Disabled);
+
+        await Frontier.Requeue(job, RequeueScope.All, default);
+
+        var page = await pages.FindPage(url, default);
+        page!.StatusCode.Should().Be(200);
+        page.Parsed!.Title.Should().Be("Title");
+        var site = (await sites.ListSites(new SiteQuery(null, SiteSort.Host, 50, 0), default)).Items.Single();
+        site.Pages.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ARequeuedLinkIsQueuedAndCountedAsWaitingUntilItIsFetchedAgain()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource, "Running");
+        var url = await Url(job, "page");
+        await Parsed(await Fetch(url), indexed: true);
+        var progress = new PostgresJobProgressReader(postgres.DataSource);
+        var jobs = new PostgresCrawlJobRepository(postgres.DataSource);
+
+        await Frontier.Requeue(job, RequeueScope.All, default);
+
+        (await Reader.List(job, new JobLinkQuery(JobLinkFilter.All, null, 50, 0), default)).Items.Single().State.Should().Be(LinkState.Queued);
+        (await progress.Read(job, default))!.Queued.Should().Be(1);
+        (await jobs.CompleteFinishedJobs(TestData.Now, default)).Should().BeEmpty();
+
+        var newFetch = await Fetch(url);
+
+        (await PostgresTestData.Scalar<int>(postgres.DataSource, """SELECT "LastFetchId" FROM "DiscoveredUrls" WHERE "Id" = @url""", new { url })).Should().Be(newFetch);
+        (await Reader.List(job, new JobLinkQuery(JobLinkFilter.All, null, 50, 0), default)).Items.Single().State.Should().Be(LinkState.Parsing);
+        (await progress.Read(job, default))!.Queued.Should().Be(0);
+    }
 }
