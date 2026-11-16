@@ -6,6 +6,7 @@ using Minio;
 using SamoBot.Adapters.Browser;
 using SamoBot.Adapters.Html;
 using SamoBot.Adapters.Http;
+using SamoBot.Adapters.Markdown;
 using SamoBot.Adapters.Postgres;
 using SamoBot.Adapters.Search;
 using SamoBot.Adapters.Storage;
@@ -23,7 +24,8 @@ public static class AdaptersServiceCollectionExtensions
         .AddFetchers(configuration)
         .AddStorage(configuration)
         .AddSamoBotSearch(configuration)
-        .AddSingleton<IPageParser, HtmlAgilityPackParser>();
+        .AddSingleton<IPageParser, HtmlAgilityPackParser>()
+        .AddSingleton<IMarkdownConverter, ReverseMarkdownConverter>();
 
     private static IServiceCollection AddPostgresAdapters(this IServiceCollection services) => services
         .AddSingleton<IUrlFrontier, PostgresUrlFrontier>()

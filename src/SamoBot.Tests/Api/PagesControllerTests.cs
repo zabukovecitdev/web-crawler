@@ -12,7 +12,8 @@ namespace SamoBot.Tests.Api;
 
 public class PagesControllerTests
 {
-    private sealed class FakePageReader(string? objectName, PagedResult<PageLinkItem>? links = null, PagePolicy? policy = null) : IPageReader
+    private sealed class FakePageReader(
+        string? objectName, PagedResult<PageLinkItem>? links = null, PagePolicy? policy = null, string? contentType = "text/html") : IPageReader
     {
         public LinkQuery? LastLinkQuery { get; private set; }
 
@@ -28,11 +29,12 @@ public class PagesControllerTests
         public Task<PageDetail?> FindPage(int id, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<StoredCopy?> FindStoredCopy(int id, CancellationToken ct) =>
-            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, policy ?? PagePolicy.Default));
+            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, new Uri("https://example.com/page"), policy ?? PagePolicy.Default, contentType));
     }
 
-    private static PagesController Controller(string? objectName, FakeContentStore store, FakePageReader? reader = null) =>
-        new(reader ?? new FakePageReader(objectName), store)
+    private static PagesController Controller(
+        string? objectName, FakeContentStore store, FakePageReader? reader = null, FakeMarkdownConverter? converter = null) =>
+        new(reader ?? new FakePageReader(objectName), store, converter ?? new FakeMarkdownConverter())
     {
         ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
     };
@@ -73,6 +75,96 @@ public class PagesControllerTests
         var result = await Controller(null, new FakeContentStore()).GetContent(7, default);
 
         result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task MarkdownWithoutAStoredBodyIsNotFound()
+    {
+        var result = await Controller(null, new FakeContentStore()).GetMarkdown(7, default);
+
+        result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task MarkdownOfANoArchivePageIsForbiddenAndNotConverted()
+    {
+        var converter = new FakeMarkdownConverter();
+        var reader = new FakePageReader("obj", policy: PagePolicy.Default with { Archive = false });
+
+        var result = await Controller("obj", new FakeContentStore(), reader, converter).GetMarkdown(7, default);
+
+        var refused = result.Should().BeOfType<ObjectResult>().Subject;
+        refused.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        refused.Value.Should().BeOfType<ProblemDetails>().Which.Title.Should().Be(PagesController.NoArchiveMessage);
+        converter.Calls.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task MarkdownIsConvertedFromTheStoredHtmlAndServedWithSniffingAndActiveContentDisabled()
+    {
+        var store = new FakeContentStore();
+        store.Put("obj", "<h1>Hi</h1>");
+        var converter = new FakeMarkdownConverter("# Hi\n");
+        var controller = Controller("obj", store, converter: converter);
+
+        var result = await controller.GetMarkdown(7, default);
+
+        var file = result.Should().BeOfType<FileContentResult>().Subject;
+        file.ContentType.Should().Be("text/markdown; charset=utf-8");
+        System.Text.Encoding.UTF8.GetString(file.FileContents).Should().Be("# Hi\n");
+        converter.Calls.Should().Equal(("<h1>Hi</h1>", new Uri("https://example.com/page")));
+        var headers = controller.Response.Headers;
+        headers["X-Content-Type-Options"].ToString().Should().Be("nosniff");
+        headers["Content-Security-Policy"].ToString().Should().Be("default-src 'none'; sandbox");
+        headers["Content-Disposition"].ToString().Should().StartWith("inline").And.Contain("page-7.md");
+        headers[StoredContent.TruncatedHeader].ToString().Should().Be("false");
+    }
+
+    [Theory]
+    [InlineData("text/markdown; charset=utf-8", "# Title\n\n- one\n- two\n")]
+    [InlineData("text/x-markdown", "# Title\n")]
+    [InlineData("text/plain", "line one\nline two\n")]
+    public async Task MarkdownOfAStoredMarkdownOrTextBodyIsTheBodyUnchanged(string contentType, string body)
+    {
+        var store = new FakeContentStore();
+        store.Put("obj", body);
+        var converter = new FakeMarkdownConverter();
+        var controller = Controller("obj", store, new FakePageReader("obj", contentType: contentType), converter);
+
+        var result = await controller.GetMarkdown(7, default);
+
+        var file = result.Should().BeOfType<FileContentResult>().Subject;
+        System.Text.Encoding.UTF8.GetString(file.FileContents).Should().Be(body);
+        converter.Calls.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("text/plain", "<!doctype html><h1>Hi</h1>")]
+    [InlineData(null, "<h1>Hi</h1>")]
+    public async Task MarkdownConvertsAPlainTextBodyThatIsHtmlAndABodyWithoutAType(string? contentType, string body)
+    {
+        var store = new FakeContentStore();
+        store.Put("obj", body);
+        var converter = new FakeMarkdownConverter();
+        var controller = Controller("obj", store, new FakePageReader("obj", contentType: contentType), converter);
+
+        await controller.GetMarkdown(7, default);
+
+        converter.Calls.Should().ContainSingle().Which.Html.Should().Be(body);
+    }
+
+    [Fact]
+    public async Task MarkdownOfAnOversizedBodyConvertsTheCappedHtmlAndSaysSo()
+    {
+        var store = new FakeContentStore();
+        store.Put("obj", new string('a', StoredContent.MaxBytes + 10));
+        var converter = new FakeMarkdownConverter();
+        var controller = Controller("obj", store, converter: converter);
+
+        await controller.GetMarkdown(7, default);
+
+        controller.Response.Headers[StoredContent.TruncatedHeader].ToString().Should().Be("true");
+        converter.Calls.Single().Html.Length.Should().Be(StoredContent.MaxBytes);
     }
 
     [Theory]

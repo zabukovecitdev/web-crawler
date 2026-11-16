@@ -23,7 +23,7 @@ internal static class MarkdownPage
     {
         using var reader = new StreamReader(content, Encoding.UTF8);
         var markdown = reader.ReadToEnd();
-        var document = Markdown.Parse(markdown, Pipeline);
+        var document = Markdig.Markdown.Parse(markdown, Pipeline);
         var frontMatter = FrontMatter(document);
 
         var title = frontMatter.GetValueOrDefault("title") ?? FirstTitleHeading(document);

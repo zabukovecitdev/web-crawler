@@ -151,3 +151,83 @@
     overflow: auto;
   }
 }
+
+/* Rendered Markdown of a stored page (MarkdownRender). Scoped, built from the design tokens. */
+@layer components {
+  .markdown-body {
+    @apply text-[15px] leading-[24px] text-foreground;
+    overflow-wrap: anywhere;
+  }
+  .markdown-body > :first-child {
+    @apply mt-0;
+  }
+  .markdown-body > :last-child {
+    @apply mb-0;
+  }
+  .markdown-body :is(p, ul, ol, blockquote, pre, table) {
+    @apply my-3;
+  }
+  .markdown-body :is(h1, h2, h3, h4, h5, h6) {
+    @apply mb-2 mt-6 font-semibold leading-snug;
+  }
+  .markdown-body h1 {
+    @apply text-[28px] tracking-[-0.02em];
+  }
+  .markdown-body h2 {
+    @apply text-[22px] tracking-[-0.01em];
+  }
+  .markdown-body h3 {
+    @apply text-[18px];
+  }
+  .markdown-body :is(h4, h5, h6) {
+    @apply text-[15px];
+  }
+  .markdown-body h6 {
+    @apply text-muted-foreground;
+  }
+  .markdown-body :is(ul, ol) {
+    @apply pl-6;
+  }
+  .markdown-body ul {
+    @apply list-disc;
+  }
+  .markdown-body ol {
+    @apply list-decimal;
+  }
+  .markdown-body li {
+    @apply my-1;
+  }
+  .markdown-body li > :is(ul, ol) {
+    @apply my-1;
+  }
+  .markdown-body a {
+    @apply text-signal-ink underline underline-offset-2;
+  }
+  .markdown-body blockquote {
+    @apply border-l-2 border-line-strong pl-4 text-muted-foreground;
+  }
+  .markdown-body code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-[13px];
+  }
+  .markdown-body pre {
+    @apply well max-h-[420px];
+  }
+  .markdown-body pre code {
+    @apply bg-transparent p-0;
+  }
+  .markdown-body img {
+    @apply my-3 h-auto max-w-full rounded-md;
+  }
+  .markdown-body table {
+    @apply block w-full max-w-full overflow-x-auto border-collapse text-[13px];
+  }
+  .markdown-body :is(th, td) {
+    @apply border border-border px-3 py-1.5 text-left align-top;
+  }
+  .markdown-body th {
+    @apply bg-muted font-semibold;
+  }
+  .markdown-body hr {
+    @apply my-6 border-border;
+  }
+}

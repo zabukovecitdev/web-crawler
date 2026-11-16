@@ -26,8 +26,8 @@ export function usePage(id: number, enabled = true) {
 /** storedBytes: the size of the whole stored body, or null when the server did not say. */
 export type PageContent = { text: string; truncated: boolean; storedBytes: number | null }
 
-async function fetchContent(id: number): Promise<PageContent> {
-  const res = await apiFetchResponse(`/api/v1/pages/${id}/content`, { headers: { Accept: 'text/plain' } })
+async function fetchStoredText(path: string, accept: string): Promise<PageContent> {
+  const res = await apiFetchResponse(path, { headers: { Accept: accept } })
   const stored = Number(res.headers.get('X-Content-Stored-Bytes') ?? NaN)
   return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true', storedBytes: Number.isFinite(stored) ? stored : null }
 }
@@ -36,7 +36,17 @@ async function fetchContent(id: number): Promise<PageContent> {
 export function usePageContent(id: number, enabled: boolean) {
   return useQuery({
     queryKey: ['page-content', id],
-    queryFn: () => fetchContent(id),
+    queryFn: () => fetchStoredText(`/api/v1/pages/${id}/content`, 'text/plain'),
+    enabled,
+    retry: retryUnlessMissing,
+  })
+}
+
+/** The stored body converted to Markdown by the API, loaded only when `enabled`. */
+export function usePageMarkdown(id: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['page-markdown', id],
+    queryFn: () => fetchStoredText(`/api/v1/pages/${id}/markdown`, 'text/markdown'),
     enabled,
     retry: retryUnlessMissing,
   })

@@ -5,11 +5,12 @@ import { formatNumber } from '@/lib/format'
 import type { PageDetail, ParsedPageDto } from '@/types/api'
 import { HtmlSource } from './HtmlSource'
 import { CONTENT_LABELS } from './labels'
+import { MarkdownView } from './MarkdownView'
 import { PageLinksView } from './PageLinksView'
 import { Panel } from './Panel'
 
-type View = 'text' | 'html' | 'headings' | 'links'
-const VIEWS: View[] = ['text', 'html', 'headings', 'links']
+type View = 'text' | 'markdown' | 'html' | 'headings' | 'links'
+const VIEWS: View[] = ['text', 'markdown', 'html', 'headings', 'links']
 
 function TextView({ parsed }: { parsed: ParsedPageDto }) {
   const paragraphs = parsed.bodyText.split(/\n{2,}/).filter((p) => p.trim() !== '')
@@ -41,6 +42,9 @@ function HeadingsView({ parsed }: { parsed: ParsedPageDto }) {
 }
 
 function ViewBody({ view, page }: { view: View; page: PageDetail }) {
+  if (view === 'markdown') {
+    return <MarkdownView id={page.id} />
+  }
   if (view === 'html') {
     return <HtmlSource page={page} />
   }
@@ -71,6 +75,7 @@ export function PageContentCard({ page }: { page: PageDetail }) {
       <Tabs value={view} onValueChange={(v) => setView(v as View)}>
         <TabsList aria-label="Content view" className="h-auto flex-wrap">
           <TabsTrigger value="text">Text</TabsTrigger>
+          <TabsTrigger value="markdown">Markdown</TabsTrigger>
           <TabsTrigger value="html">Downloaded HTML</TabsTrigger>
           <TabsTrigger value="headings">Headings {parsed ? parsed.headings.length : 0}</TabsTrigger>
           <TabsTrigger value="links">Links {parsed ? formatNumber(parsed.linkCount) : 0}</TabsTrigger>
