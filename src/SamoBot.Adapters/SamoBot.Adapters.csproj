@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Playwright" />
     <PackageReference Include="Minio" />
     <PackageReference Include="Npgsql" />
+    <PackageReference Include="ReverseMarkdown" />
   </ItemGroup>
 
   <ItemGroup>
