@@ -7,6 +7,7 @@ public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
 {
     public List<(ClaimedUrl Url, UrlUpdate Update, FetchRecord? Fetch)> Completed { get; } = [];
     public List<(int JobId, IReadOnlyList<NewUrl> Seeds)> AddedSeeds { get; } = [];
+    public List<(int JobId, IReadOnlyList<string> MediaTypes)> Reprocessed { get; } = [];
     public (int BatchSize, TimeSpan Lease, TimeSpan Hold)? LastClaim { get; private set; }
 
     public Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct)
@@ -34,5 +35,11 @@ public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
     {
         AddedSeeds.Add((crawlJobId, seeds));
         return Task.CompletedTask;
+    }
+
+    public Task<RequeuedWork> RequeueForReprocess(int crawlJobId, IReadOnlyList<string> storedMediaTypes, CancellationToken ct)
+    {
+        Reprocessed.Add((crawlJobId, storedMediaTypes));
+        return Task.FromResult(new RequeuedWork(1, 2));
     }
 }

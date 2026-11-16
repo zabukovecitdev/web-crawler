@@ -5,6 +5,18 @@
 # Every published port binds to 127.0.0.1. Publish on another interface only behind a firewall:
 # the defaults for the database, storage and search credentials are development values.
 services:
+  # Dashboard on http://localhost:8081. nginx serves the build and forwards /api and /hubs to the API.
+  frontend:
+    image: samobot-frontend
+    build:
+      context: src/frontend
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
   postgres:
     image: postgres:16-alpine
     ports:

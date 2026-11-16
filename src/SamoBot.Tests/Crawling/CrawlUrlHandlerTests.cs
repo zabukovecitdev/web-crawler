@@ -119,6 +119,19 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
+    public async Task HandleMarkdownContentIsStored()
+    {
+        var markdown = new FetchResponse { StatusCode = 200, ContentType = "text/markdown; charset=utf-8", Content = "# Docs"u8.ToArray() };
+        var url = TestData.Url();
+        var handler = Handler(new FakeFetcher(response: markdown));
+
+        await handler.Handle(url, default);
+
+        _store.SavedUrls.Should().Equal(url.Url);
+        _frontier.Completed.Single().Fetch!.ObjectName.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task HandleHtmlErrorPageIsNotStored()
     {
         var response = new FetchResponse { StatusCode = 404, ContentType = "text/html", Content = "<html>missing</html>"u8.ToArray() };

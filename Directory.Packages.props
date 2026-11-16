@@ -12,6 +12,7 @@
     <PackageVersion Include="FluentResults" Version="4.0.0" />
     <PackageVersion Include="Google.Apis.Auth" Version="1.73.0" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.11.71" />
+    <PackageVersion Include="Markdig" Version="1.6.0" />
     <PackageVersion Include="MeiliSearch" Version="0.18.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.3" />

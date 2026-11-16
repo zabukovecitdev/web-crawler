@@ -35,7 +35,7 @@ public sealed class FetchRecorder(
 
     private async Task<string?> SaveContent(ClaimedUrl url, FetchResponse response, CancellationToken ct)
     {
-        if (!response.IsSuccess || !response.IsHtml || !response.HasContent)
+        if (!response.IsSuccess || !response.IsStoredType || !response.HasContent)
         {
             return null;
         }

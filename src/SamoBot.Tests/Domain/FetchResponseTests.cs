@@ -40,6 +40,18 @@ public class FetchResponseTests
     }
 
     [Theory]
+    [InlineData("text/markdown; charset=utf-8", true)]
+    [InlineData("text/x-markdown", true)]
+    [InlineData("text/html", true)]
+    [InlineData("text/plain", true)]
+    [InlineData("application/json", false)]
+    [InlineData("application/pdf", false)]
+    public void IsStoredTypeIsTrueForHtmlMarkdownAndPlainText(string contentType, bool expected)
+    {
+        Response(contentType, "# Title").IsStoredType.Should().Be(expected);
+    }
+
+    [Theory]
     [InlineData(199, false)]
     [InlineData(200, true)]
     [InlineData(299, true)]

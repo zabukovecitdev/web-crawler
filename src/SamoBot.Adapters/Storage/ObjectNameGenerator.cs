@@ -11,6 +11,8 @@ internal static partial class ObjectNameGenerator
     {
         ["text/html"] = "html",
         ["application/xhtml+xml"] = "html",
+        ["text/markdown"] = "md",
+        ["text/x-markdown"] = "md",
         ["text/plain"] = "txt",
         ["application/json"] = "json",
         ["application/xml"] = "xml",
@@ -30,7 +32,7 @@ internal static partial class ObjectNameGenerator
 
     private static readonly HashSet<string> PathExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        "html", "htm", "xml", "json", "txt", "css", "js", "pdf", "jpg", "jpeg", "png", "gif", "webp", "svg"
+        "html", "htm", "md", "xml", "json", "txt", "css", "js", "pdf", "jpg", "jpeg", "png", "gif", "webp", "svg"
     };
 
     public static string GenerateHierarchical(string url, string? contentType = null)

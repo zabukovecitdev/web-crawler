@@ -37,7 +37,52 @@ public class HtmlAgilityPackParserTests
         </html>
         """;
 
-    private static ParsedPage Parse(string html) => new HtmlAgilityPackParser().Parse(new MemoryStream(Encoding.UTF8.GetBytes(html)));
+    private static ParsedPage Parse(string body, string? contentType = "text/html") =>
+        new HtmlAgilityPackParser().Parse(new MemoryStream(Encoding.UTF8.GetBytes(body)), contentType);
+
+    private const string MarkdownPage = """
+        ---
+        title: "Docs & guides"
+        summary: Find guides.
+        related:
+          - /docs/other
+        ---
+
+        # Welcome
+
+        Some **bold** text and a [link](/docs/next "Next page").
+
+        ## Install
+
+        ```bash
+        npm i
+        ```
+        """;
+
+    [Fact]
+    public void ParseOfMarkdownTakesTitleAndDescriptionFromTheFrontMatter()
+    {
+        var page = Parse(MarkdownPage, "text/markdown; charset=utf-8");
+
+        page.Title.Should().Be("Docs & guides");
+        page.Description.Should().Be("Find guides.");
+    }
+
+    [Fact]
+    public void ParseOfMarkdownExtractsHeadingsTextAndLinks()
+    {
+        var page = Parse(MarkdownPage, "text/markdown");
+
+        page.Headings.Should().Equal(new ParsedHeading(1, "Welcome"), new ParsedHeading(2, "Install"));
+        page.BodyText.Should().Contain("Some bold text and a link").And.NotContain("title:").And.NotContain("/docs/other");
+        page.Links.Should().ContainSingle(l => l.Url == "/docs/next" && l.LinkText == "link");
+    }
+
+    [Fact]
+    public void ParseOfMarkdownWithoutFrontMatterTakesTheTitleFromTheFirstLevelOneHeading()
+    {
+        Parse("Intro\n\n# The *real* title\n\n# Second", "text/x-markdown").Title.Should().Be("The real title");
+    }
 
     [Fact]
     public void ParseExtractsMetadata()
@@ -104,5 +149,24 @@ public class HtmlAgilityPackParserTests
         page.BodyText.Should().BeEmpty();
         page.MetaTags.Should().BeEmpty();
         page.BaseHref.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ParseOfPlainTextKeepsTheTextAsBodyText()
+    {
+        var page = Parse("User-agent notes\n<not a tag> & more", "text/plain; charset=utf-8");
+
+        page.BodyText.Should().Be("User-agent notes <not a tag> & more");
+        page.Title.Should().BeEmpty();
+        page.Links.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ParseOfPlainTextThatStartsLikeHtmlParsesItAsHtml()
+    {
+        var page = Parse("<!doctype html><html><head><title>Wrong type</title></head><body><a href=\"/x\">x</a></body></html>", "text/plain");
+
+        page.Title.Should().Be("Wrong type");
+        page.Links.Should().ContainSingle(l => l.Url == "/x");
     }
 }

@@ -29,7 +29,7 @@ Transport notes:
 | `GET /api/v1/crawl-jobs?limit` | | `CrawlJobDto[]` |
 | `GET /api/v1/crawl-jobs/{id}` | | `CrawlJobDto` |
 | `POST /api/v1/crawl-jobs` | `CreateCrawlJobRequest` | `201 CrawlJobDto` |
-| `POST /api/v1/crawl-jobs/{id}/actions` | `{ action: CrawlJobAction }` | `204`; `409` with the reason when the action is not allowed. `recrawl` queues every link of the job again, `retry-failed` only the failed and retrying ones; both make a finished job run again |
+| `POST /api/v1/crawl-jobs/{id}/actions` | `{ action: CrawlJobAction }` (`start`, `pause`, `cancel`, `recrawl`, `retry-failed`, `reprocess`) | `204`; `409` with the reason when the action is not allowed. `recrawl` queues every link of the job again, `retry-failed` only the failed and retrying ones; both make a finished job run again. `reprocess` is allowed only for a `Completed` job: the job is `Running` again, URLs whose body was skipped for a type that is stored now are fetched again, and the stored pages are parsed and indexed again (nothing stored is fetched again) |
 | `GET /api/v1/crawl-jobs/{id}/links?filter=all\|problems\|notIndexed\|pending\|indexed&query&limit&offset` | | `Page<JobLinkDto>`: each link with its `state`, a `reason` sentence and the status of its steps (`fetch`, `store`, `parse`, `index`) |
 | `POST /api/v1/crawl-jobs/{id}/links/{linkId}/recrawl` | | `204`; `409` when the link is in flight, not part of the job, or the job was cancelled |
 | `GET /api/v1/crawl-jobs/{id}/progress` | | `CrawlProgress` |

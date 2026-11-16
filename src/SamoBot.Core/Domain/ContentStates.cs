@@ -13,8 +13,8 @@ public sealed record PageStateFacts
 
 /// <summary>
 /// Derives the content state of a page. A URL without a fetch is Failed when it has a fail reason, else NotStored.
-/// A status below 200 or from 400 up is Failed. A status in 300-399 is Redirect. Only successful HTML with content is
-/// stored: a success without a stored object is Skipped for non-HTML and NotStored for HTML. A stored page waits for
+/// A status below 200 or from 400 up is Failed. A status in 300-399 is Redirect. Only a successful stored type with content is
+/// stored: a success without a stored object is Skipped for other types and NotStored for a stored type (HTML, Markdown, plain text). A stored page waits for
 /// the parser until it has a parsed document, then waits for the index until the document is indexed.
 /// </summary>
 public static class ContentStates
@@ -38,7 +38,7 @@ public static class ContentStates
     {
         if (facts.ObjectName is null)
         {
-            return IsHtml(facts.ContentType) ? ContentState.NotStored : ContentState.Skipped;
+            return IsStoredType(facts.ContentType) ? ContentState.NotStored : ContentState.Skipped;
         }
 
         if (!facts.HasParsedDocument)
@@ -49,6 +49,8 @@ public static class ContentStates
         return facts.Indexed ? ContentState.ParsedIndexed : ContentState.ParsedWaitingForIndex;
     }
 
-    private static bool IsHtml(string? contentType) =>
-        contentType is null || contentType.Contains("html", StringComparison.OrdinalIgnoreCase);
+    private static bool IsStoredType(string? contentType) =>
+        contentType is null
+        || contentType.Contains("html", StringComparison.OrdinalIgnoreCase)
+        || StoredMediaTypes.IsStored(StoredMediaTypes.MediaType(contentType));
 }

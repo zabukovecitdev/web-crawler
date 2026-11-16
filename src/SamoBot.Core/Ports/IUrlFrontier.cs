@@ -21,4 +21,11 @@ public interface IUrlFrontier
     Task<int> Requeue(int crawlJobId, RequeueScope scope, CancellationToken ct);
 
     Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct);
+
+    /// <summary>
+    /// Gives the work of a job back to the stages, in one transaction. A URL whose last fetch was a success with a body of a
+    /// type in <paramref name="storedMediaTypes"/> that was not stored is due now and waits for its first fetch again.
+    /// The last stored fetch of each other URL waits for the parser again (the parser then clears its index mark).
+    /// </summary>
+    Task<RequeuedWork> RequeueForReprocess(int crawlJobId, IReadOnlyList<string> storedMediaTypes, CancellationToken ct);
 }

@@ -63,6 +63,18 @@ public sealed class CrawlJob
         return result;
     }
 
+    /// <summary>Opens a completed job again for a reprocess, so that the stages can process its URLs with the current code.</summary>
+    public Result Reprocess(DateTimeOffset now)
+    {
+        var result = Transition(Status is CrawlJobStatus.Completed, CrawlJobStatus.Running, now);
+        if (result.IsSuccess)
+        {
+            CompletedAt = null;
+        }
+
+        return result;
+    }
+
     public Result Pause(DateTimeOffset now) =>
         Transition(Status is CrawlJobStatus.Running, CrawlJobStatus.Paused, now);
 

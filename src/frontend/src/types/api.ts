@@ -142,8 +142,11 @@ export type CreateCrawlJobRequest = {
   useJsRendering?: boolean
   startImmediately?: boolean
 }
-/** recrawl fetches every link of the job again; retry-failed only the links that failed. */
-export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-failed'
+/**
+ * recrawl fetches every link of the job again; retry-failed only the links that failed.
+ * reprocess parses the stored pages of a completed job again and fetches only the bodies that were skipped.
+ */
+export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-failed' | 'reprocess'
 
 // --- Links of a crawl job: GET /crawl-jobs/{id}/links, POST /crawl-jobs/{id}/links/{linkId}/recrawl ---
 export type LinkState = 'Queued' | 'Fetching' | 'Retrying' | 'Parsing' | 'Indexing' | 'Indexed' | 'NotIndexed' | 'Skipped' | 'Failed'

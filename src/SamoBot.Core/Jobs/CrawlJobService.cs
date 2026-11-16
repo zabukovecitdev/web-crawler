@@ -76,6 +76,32 @@ public sealed class CrawlJobService(
         return Result.Ok();
     }
 
+    /// <summary>
+    /// Processes a completed job again with the current code: fetches again what was skipped for a type that is stored now,
+    /// and parses (and so indexes) the stored pages again. The job is Running again until the stages finish.
+    /// </summary>
+    public async Task<Result> Reprocess(int id, CancellationToken ct)
+    {
+        var loaded = await Load(id, ct);
+        if (loaded.IsFailed)
+        {
+            return loaded.ToResult();
+        }
+
+        var job = loaded.Value;
+        var reopened = job.Reprocess(timeProvider.GetUtcNow());
+        if (reopened.IsFailed)
+        {
+            return reopened;
+        }
+
+        // The work goes back before the job turns Running, so that the completion check never sees a running job without it.
+        var work = await frontier.RequeueForReprocess(job.Id, StoredMediaTypes.All, ct);
+        await jobs.Save(job, ct);
+        await events.Publish(id, CrawlEventTypes.JobStarted, new { reprocess = true, refetch = work.Refetch, reparse = work.Reparse }, ct);
+        return Result.Ok();
+    }
+
     public Task<Result> Pause(int id, CancellationToken ct) =>
         Change(id, (job, now) => job.Pause(now), CrawlEventTypes.JobPaused, ct);
 

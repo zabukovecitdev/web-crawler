@@ -33,6 +33,8 @@ public class ContentStatesTests
     {
         ContentStates.Derive(StoredHtml with { ObjectName = null, ContentType = "application/pdf" }).Should().Be(ContentState.Skipped);
         ContentStates.Derive(StoredHtml with { ObjectName = null }).Should().Be(ContentState.NotStored);
+        ContentStates.Derive(StoredHtml with { ObjectName = null, ContentType = "text/markdown" }).Should().Be(ContentState.NotStored);
+        ContentStates.Derive(StoredHtml with { ObjectName = null, ContentType = "text/plain; charset=utf-8" }).Should().Be(ContentState.NotStored);
     }
 
     [Fact]

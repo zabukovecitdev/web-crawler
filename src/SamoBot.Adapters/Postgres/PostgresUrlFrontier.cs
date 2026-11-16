@@ -135,12 +135,41 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await transaction.CommitAsync(ct);
     }
 
+    // LastCrawlAt goes back to null: the URL waits for its first fetch again, so the job does not complete before the fetch.
+    private const string RefetchSkippedSql = $"""
+        UPDATE "{TableNames.DiscoveredUrls}" u
+        SET "NextCrawlAt" = @Now, "LastCrawlAt" = NULL, "StatusUpdatedAt" = @Now
+        FROM "{TableNames.UrlFetches}" f
+        WHERE u."CrawlJobId" = @CrawlJobId AND u."Status" = 'Idle' AND f."Id" = u."LastFetchId"
+          AND f."StatusCode" BETWEEN 200 AND 299 AND f."ObjectName" IS NULL AND f."ContentLength" > 0
+          AND lower(btrim(split_part(f."ContentType", ';', 1))) = ANY(@MediaTypes)
+        """;
+
+    private const string ReparseStoredSql = $"""
+        UPDATE "{TableNames.UrlFetches}" f
+        SET "ParsedAt" = NULL, "LeaseUntil" = NULL
+        FROM "{TableNames.DiscoveredUrls}" u
+        WHERE u."CrawlJobId" = @CrawlJobId AND f."Id" = u."LastFetchId"
+          AND f."ObjectName" IS NOT NULL AND f."ParsedAt" IS NOT NULL
+        """;
+
     public async Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
         await NewUrlInserter.Insert(connection, transaction, crawlJobId, seeds, timeProvider.GetUtcNow(), ct);
         await transaction.CommitAsync(ct);
+    }
+
+    public async Task<RequeuedWork> RequeueForReprocess(int crawlJobId, IReadOnlyList<string> storedMediaTypes, CancellationToken ct)
+    {
+        var parameters = new { CrawlJobId = crawlJobId, MediaTypes = storedMediaTypes.ToArray(), Now = timeProvider.GetUtcNow() };
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var refetch = await connection.ExecuteAsync(new CommandDefinition(RefetchSkippedSql, parameters, transaction, cancellationToken: ct));
+        var reparse = await connection.ExecuteAsync(new CommandDefinition(ReparseStoredSql, parameters, transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct);
+        return new RequeuedWork(refetch, reparse);
     }
 
     /// <summary>

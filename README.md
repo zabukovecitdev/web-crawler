@@ -15,7 +15,7 @@ A polite web crawler with a dashboard. PostgreSQL is the only queue.
         claim with a lease     |     record one result
    +---------------------------+--------------------------+
    |  Worker                                              |
-   |  crawl loop --> RustFS (HTML)                        |
+   |  crawl loop --> RustFS (HTML, Markdown, plain text)  |
    |  parse loop <-- RustFS, adds links to the frontier   |
    |  index loop --> Meilisearch                          |
    |  completion loop (marks finished jobs)               |
@@ -34,7 +34,7 @@ openssl rand -hex 32   # put the output in .env as DASHBOARD_API_KEY
 docker compose up --build
 ```
 
-This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker and the API (port 5080).
+This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker, the API (port 5080) and the dashboard (http://localhost:8081).
 Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`.
 
 - **API key:** `DASHBOARD_API_KEY` is required. In Production (the Docker images) the API refuses to start when the key is shorter than 32 characters or a placeholder such as `change-me`; an existing deployment with a short key must be changed.
@@ -42,7 +42,8 @@ Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard i
 - **Cookie:** compose serves plain http on localhost, so `AUTH_ALLOW_INSECURE_COOKIE` defaults to `true` (the session cookie is sent without `Secure`). Set it to `false` behind HTTPS. Outside Development without this flag the cookie is always `Secure`.
 - **Allowlist changes:** the allowlist is checked on every request, so removing an account signs it out on its next call. `appsettings.json` changes are picked up at once; environment variables (compose) are read once, so restart the `api` container after editing `AUTH_ALLOWED_EMAILS` or `AUTH_ALLOWED_DOMAINS`. A session also ends 24 hours after sign-in.
 - **Swagger** is served only in Development (`dotnet run`). **Rate limit:** 300 requests per minute per user (`RateLimiting:PermitsPerMinute`), `429` with `Retry-After` above it; the live hub is exempt.
-- **Dashboard in dev:** with `dotnet run` the API listens on http://localhost:5288 and allows the origins in `appsettings.Development.json`; with compose it is http://localhost:5080 and allows `CORS_ORIGIN`.
+- **Dashboard container:** nginx serves the built dashboard and forwards `/api` and `/hubs` to the API, so the browser sees one origin and needs no CORS. Vite builds `GOOGLE_CLIENT_ID` into the bundle: rebuild the image (`docker compose up --build frontend`) after you change it, and add `http://localhost:8081` to the authorised JavaScript origins of the Google client. The container has no API-key sign-in; use the Vite dev server for that (see below).
+- **Dashboard in dev:** the API listens on http://localhost:5080 with both `dotnet run` and compose. With `dotnet run` it allows the origins in `appsettings.Development.json`; with compose it allows `CORS_ORIGIN`.
 
 ### JavaScript rendering
 
@@ -113,6 +114,12 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 - **Parse:** a claim leases stored fetches with `FOR UPDATE SKIP LOCKED`. One transaction stores the page, replaces the links of the page in `Links` (all of them, for the link lists of the dashboard),
   adds the in-scope links and marks the fetch parsed.
 - **Index:** pages with no `IndexedAt` go to Meilisearch in one batch. Indexing is idempotent.
+
+- **Stored formats:** HTML, Markdown and plain text (`StoredMediaTypes`). Page requests send `Accept` with HTML first,
+  then Markdown, then plain text. Markdown and plain text are converted to HTML at parse time. Other types are fetched
+  and skipped.
+- **Recrawl:** the job action `recrawl` runs a completed job again with the current code. It fetches again the URLs
+  whose body was skipped for a type that is stored now, and parses (and so indexes) the stored pages again.
 
 A worker that dies leaves a lease. When the lease ends, the next claim takes the row again.
 A job is complete when no URL is in flight, no URL waits for its first fetch or a retry, and no page waits for the parser.

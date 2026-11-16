@@ -41,6 +41,7 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         fetch.FetchId.Should().Be(fetchId);
         fetch.CrawlJobId.Should().Be(job);
         fetch.ObjectName.Should().Be("obj-1");
+        fetch.ContentType.Should().Be("text/html");
         fetch.AllowedHosts.Should().Equal("a.example");
         fetch.Url.Should().Be("https://a.example/");
     }

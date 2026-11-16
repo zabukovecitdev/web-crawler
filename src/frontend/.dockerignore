@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+# Vite reads .env* files during the build. Keep local values (VITE_API_BASE, DEV_API_KEY) out of the image.
+.env*
+Dockerfile
+.dockerignore

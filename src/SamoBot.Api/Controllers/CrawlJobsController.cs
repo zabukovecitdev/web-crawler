@@ -62,7 +62,7 @@ public sealed class CrawlJobsController(
             return BadRequest(new ProblemDetails
             {
                 Title = "Unknown action.",
-                Detail = $"The action '{request.Action}' is not start, pause, cancel, recrawl or retry-failed."
+                Detail = $"The action '{request.Action}' is not start, pause, cancel, recrawl, retry-failed or reprocess."
             });
         }
 
@@ -80,7 +80,10 @@ public sealed class CrawlJobsController(
         return result.IsSuccess ? NoContent() : JobActionResults.Failed(result.Errors);
     }
 
-    /// <summary>recrawl fetches every link of the job again; retry-failed only the links that failed.</summary>
+    /// <summary>
+    /// recrawl fetches every link of the job again; retry-failed only the links that failed. reprocess parses the stored
+    /// pages of a completed job again and fetches only the bodies that were skipped.
+    /// </summary>
     private async Task<Result?> Run(int id, string action, CancellationToken ct) => action switch
     {
         "start" => await service.Start(id, ct),
@@ -88,6 +91,7 @@ public sealed class CrawlJobsController(
         "cancel" => await service.Cancel(id, ct),
         "recrawl" => (await service.Recrawl(id, RequeueScope.All, ct)).ToResult(),
         "retry-failed" => (await service.Recrawl(id, RequeueScope.Failed, ct)).ToResult(),
+        "reprocess" => await service.Reprocess(id, ct),
         _ => null
     };
 

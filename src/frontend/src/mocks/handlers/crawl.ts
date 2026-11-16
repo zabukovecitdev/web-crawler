@@ -9,6 +9,7 @@ const STATUS_AFTER: Record<CrawlJobAction, CrawlJobDto['status']> = {
   cancel: 'Cancelled',
   recrawl: 'Running',
   'retry-failed': 'Running',
+  reprocess: 'Running',
 }
 
 function findJob(id: unknown): CrawlJobDto | undefined {

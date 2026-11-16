@@ -72,6 +72,16 @@ public class CrawlJobsControllerTests
         result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
+    [Fact]
+    public async Task ReprocessActionOfARunningJobReturns409()
+    {
+        AddJob(CrawlJobStatus.Running);
+
+        var result = await _controller.Actions(5, Action("reprocess"));
+
+        result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+    }
+
     [Theory]
     [InlineData("explode")]
     [InlineData("")]

@@ -10,7 +10,7 @@ namespace SamoBot.Core.Parsing;
 /// </summary>
 public sealed class ParsePageHandler(
     IContentStore contentStore,
-    IHtmlParser parser,
+    IPageParser parser,
     IParseBacklog queue,
     PageContextFactory contexts,
     PagePolicyEvaluator policies,
@@ -27,7 +27,7 @@ public sealed class ParsePageHandler(
 
     private async Task<ParsedPage> Parse(FetchToParse fetch, CancellationToken ct)
     {
-        await using var html = await contentStore.Load(fetch.ObjectName, ct);
-        return parser.Parse(html);
+        await using var content = await contentStore.Load(fetch.ObjectName, ct);
+        return parser.Parse(content, fetch.ContentType);
     }
 }

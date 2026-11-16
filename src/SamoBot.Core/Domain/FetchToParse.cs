@@ -9,6 +9,9 @@ public sealed record FetchToParse
     public required string Url { get; init; }
     public required int Depth { get; init; }
     public required string ObjectName { get; init; }
+
+    /// <summary>The Content-Type of the fetch. It selects how the stored body is read (HTML or Markdown).</summary>
+    public string? ContentType { get; init; }
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
 

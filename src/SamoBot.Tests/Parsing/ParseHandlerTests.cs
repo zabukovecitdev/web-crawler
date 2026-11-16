@@ -23,7 +23,7 @@ public class ParseHandlerTests
         store.Put("page-1", "<html></html>");
         var queue = new FakeParseBacklog(fetch ?? Fetch);
         var handler = new ParsePageHandler(
-            store, new FakeHtmlParser(page), queue, TestDirectives.Contexts, TestDirectives.Policies, TestDirectives.Links);
+            store, new FakePageParser(page), queue, TestDirectives.Contexts, TestDirectives.Policies, TestDirectives.Links);
         return (queue, handler);
     }
 
