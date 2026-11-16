@@ -16,8 +16,7 @@ public class CrawlOutcomeTests
         NormalizedUrl = "https://a.example/x",
         Depth = 3,
         FailCount = failCount,
-        UseJsRendering = false,
-        RespectRobots = true
+        UseJsRendering = false
     };
 
     [Fact]

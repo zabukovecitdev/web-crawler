@@ -31,6 +31,7 @@ public static class AdaptersServiceCollectionExtensions
         .AddSingleton<IIndexBacklog, PostgresIndexBacklog>()
         .AddSingleton<ICrawlJobRepository, PostgresCrawlJobRepository>()
         .AddSingleton<IJobPageReader, PostgresJobPageReader>()
+        .AddSingleton<IJobLinkReader, PostgresJobLinkReader>()
         .AddSingleton<IJobProgressReader, PostgresJobProgressReader>()
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()
         .AddSingleton<ISitemapStore, PostgresSitemapStore>()

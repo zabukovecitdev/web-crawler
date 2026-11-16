@@ -14,7 +14,7 @@ internal static class NewUrlInserter
 {
     private const string InsertSql = $"""
         WITH job AS (
-            SELECT "UseJsRendering", "RespectRobots", "AllowedHosts"::jsonb AS allowed,
+            SELECT "UseJsRendering", "AllowedHosts"::jsonb AS allowed,
                    COALESCE("MaxUrls", 2147483647) AS max_urls
             FROM "{TableNames.CrawlJobs}" WHERE "Id" = @JobId
         ),
@@ -36,8 +36,8 @@ internal static class NewUrlInserter
         ),
         inserted AS (
             INSERT INTO "{TableNames.DiscoveredUrls}"
-                ("Host", "Url", "NormalizedUrl", "Status", "NextCrawlAt", "CrawlJobId", "Depth", "UseJsRendering", "RespectRobots")
-            SELECT n.host, n.url, n.normalized, 'Idle', @Now, @JobId, n.depth, job."UseJsRendering", job."RespectRobots"
+                ("Host", "Url", "NormalizedUrl", "Status", "NextCrawlAt", "CrawlJobId", "Depth", "UseJsRendering")
+            SELECT n.host, n.url, n.normalized, 'Idle', @Now, @JobId, n.depth, job."UseJsRendering"
             FROM numbered n, job
             WHERE n.rn <= GREATEST(job.max_urls - (SELECT count(*) FROM "{TableNames.DiscoveredUrls}" WHERE "CrawlJobId" = @JobId), 0)
             ORDER BY n.ord

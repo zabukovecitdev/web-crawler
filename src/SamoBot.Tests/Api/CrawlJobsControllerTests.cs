@@ -19,7 +19,7 @@ public class CrawlJobsControllerTests
     public CrawlJobsControllerTests()
     {
         var service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), new FakeTimeProvider(TestData.Now));
-        _controller = new CrawlJobsController(service, _jobs)
+        _controller = new CrawlJobsController(service, _jobs, new FakeJobLinkReader())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
@@ -109,5 +109,28 @@ public class CrawlJobsControllerTests
         var dto = result.Should().BeOfType<CreatedAtActionResult>().Which.Value.Should().BeOfType<CrawlJobDto>().Subject;
         dto.Status.Should().Be("Running");
         _frontier.AddedSeeds.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RecrawlActionQueuesEveryLink()
+    {
+        AddJob(CrawlJobStatus.Running);
+
+        var result = await _controller.Actions(5, Action("recrawl"), default);
+
+        result.Should().BeOfType<NoContentResult>();
+        _frontier.Requeued.Should().ContainSingle().Which.Scope.Should().Be(RequeueScope.All);
+    }
+
+    [Fact]
+    public async Task RecrawlOfALinkThatCannotBeQueuedReturns409()
+    {
+        AddJob(CrawlJobStatus.Running);
+        _frontier.RequeueResult = 0;
+
+        var result = await _controller.Recrawl(5, 77, default);
+
+        result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+        _frontier.Requeued.Should().ContainSingle().Which.Scope.Should().Be(RequeueScope.Link(77));
     }
 }

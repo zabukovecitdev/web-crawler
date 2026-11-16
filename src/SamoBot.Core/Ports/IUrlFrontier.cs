@@ -14,5 +14,11 @@ public interface IUrlFrontier
     /// <summary>Records the fetch, the new URL state, and an optional new URL in one transaction.</summary>
     Task Complete(ClaimedUrl url, UrlUpdate update, FetchRecord? fetch, CancellationToken ct);
 
+    /// <summary>
+    /// Puts links of a job back in the queue, due now and with a clean failure count, so that they are fetched again.
+    /// A link that is in flight is left alone. Returns the number of links that were queued.
+    /// </summary>
+    Task<int> Requeue(int crawlJobId, RequeueScope scope, CancellationToken ct);
+
     Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct);
 }

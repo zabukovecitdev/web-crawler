@@ -1,12 +1,14 @@
 import { http, HttpResponse } from 'msw'
 import type { CrawlJobAction, CrawlJobDto, CreateCrawlJobRequest } from '@/types/api'
-import { JOBS, progressOf, recentEvents } from '../data/crawl'
+import { JOBS, NO_LINKS, progressOf, recentEvents } from '../data/crawl'
 import { ago, json, noContent, notFound } from '../util'
 
 const STATUS_AFTER: Record<CrawlJobAction, CrawlJobDto['status']> = {
   start: 'Running',
   pause: 'Paused',
   cancel: 'Cancelled',
+  recrawl: 'Running',
+  'retry-failed': 'Running',
 }
 
 function findJob(id: unknown): CrawlJobDto | undefined {
@@ -23,10 +25,10 @@ function createJob(request: CreateCrawlJobRequest): CrawlJobDto {
     maxDepth: request.maxDepth ?? 5,
     maxUrls: request.maxUrls ?? 5000,
     useJsRendering: request.useJsRendering ?? false,
-    respectRobots: request.respectRobots ?? true,
     createdAt: ago(0),
     startedAt: request.startImmediately ? ago(0) : null,
     completedAt: null,
+    links: NO_LINKS,
   }
   JOBS.unshift(job)
   return job
@@ -74,6 +76,8 @@ export const crawlHandlers = [
     job.status = STATUS_AFTER[action]
     return noContent()
   }),
+  http.get('*/api/v1/crawl-jobs/:id/links', () => json({ total: 0, items: [] })),
+  http.post('*/api/v1/crawl-jobs/:id/links/:linkId/recrawl', () => noContent()),
   http.get('*/api/v1/crawl-jobs/:id/progress', ({ params }) => {
     const job = findJob(params.id)
     return job ? json(progressOf(job)) : notFound()

@@ -6,7 +6,7 @@
     "coverage-analysis": "perTest",
     "mutation-level": "Standard",
     "reporters": ["html", "json", "progress", "cleartext"],
-    "thresholds": { "high": 80, "low": 60, "break": 75 },
+    "thresholds": { "high": 85, "low": 75, "break": 75 },
     "ignore-methods": ["*Log*", "ToString"],
     "mutate": ["!**/*ServiceCollectionExtensions.cs"]
   }

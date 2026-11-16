@@ -37,7 +37,7 @@ function Nav() {
             <NavLink to={item.to} aria-current={isActive(item, pathname) ? 'page' : undefined}>
               <item.icon strokeWidth={1.5} />
               {item.label}
-              {item.to === '/crawls' && live > 0 ? (
+              {item.to === '/' && live > 0 ? (
                 <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[11px]">
                   <Led />
                   {live} live

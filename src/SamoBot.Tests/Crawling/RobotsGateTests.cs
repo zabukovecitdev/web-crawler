@@ -25,15 +25,14 @@ public class RobotsGateTests
         new("a.example", content, _time.GetUtcNow(), _time.GetUtcNow().AddHours(hours));
 
     [Fact]
-    public async Task IsAllowedWhenRobotsAreNotRespectedReturnsTrueWithoutLookup()
+    public async Task IsAllowedAlwaysChecksRobots()
     {
         var gate = Gate(Rules(BlockPrivate), out var source);
 
-        var allowed = await gate.IsAllowed(TestData.Url("https://a.example/private", respectRobots: false), default);
+        var allowed = await gate.IsAllowed(TestData.Url("https://a.example/private"), default);
 
-        allowed.Should().BeTrue();
-        source.Downloads.Should().Be(0);
-        _store.GetCalls.Should().Be(0);
+        allowed.Should().BeFalse();
+        source.Downloads.Should().Be(1);
     }
 
     [Fact]
@@ -69,6 +68,53 @@ public class RobotsGateTests
         var allowed = await gate.IsAllowed(TestData.Url("https://a.example/private"), default);
 
         allowed.Should().BeTrue();
+        source.Downloads.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task IsAllowedKeepsRulesInTheCacheUntilTheyExpire()
+    {
+        var gate = Gate(Rules(BlockPrivate), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/one"), default);
+        await gate.IsAllowed(TestData.Url("https://a.example/two"), default);
+
+        source.Downloads.Should().Be(1);
+        _store.GetCalls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task IsAllowedCachesEachHostSeparately()
+    {
+        var gate = Gate(Rules(BlockPrivate), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/x"), default);
+        await gate.IsAllowed(TestData.Url("https://b.example/x"), default);
+
+        source.Downloads.Should().Be(2);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task IsAllowedDoesNotCacheRulesThatAreAlreadyExpired(int hours)
+    {
+        var gate = Gate(Rules(BlockPrivate, hours), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/one"), default);
+        await gate.IsAllowed(TestData.Url("https://a.example/two"), default);
+
+        source.Downloads.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task IsAllowedDownloadsAgainWhenStoredRulesExpireRightNow()
+    {
+        _store.Seed(Rules(BlockPrivate, hours: 0));
+        var gate = Gate(Rules(BlockPrivate), out var source);
+
+        await gate.IsAllowed(TestData.Url("https://a.example/x"), default);
+
         source.Downloads.Should().Be(1);
     }
 }

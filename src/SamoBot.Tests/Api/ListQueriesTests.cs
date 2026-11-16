@@ -66,6 +66,7 @@ public class ListQueriesTests
 
         capped.Bytes.Should().HaveCount(4);
         capped.Truncated.Should().BeTrue();
+        (capped.TotalBytes, whole.TotalBytes).Should().Be((10, 4));
         whole.Bytes.Should().HaveCount(4);
         whole.Truncated.Should().BeFalse();
     }

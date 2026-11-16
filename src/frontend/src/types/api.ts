@@ -130,20 +130,56 @@ export type CrawlJobDto = {
   maxDepth: number | null
   maxUrls: number | null
   useJsRendering: boolean
-  respectRobots: boolean
   createdAt: string
   startedAt: string | null
   completedAt: string | null
+  links: JobLinkSummary
 }
 export type CreateCrawlJobRequest = {
   seedUrls: string[]
   maxDepth?: number
   maxUrls?: number
   useJsRendering?: boolean
-  respectRobots?: boolean
   startImmediately?: boolean
 }
-export type CrawlJobAction = 'start' | 'pause' | 'cancel'
+/** recrawl fetches every link of the job again; retry-failed only the links that failed. */
+export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-failed'
+
+// --- Links of a crawl job: GET /crawl-jobs/{id}/links, POST /crawl-jobs/{id}/links/{linkId}/recrawl ---
+export type LinkState = 'Queued' | 'Fetching' | 'Retrying' | 'Parsing' | 'Indexing' | 'Indexed' | 'NotIndexed' | 'Skipped' | 'Failed'
+export type LinkStepStatus = 'Pending' | 'Waiting' | 'Active' | 'Done' | 'Skipped' | 'Failed'
+export type LinkSteps = { fetch: LinkStepStatus; store: LinkStepStatus; parse: LinkStepStatus; index: LinkStepStatus }
+export type JobLinkDto = {
+  id: number
+  url: string
+  host: string
+  depth: number
+  title: string | null
+  state: LinkState
+  reason: string // one sentence: why the link is in this state
+  steps: LinkSteps
+  statusCode: number | null
+  failCount: number
+  lastCrawlAt: string | null
+  nextCrawlAt: string | null
+  canRecrawl: boolean
+}
+export type JobLinkFilter = 'all' | 'problems' | 'notIndexed' | 'pending' | 'indexed'
+export type LinkProblem = { reason: string; label: string; count: number }
+/** The number of links of a job in each state. problems: why the failed and retrying links failed. */
+export type JobLinkSummary = {
+  total: number
+  queued: number
+  fetching: number
+  retrying: number
+  parsing: number
+  indexing: number
+  indexed: number
+  notIndexed: number
+  skipped: number
+  failed: number
+  problems: LinkProblem[]
+}
 export type CrawlProgress = {
   jobId: number
   status: CrawlJobStatus
@@ -167,7 +203,7 @@ export type ContentStatus = 'Stored' | 'Skipped' | 'NotStored' | 'Failed'
 
 // SignalR hub /hubs/crawl-job, method JoinJob(jobId), client event "CrawlEvent".
 export type CrawlEvent =
-  | { crawlJobId: number; eventType: 'JobCreated' | 'JobStarted' | 'JobPaused' | 'JobCancelled' | 'JobCompleted'; at: string }
+  | { crawlJobId: number; eventType: 'JobCreated' | 'JobStarted' | 'JobPaused' | 'JobCancelled' | 'JobCompleted' | 'JobRecrawlRequested'; at: string }
   | { crawlJobId: number; eventType: 'FetchStarted'; at: string; url: string; depth: number }
   | {
       crawlJobId: number

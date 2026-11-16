@@ -19,5 +19,4 @@ public sealed record JobPage
     public int? CrawlJobId { get; init; }
     public int Depth { get; init; }
     public bool UseJsRendering { get; init; }
-    public bool RespectRobots { get; init; }
 }

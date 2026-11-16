@@ -10,8 +10,7 @@ public sealed class PostgresJobPageReader(NpgsqlDataSource dataSource) : IJobPag
 {
     private const string ListPagesSql = $"""
         SELECT "Id", "Host", "Url", "NormalizedUrl", "Status", "LastCrawlAt", "NextCrawlAt", "FailCount", "FailReason",
-               "DiscoveredAt", "Priority", "LastFetchId", "StatusUpdatedAt", "CrawlJobId", "Depth", "UseJsRendering",
-               "RespectRobots"
+               "DiscoveredAt", "Priority", "LastFetchId", "StatusUpdatedAt", "CrawlJobId", "Depth", "UseJsRendering"
         FROM "{TableNames.DiscoveredUrls}"
         WHERE "CrawlJobId" = @CrawlJobId
         ORDER BY "Id"

@@ -6,5 +6,4 @@ public sealed record NewCrawlJob(
     IReadOnlyList<string> SeedUrls,
     int? MaxDepth,
     int? MaxUrls,
-    bool UseJsRendering,
-    bool RespectRobots);
+    bool UseJsRendering);

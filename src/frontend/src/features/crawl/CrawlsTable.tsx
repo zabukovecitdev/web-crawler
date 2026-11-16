@@ -1,76 +1,58 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatNumber, formatRelative } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { formatRelative } from '@/lib/format'
 import type { CrawlJobDto } from '@/types/api'
+import { JobLinksPanel } from './JobLinksPanel'
 import { JobStatusBadge } from './JobStatusBadge'
-import { crawlKeys, fetchProgress } from './crawl-api'
-import { percentOf } from './crawl-format'
-import { isFinished } from './crawl-state'
+import { JobSteps } from './JobSteps'
+import { RecrawlActions } from './RecrawlActions'
 
-function ProgressCell({ job }: { job: CrawlJobDto }) {
-  const running = job.status === 'Running'
-  const progress = useQuery({
-    queryKey: crawlKeys.progress(job.id),
-    queryFn: () => fetchProgress(job.id),
-    refetchInterval: running ? 5000 : false,
-    staleTime: isFinished(job.status) ? Infinity : 0,
-  })
-  if (!progress.data) {
-    return <span className="readout text-muted-foreground">—</span>
-  }
-  const percent = percentOf(progress.data.crawled, job.maxUrls)
+function JobHeading({ job }: { job: CrawlJobDto }) {
   return (
-    <div className="flex min-w-[140px] flex-col gap-1.5">
-      <span className="readout">
-        {formatNumber(progress.data.crawled)}
-        {job.maxUrls ? ` / ${formatNumber(job.maxUrls)}` : ''} pages
+    <div className="flex flex-wrap items-center gap-3">
+      <JobStatusBadge status={job.status} />
+      <Link to={`/crawls/${job.id}`} className="readout break-all text-base font-semibold underline-offset-4 hover:underline">
+        {job.host}
+      </Link>
+      <span className="readout text-muted-foreground">
+        #{job.id} · started {formatRelative(job.startedAt ?? job.createdAt)}
       </span>
-      {percent === null ? null : (
-        <div role="img" aria-label={`${percent} percent of the page limit`} className="h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className={`h-full rounded-full ${running ? 'bg-primary' : 'bg-ink-faint'}`} style={{ width: `${percent}%` }} />
-        </div>
-      )}
     </div>
   )
 }
 
-function JobRow({ job }: { job: CrawlJobDto }) {
+function JobItem({ job }: { job: CrawlJobDto }) {
+  const [open, setOpen] = useState(false)
+  const panelId = `job-${job.id}-links`
   return (
-    <TableRow>
-      <TableCell>
-        <JobStatusBadge status={job.status} />
-      </TableCell>
-      <TableCell className="readout break-all">
-        <Link to={`/crawls/${job.id}`} className="font-medium underline-offset-4 hover:underline">
-          {job.host}
-        </Link>
-        <span className="ml-2 text-muted-foreground">#{job.id}</span>
-      </TableCell>
-      <TableCell>
-        <ProgressCell job={job} />
-      </TableCell>
-      <TableCell className="whitespace-nowrap">{formatRelative(job.startedAt ?? job.createdAt)}</TableCell>
-    </TableRow>
+    <li className="flex flex-col gap-4 border-t py-5 first:border-t-0 first:pt-0 last:pb-0">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <JobHeading job={job} />
+        <RecrawlActions job={job} />
+      </div>
+      <JobSteps job={job} />
+      <div>
+        <Button variant="ghost" size="sm" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
+          {open ? 'Hide links' : `Show links (${job.links.total})`}
+        </Button>
+      </div>
+      {open ? (
+        <div id={panelId}>
+          <JobLinksPanel job={job} />
+        </div>
+      ) : null}
+    </li>
   )
 }
 
+/** Every crawl with its status in words, its steps and its problems; the links open in place. */
 export function CrawlsTable({ jobs }: { jobs: CrawlJobDto[] }) {
   return (
-    <Table className="min-w-[560px]">
-      <TableHeader>
-        <TableRow>
-          <TableHead className="label">Status</TableHead>
-          <TableHead className="label">Site</TableHead>
-          <TableHead className="label">Progress</TableHead>
-          <TableHead className="label">Started</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {jobs.map((job) => (
-          <JobRow key={job.id} job={job} />
-        ))}
-      </TableBody>
-    </Table>
+    <ul className="m-0 flex list-none flex-col p-0">
+      {jobs.map((job) => (
+        <JobItem key={job.id} job={job} />
+      ))}
+    </ul>
   )
 }

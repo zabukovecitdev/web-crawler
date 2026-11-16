@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import type { PageDetail } from '@/types/api'
 import { PageContentCard } from './PageContentCard'
+import { RecrawlPageButton } from './RecrawlPageButton'
 import { externalHref } from './external-url'
 import { CrawlMetadataCard, FetchHistoryCard, PageMetadataCard } from './PageMetaCards'
 import { usePage } from './pages-api'
@@ -15,7 +16,7 @@ function Heading({ page, host }: { page: PageDetail; host: string }) {
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-2">
         <p className="label">
-          <Link to="/" className="text-inherit no-underline hover:underline">Sites</Link> /{' '}
+          <Link to="/sites" className="text-inherit no-underline hover:underline">Sites</Link> /{' '}
           <Link to={`/sites/${encodeURIComponent(host)}`} className="text-inherit no-underline hover:underline">
             {host}
           </Link>{' '}
@@ -29,13 +30,16 @@ function Heading({ page, host }: { page: PageDetail; host: string }) {
         </div>
         <p className="readout m-0 text-muted-foreground [overflow-wrap:anywhere]">{page.url}</p>
       </div>
-      {href ? (
-        <Button asChild variant="outline">
-          <a href={href} target="_blank" rel="noopener noreferrer">
-            Open original page
-          </a>
-        </Button>
-      ) : null}
+      <div className="flex flex-wrap items-start gap-3">
+        <RecrawlPageButton page={page} />
+        {href ? (
+          <Button asChild variant="outline">
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              Open original page
+            </a>
+          </Button>
+        ) : null}
+      </div>
     </div>
   )
 }

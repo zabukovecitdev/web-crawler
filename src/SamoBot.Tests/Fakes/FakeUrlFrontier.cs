@@ -21,6 +21,15 @@ public sealed class FakeUrlFrontier(params ClaimedUrl[] due) : IUrlFrontier
         return Task.CompletedTask;
     }
 
+    public List<(int JobId, RequeueScope Scope)> Requeued { get; } = [];
+    public int RequeueResult { get; set; } = 1;
+
+    public Task<int> Requeue(int crawlJobId, RequeueScope scope, CancellationToken ct)
+    {
+        Requeued.Add((crawlJobId, scope));
+        return Task.FromResult(RequeueResult);
+    }
+
     public Task AddSeeds(int crawlJobId, IReadOnlyList<NewUrl> seeds, CancellationToken ct)
     {
         AddedSeeds.Add((crawlJobId, seeds));

@@ -92,4 +92,66 @@ public class CrawlJobTests
         job.Status.Should().Be(CrawlJobStatus.Completed);
         job.CompletedAt.Should().Be(Now.AddHours(2));
     }
+
+    [Fact]
+    public void ReopenKeepsAPausedJobPaused()
+    {
+        var job = new CrawlJob { SeedUrls = ["https://a.example/"] };
+        job.Start(Now);
+        job.Pause(Now);
+
+        job.Reopen(Now, wholeJob: true).IsSuccess.Should().BeTrue();
+
+        job.Status.Should().Be(CrawlJobStatus.Paused);
+    }
+
+    [Fact]
+    public void ReopenOfAJobThatNeverStartedFails() =>
+        new CrawlJob().Reopen(Now, wholeJob: true).IsFailed.Should().BeTrue();
+
+    [Fact]
+    public void ReopenOfACancelledJobRunsItAgainOnlyForTheWholeJob()
+    {
+        var job = new CrawlJob { SeedUrls = ["https://a.example/"] };
+        job.Start(Now);
+        job.Cancel(Now);
+
+        job.Reopen(Now, wholeJob: false).IsFailed.Should().BeTrue();
+        job.Reopen(Now, wholeJob: true).IsSuccess.Should().BeTrue();
+
+        (job.Status, job.CompletedAt).Should().Be((CrawlJobStatus.Running, null));
+    }
+
+    [Fact]
+    public void CancelSetsCompletedAtOnlyWhenItWorks()
+    {
+        var cancelled = JobIn(CrawlJobStatus.Running);
+        cancelled.Cancel(Now.AddHours(1));
+        var completed = JobIn(CrawlJobStatus.Completed);
+        var before = completed.CompletedAt;
+
+        completed.Cancel(Now.AddHours(1)).IsFailed.Should().BeTrue();
+
+        cancelled.CompletedAt.Should().Be(Now.AddHours(1));
+        completed.CompletedAt.Should().Be(before);
+    }
+
+    [Fact]
+    public void ARefusedChangeNamesTheStatuses() =>
+        JobIn(CrawlJobStatus.Pending).Pause(Now).Errors[0].Message.Should().Be("A job in status Pending cannot change to Paused.");
+
+    [Fact]
+    public void CreateWithoutAValidSeedSaysSo() =>
+        CrawlJob.Create(new NewCrawlJob(null, ["", "not a url"], null, null, false), Now).Errors[0].Message
+            .Should().Be("At least one valid seed URL is required.");
+
+    [Fact]
+    public void ReopenSaysWhyItIsRefused()
+    {
+        new CrawlJob().Reopen(Now, wholeJob: true).Errors[0].Message.Should().Be("The crawl has not started yet.");
+        var cancelled = JobIn(CrawlJobStatus.Cancelled);
+
+        cancelled.Reopen(Now, wholeJob: false).Errors[0].Message.Should().Be(
+            "This crawl was cancelled. Start a new crawl for this link, or recrawl the whole job.");
+    }
 }

@@ -43,7 +43,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE p."Id" = u."Id"
           AND (u."Status" = 'Idle' OR (u."Status" = 'InFlight' AND u."LeaseUntil" < @Now))
         RETURNING u."Id", u."CrawlJobId", u."Host", u."Url", u."NormalizedUrl", u."Depth", u."FailCount",
-                  u."UseJsRendering", u."RespectRobots", p."CrawlDelayMs", p."AvgResponseMs", p."ConsecutiveFailures"
+                  u."UseJsRendering", p."CrawlDelayMs", p."AvgResponseMs", p."ConsecutiveFailures"
         """;
 
     private const string InsertFetchSql = $"""
@@ -87,6 +87,27 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             "LastFetchId" = COALESCE(@FetchId, "LastFetchId")
         WHERE "Id" = @UrlId
         """;
+
+    // A requeued link looks like a link that was never fetched (no last fetch), so the queue counters, the completion
+    // check and the dashboard all see it as waiting. Its fetch history stays in UrlFetches.
+    private const string RequeueSql = $"""
+        UPDATE "{TableNames.DiscoveredUrls}"
+        SET "Status" = 'Idle', "NextCrawlAt" = @Now, "FailCount" = 0, "FailReason" = NULL, "LeaseUntil" = NULL,
+            "LastCrawlAt" = NULL, "LastFetchId" = NULL, "StatusUpdatedAt" = @Now
+        WHERE "CrawlJobId" = @JobId
+          AND "Status" <> 'InFlight'
+          AND (@UrlId::int IS NULL OR "Id" = @UrlId)
+          AND (NOT @FailedOnly
+               OR ("Status" = 'Idle' AND "FailCount" > 0)
+               OR ("Status" = 'Disabled' AND "FailReason" NOT IN ('redirect', 'robots', 'blocked-address')))
+        """;
+
+    public async Task<int> Requeue(int crawlJobId, RequeueScope scope, CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        var parameters = new { JobId = crawlJobId, scope.UrlId, scope.FailedOnly, Now = timeProvider.GetUtcNow() };
+        return await connection.ExecuteAsync(new CommandDefinition(RequeueSql, parameters, cancellationToken: ct));
+    }
 
     public async Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct)
     {

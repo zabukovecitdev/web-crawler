@@ -80,8 +80,10 @@ export function CrawlOptionsFields({ options, errors, disabled, onChange }: Prop
           onChange={(maxUrls) => onChange({ maxUrls })}
         />
       </div>
-      <Toggle id="crawl-robots" label="Respect robots.txt" checked={options.respectRobots} disabled={disabled} onChange={(respectRobots) => onChange({ respectRobots })} />
       <Toggle id="crawl-js" label="Render JavaScript in a browser (slower)" checked={options.useJsRendering} disabled={disabled} onChange={(useJsRendering) => onChange({ useJsRendering })} />
+      <p className="m-0 text-[13px] leading-[18px] text-muted-foreground">
+        SamoBot always follows the robots.txt of the site. Pages that it disallows are not requested.
+      </p>
     </fieldset>
   )
 }

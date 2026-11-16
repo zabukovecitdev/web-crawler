@@ -5,7 +5,10 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>Decides whether robots.txt allows a URL. The rules come from the cache, then the store, then the source.</summary>
+/// <summary>
+/// Decides whether robots.txt allows a URL. The rules come from the cache, then the store, then the source.
+/// Every URL is checked: no job and no setting can turn robots.txt off.
+/// </summary>
 public sealed class RobotsGate(
     IMemoryCache cache,
     IRobotsStore store,
@@ -17,11 +20,6 @@ public sealed class RobotsGate(
 
     public async Task<bool> IsAllowed(ClaimedUrl url, CancellationToken ct)
     {
-        if (!url.RespectRobots)
-        {
-            return true;
-        }
-
         var rules = await RulesOrThrow(url.Host, ct);
         return rules.IsAllowed(new Uri(url.Url).PathAndQuery, UserAgent);
     }
