@@ -35,9 +35,11 @@ export function jobSteps(links: JobLinkSummary): JobStep[] {
   const parsed = stored - links.parsing
   const fetched = links.total - links.queued - links.fetching - links.retrying
   const started = fetched > 0 || links.fetching > 0
+  // Failed and skipped links were fetched but have no page to keep, so they do not count against Store.
+  const storable = fetched - links.failed - links.skipped
   return [
     { label: 'Fetch', done: fetched, of: links.total, status: stepStatus(fetched, links.total, started), note: 'links requested' },
-    { label: 'Store', done: stored, of: fetched, status: stepStatus(stored, stored, started), note: 'HTML pages kept' },
+    { label: 'Store', done: stored, of: storable, status: stepStatus(stored, storable, started), note: 'HTML pages kept' },
     { label: 'Parse', done: parsed, of: stored, status: stepStatus(parsed, stored, stored > 0), note: 'pages read' },
     { label: 'Index', done: links.indexed, of: parsed - links.notIndexed, status: stepStatus(links.indexed, parsed - links.notIndexed, parsed > 0), note: 'pages searchable' },
   ]
