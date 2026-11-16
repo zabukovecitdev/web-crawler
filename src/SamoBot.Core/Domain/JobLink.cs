@@ -18,21 +18,6 @@ public enum LinkState
     Failed
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum LinkStepStatus
-{
-    /// <summary>The step was not reached.</summary>
-    Pending,
-    Waiting,
-    Active,
-    Done,
-    Skipped,
-    Failed
-}
-
-/// <summary>The four steps every link goes through, in order.</summary>
-public sealed record LinkSteps(LinkStepStatus Fetch, LinkStepStatus Store, LinkStepStatus Parse, LinkStepStatus Index);
-
 /// <summary>What the database knows about one link of a job. <see cref="State"/> is derived by the query.</summary>
 public sealed record JobLinkFacts
 {
@@ -52,7 +37,7 @@ public sealed record JobLinkFacts
     public PagePolicy? Policy { get; init; }
 }
 
-/// <summary>One link of a job as the dashboard shows it: its state, the reason in words and the state of each step.</summary>
+/// <summary>One link of a job as the dashboard shows it: its state and the reason in words.</summary>
 public sealed record JobLink
 {
     public int Id { get; init; }
@@ -62,7 +47,6 @@ public sealed record JobLink
     public string? Title { get; init; }
     public LinkState State { get; init; }
     public required string Reason { get; init; }
-    public required LinkSteps Steps { get; init; }
     public int? StatusCode { get; init; }
     public int FailCount { get; init; }
     public DateTimeOffset? LastCrawlAt { get; init; }

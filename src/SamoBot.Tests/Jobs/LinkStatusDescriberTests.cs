@@ -20,11 +20,10 @@ public class LinkStatusDescriberTests
         });
 
     [Fact]
-    public void AnIndexedLinkHasEveryStepDone()
+    public void AnIndexedLinkIsInTheIndexAndCanBeRecrawled()
     {
         var link = Describe(LinkState.Indexed, statusCode: 200);
 
-        link.Steps.Should().Be(new LinkSteps(LinkStepStatus.Done, LinkStepStatus.Done, LinkStepStatus.Done, LinkStepStatus.Done));
         link.Reason.Should().Be("In the search index.");
         link.CanRecrawl.Should().BeTrue();
     }
@@ -34,7 +33,7 @@ public class LinkStatusDescriberTests
     {
         var link = Describe(LinkState.Fetching);
 
-        link.Steps.Fetch.Should().Be(LinkStepStatus.Active);
+        link.Reason.Should().Be("Being fetched right now.");
         link.CanRecrawl.Should().BeFalse();
     }
 
@@ -47,8 +46,6 @@ public class LinkStatusDescriberTests
         var link = Describe(LinkState.Failed, failReason, statusCode);
 
         link.Reason.Should().Be(expected);
-        link.Steps.Fetch.Should().Be(LinkStepStatus.Failed);
-        link.Steps.Store.Should().Be(LinkStepStatus.Pending);
     }
 
     [Fact]
@@ -62,21 +59,19 @@ public class LinkStatusDescriberTests
     [Theory]
     [InlineData("robots", "robots.txt")]
     [InlineData("blocked-address", "private or reserved address")]
-    public void ALinkThatWasNeverRequestedHasASkippedFetch(string failReason, string expected)
+    public void ALinkThatWasNeverRequestedSaysWhy(string failReason, string expected)
     {
         var link = Describe(LinkState.Skipped, failReason);
 
         link.Reason.Should().Contain(expected);
-        link.Steps.Fetch.Should().Be(LinkStepStatus.Skipped);
     }
 
     [Fact]
-    public void ARedirectIsFetchedButNotStored()
+    public void ARedirectSaysWhereItGoes()
     {
         var link = Describe(LinkState.Skipped, "redirect", 301);
 
         link.Reason.Should().StartWith("The URL redirects (301).");
-        (link.Steps.Fetch, link.Steps.Store).Should().Be((LinkStepStatus.Done, LinkStepStatus.Skipped));
     }
 
     [Fact]
@@ -99,8 +94,15 @@ public class LinkStatusDescriberTests
         var link = LinkStatusDescriber.Describe(facts);
 
         link.Reason.Should().Be("Kept out of the search index because the site asked for it: noindex (meta robots).");
-        link.Steps.Index.Should().Be(LinkStepStatus.Skipped);
     }
+
+    [Theory]
+    [InlineData(LinkState.Queued, "Waiting in the queue to be fetched.")]
+    [InlineData(LinkState.Fetching, "Being fetched right now.")]
+    [InlineData(LinkState.Parsing, "Fetched and stored. Waiting for the parser.")]
+    [InlineData(LinkState.Indexing, "Parsed. Waiting to be sent to the search index.")]
+    [InlineData(LinkState.Indexed, "In the search index.")]
+    public void AStateWithoutDetailsHasAFixedReason(LinkState state, string expected) => Describe(state).Reason.Should().Be(expected);
 
     [Fact]
     public void EveryStateHasADescription()
