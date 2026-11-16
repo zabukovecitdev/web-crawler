@@ -8,13 +8,18 @@ describe('jobSteps', () => {
   it('counts what passed each step', () => {
     const links = { ...NONE, total: 10, queued: 2, parsing: 1, indexing: 1, indexed: 3, notIndexed: 1, skipped: 1, failed: 1 }
     const steps = jobSteps(links)
-    expect(steps.map((step) => [step.done, step.of])).toEqual([[8, 10], [6, 6], [5, 6], [3, 4]])
-    expect(steps.map((step) => step.status)).toEqual(['active', 'done', 'active', 'active'])
+    expect(steps.map((step) => [step.done, step.of])).toEqual([[8, 10], [6, 8], [5, 6], [3, 4]])
+    expect(steps.map((step) => step.status)).toEqual(['active', 'active', 'active', 'active'])
   })
 
   it('keeps Store active while nothing storable has been stored yet', () => {
     const steps = jobSteps({ ...NONE, total: 4, queued: 2, fetching: 1, failed: 1 })
-    expect(steps[1]).toMatchObject({ done: 0, of: 0, status: 'active' })
+    expect(steps[1]).toMatchObject({ done: 0, of: 3, status: 'active' })
+  })
+
+  it('fills Store while links are still queued, not only when the fetched ones are stored', () => {
+    const steps = jobSteps({ ...NONE, total: 10, queued: 4, indexed: 5, skipped: 1 })
+    expect(steps[1]).toMatchObject({ done: 5, of: 9, status: 'active' })
   })
 
   it('shows Store done at 100 % when all storable pages are stored and some links were skipped', () => {
@@ -28,7 +33,7 @@ describe('jobSteps', () => {
   })
 
   it('waits on Store when nothing was fetched', () => {
-    expect(jobSteps({ ...NONE, total: 2, queued: 2 })[1]).toMatchObject({ done: 0, of: 0, status: 'waiting' })
+    expect(jobSteps({ ...NONE, total: 2, queued: 2 })[1]).toMatchObject({ done: 0, of: 2, status: 'waiting' })
   })
 
   it('waits before the first fetch', () => {
