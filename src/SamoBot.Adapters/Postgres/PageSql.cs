@@ -105,7 +105,7 @@ internal static class PageSql
     public const string CountOutgoingLinks = $"""SELECT count(*)::int FROM "{TableNames.Links}" WHERE "FromUrlId" = @Id""";
 
     public const string StoredCopy = $"""
-        SELECT f."ObjectName", COALESCE(f."FinalUrl", u."Url") AS "Url", d."Policy"
+        SELECT f."ObjectName", COALESCE(f."FinalUrl", u."Url") AS "Url", d."Policy", f."ContentType"
         FROM "{TableNames.UrlFetches}" f
         JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = f."DiscoveredUrlId"
         LEFT JOIN "{TableNames.ParsedDocuments}" d ON d."UrlFetchId" = f."Id"

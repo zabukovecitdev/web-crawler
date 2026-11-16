@@ -78,9 +78,25 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
             return error!;
         }
 
-        var result = markdown.Convert(Encoding.UTF8.GetString(body.Content.Bytes), body.Copy.Url);
+        var text = Encoding.UTF8.GetString(body.Content.Bytes);
+        var result = IsHtml(body.Copy.ContentType, text) ? markdown.Convert(text, body.Copy.Url) : text;
         SetContentHeaders($"page-{id}.md", body.Content);
         return File(Encoding.UTF8.GetBytes(result), "text/markdown; charset=utf-8");
+    }
+
+    /// <summary>
+    /// A Markdown or plain-text body is already readable as Markdown, so the endpoint returns it unchanged. The HTML converter would escape
+    /// its line starts and join its lines. The parser makes the same choice (a plain-text body that starts like HTML is HTML).
+    /// </summary>
+    private static bool IsHtml(string? contentType, string text)
+    {
+        var mediaType = StoredMediaTypes.MediaType(contentType);
+        if (StoredMediaTypes.IsMarkdown(mediaType))
+        {
+            return false;
+        }
+
+        return !StoredMediaTypes.IsPlainText(mediaType) || StoredMediaTypes.LooksLikeHtml(text);
     }
 
     /// <summary>Finds the stored copy and loads its capped body. Gives an error result (404, or 403 for noarchive) instead when there is nothing to show.</summary>

@@ -216,7 +216,7 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
             """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Policy") VALUES (@id, 'A', '{"archive":false}') RETURNING "Id" """,
             new { id = noArchiveFetch });
 
-        (await Pages.FindStoredCopy(stored, default)).Should().Be(new StoredCopy("bodies/s", new Uri("https://a.example/s"), PagePolicy.Default));
+        (await Pages.FindStoredCopy(stored, default)).Should().Be(new StoredCopy("bodies/s", new Uri("https://a.example/s"), PagePolicy.Default, "text/html"));
         (await Pages.FindStoredCopy(noArchive, default))!.Policy.Archive.Should().BeFalse();
         (await Pages.FindStoredCopy(notStored, default)).Should().BeNull();
         storedFetch.Should().BePositive();
