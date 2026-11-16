@@ -35,7 +35,7 @@ docker compose up --build
 ```
 
 This starts PostgreSQL, RustFS (S3 storage, console at http://localhost:9001/rustfs/console/), Meilisearch, the migrations, the worker, the API (port 5080) and the dashboard (http://localhost:8081).
-Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`.
+Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`. The page screen has a Markdown tab: `GET /api/v1/pages/{id}/markdown` turns the stored HTML into clean Markdown (headings, text, lists, tables, links, images) on demand, for reading or as input for an LLM.
 
 - **API key:** `DASHBOARD_API_KEY` is required. In Production (the Docker images) the API refuses to start when the key is shorter than 32 characters or a placeholder such as `change-me`; an existing deployment with a short key must be changed.
 - **Ports:** compose binds every published port (PostgreSQL, RustFS, Meilisearch, the API) to `127.0.0.1`. The database, storage and search credentials default to development values; set `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` and `MEILI_MASTER_KEY` in `.env` before publishing on another interface, and then only behind a firewall.
