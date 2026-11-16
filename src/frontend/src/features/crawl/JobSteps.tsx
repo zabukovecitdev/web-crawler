@@ -43,11 +43,11 @@ function Notes({ job }: { job: CrawlJobDto }) {
   )
 }
 
-/** What the job has done so far: one sentence, the four steps with counts, and why links failed. */
-export function JobSteps({ job }: { job: CrawlJobDto }) {
+/** What the job has done so far: one sentence (unless the caller shows it already), the four steps with counts, and why links failed. */
+export function JobSteps({ job, headline = true }: { job: CrawlJobDto; headline?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <p className="m-0 text-sm font-medium">{jobHeadline(job)}</p>
+      {headline ? <p className="m-0 text-sm font-medium">{jobHeadline(job)}</p> : null}
       <ol className="m-0 flex list-none flex-wrap gap-3 p-0">
         {jobSteps(job.links).map((step, index) => (
           <Step key={step.label} step={step} index={index} />
