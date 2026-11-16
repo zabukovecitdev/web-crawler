@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
 import { errorMessage } from '@/lib/api'
 import type { PageContent } from './pages-api'
-import { isForbidden } from './sites-api'
+import { isForbidden, isNotFound } from './sites-api'
 
 type Query = {
   isPending: boolean
@@ -24,6 +24,13 @@ const DEFAULT_NOTE = 'The stored source is longer than the dashboard shows. This
 function StoredBodyError({ query }: { query: Query }) {
   if (isForbidden(query.error)) {
     return <EmptyState title="Stored copy hidden">{errorMessage(query.error)}</EmptyState>
+  }
+  if (isNotFound(query.error)) {
+    return (
+      <EmptyState title="No stored copy">
+        The crawler did not keep a body for this page, for example because it was a redirect, an error or not a web page.
+      </EmptyState>
+    )
   }
   return <ErrorState error={query.error} onRetry={() => void query.refetch()} />
 }

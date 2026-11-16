@@ -212,6 +212,9 @@ export type CrawlEvent =
       crawlJobId: number
       eventType: 'FetchCompleted'
       at: string
+      /** The page (discovered URL) id and host; missing on events recorded before they were added. */
+      pageId?: number
+      host?: string
       url: string
       depth: number
       statusCode: number

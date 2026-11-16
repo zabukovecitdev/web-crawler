@@ -44,6 +44,8 @@ public sealed class CrawlUrlHandler(
     {
         var payload = new
         {
+            pageId = url.Id,
+            host = url.Host,
             url = url.Url,
             depth = url.Depth,
             statusCode = response.StatusCode,
