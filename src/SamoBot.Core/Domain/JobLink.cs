@@ -56,12 +56,12 @@ public sealed record JobLinkFacts
 public sealed record JobLink
 {
     public int Id { get; init; }
-    public string Url { get; init; } = string.Empty;
-    public string Host { get; init; } = string.Empty;
+    public required string Url { get; init; }
+    public required string Host { get; init; }
     public int Depth { get; init; }
     public string? Title { get; init; }
     public LinkState State { get; init; }
-    public string Reason { get; init; } = string.Empty;
+    public required string Reason { get; init; }
     public required LinkSteps Steps { get; init; }
     public int? StatusCode { get; init; }
     public int FailCount { get; init; }

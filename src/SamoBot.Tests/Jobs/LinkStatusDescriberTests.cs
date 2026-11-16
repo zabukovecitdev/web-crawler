@@ -117,4 +117,42 @@ public class LinkStatusDescriberTests
     [InlineData(null, "Unknown error")]
     [InlineData("connection refused", "connection refused")]
     public void LabelsAreShort(string? reason, string expected) => LinkReasons.Label(reason).Should().Be(expected);
+
+    [Fact]
+    public void AFailedLinkWithoutAnAnswerSaysTheFetchFailed() =>
+        Describe(LinkState.Failed, "timeout", 0).Reason.Should().Be("The fetch failed: Timed out.");
+
+    [Fact]
+    public void AFailedLinkWithoutAStatusSaysTheFetchFailed() =>
+        Describe(LinkState.Failed, "network-error").Reason.Should().Be("The fetch failed: Network error.");
+
+    [Fact]
+    public void ALabelNamesTheRetryLimit() => LinkReasons.Label("max-failures").Should().Be("Gave up after 5 attempts");
+
+    [Fact]
+    public void ANoindexPageWithoutNamedDirectivesSaysSo() =>
+        LinkStatusDescriber.Describe(new JobLinkFacts { State = LinkState.NotIndexed }).Reason
+            .Should().Be("Kept out of the search index by the directives of the page.");
+
+    [Theory]
+    [InlineData("text/html; charset=utf-8")]
+    [InlineData(null)]
+    public void AnHtmlResponseWithoutABodyWasNotStored(string? contentType) =>
+        Describe(LinkState.Skipped, statusCode: 200, contentType: contentType).Reason
+            .Should().Be("The response had no body, so nothing was stored.");
+
+    [Fact]
+    public void RequeueScopesSayWhichLinksTheyMean()
+    {
+        RequeueScope.All.Should().Be(new RequeueScope(null, false));
+        RequeueScope.Failed.Should().Be(new RequeueScope(null, true));
+        RequeueScope.Link(5).Should().Be(new RequeueScope(5, false));
+    }
+
+    [Fact]
+    public void ReadModelRowsStartEmpty()
+    {
+        (new JobLinkFacts().Url, new JobLinkFacts().Host).Should().Be((string.Empty, string.Empty));
+        (new JobPage().Url, new JobPage().Host).Should().Be((string.Empty, string.Empty));
+    }
 }

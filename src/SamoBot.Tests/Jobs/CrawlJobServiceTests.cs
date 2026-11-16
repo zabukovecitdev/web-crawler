@@ -233,4 +233,39 @@ public class CrawlJobServiceTests
 
         result.Errors.Should().ContainSingle().Which.Should().BeOfType<JobNotFoundError>();
     }
+
+    [Fact]
+    public async Task RecrawlThatQueuesNothingSaysWhatWasAskedFor()
+    {
+        AddJob(CrawlJobStatus.Running);
+        _frontier.RequeueResult = 0;
+
+        var one = await _service.Recrawl(5, RequeueScope.Link(9), default);
+        var all = await _service.Recrawl(5, RequeueScope.All, default);
+
+        one.Errors[0].Message.Should().Be("This link is not part of the crawl, or it is being fetched right now.");
+        all.Errors[0].Message.Should().Be("This crawl has no links to fetch again.");
+    }
+
+    [Fact]
+    public async Task PauseSavesTheJobAndPublishesTheEvent()
+    {
+        var job = AddJob(CrawlJobStatus.Running);
+
+        (await _service.Pause(5, default)).IsSuccess.Should().BeTrue();
+
+        _jobs.Saved.Should().Contain(job);
+        _events.Published.Should().ContainSingle(e => e.EventType == CrawlEventTypes.JobPaused);
+    }
+
+    [Fact]
+    public async Task RecrawlOfAFailedLinkPublishesWhatWasQueued()
+    {
+        AddJob(CrawlJobStatus.Running);
+        _frontier.RequeueResult = 4;
+
+        await _service.Recrawl(5, RequeueScope.Failed, default);
+
+        _events.Published.Should().ContainSingle(e => e.EventType == CrawlEventTypes.JobRecrawlRequested);
+    }
 }
