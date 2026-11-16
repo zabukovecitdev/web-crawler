@@ -269,4 +269,43 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
             postgres.DataSource, """SELECT "NormalizedUrl" FROM "DiscoveredUrls" ORDER BY "Id" """);
         urls.Should().Equal("https://a.example/0", "https://a.example/1");
     }
+
+    [Fact]
+    public async Task RequeueRefetchesSkippedStoredTypesAndReparsesStoredPagesSoTheJobIsNotDone()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        var markdown = await UrlWithLastFetch(job, "https://a.example/docs", "text/markdown; charset=utf-8", objectName: null, parsed: false);
+        var html = await UrlWithLastFetch(job, "https://a.example/", "text/html", objectName: "obj", parsed: true);
+        var pdf = await UrlWithLastFetch(job, "https://a.example/a.pdf", "application/pdf", objectName: null, parsed: false);
+        _time.Advance(TimeSpan.FromHours(1));
+
+        var work = await Frontier().RequeueForReprocess(job, StoredMediaTypes.All, default);
+
+        work.Should().Be(new RequeuedWork(1, 1));
+        var refetched = await UrlState(markdown);
+        ((DateTimeOffset)refetched.NextCrawlAt).Should().Be(_time.GetUtcNow());
+        ((object?)refetched.LastCrawlAt).Should().BeNull();
+        ((object?)(await UrlState(pdf)).LastCrawlAt).Should().NotBeNull();
+        (await PostgresTestData.Scalar<int>(postgres.DataSource,
+            """SELECT count(*) FROM "UrlFetches" WHERE "DiscoveredUrlId" = @html AND "ParsedAt" IS NULL""", new { html })).Should().Be(1);
+        (await new PostgresCrawlJobRepository(postgres.DataSource).CompleteFinishedJobs(_time.GetUtcNow(), default)).Should().BeEmpty();
+    }
+
+    private Task<dynamic> UrlState(int urlId) =>
+        PostgresTestData.Row(postgres.DataSource, """SELECT "NextCrawlAt", "LastCrawlAt" FROM "DiscoveredUrls" WHERE "Id" = @urlId""", new { urlId });
+
+    private async Task<int> UrlWithLastFetch(int job, string url, string contentType, string? objectName, bool parsed)
+    {
+        var urlId = await PostgresTestData.InsertUrl(postgres.DataSource, job, url, nextCrawlAt: TestData.Now.AddDays(1));
+        await PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """
+            WITH f AS (
+                INSERT INTO "UrlFetches" ("DiscoveredUrlId", "FetchedAt", "StatusCode", "ContentType", "ContentLength", "ObjectName", "ParsedAt")
+                VALUES (@urlId, @now, 200, @contentType, 10, @objectName, CASE WHEN @parsed THEN @now END) RETURNING "Id")
+            UPDATE "DiscoveredUrls" SET "LastFetchId" = (SELECT "Id" FROM f), "LastCrawlAt" = @now WHERE "Id" = @urlId RETURNING "Id"
+            """,
+            new { urlId, now = TestData.Now, contentType, objectName, parsed });
+        return urlId;
+    }
 }

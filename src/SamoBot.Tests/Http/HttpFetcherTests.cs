@@ -34,6 +34,19 @@ public class HttpFetcherTests
     }
 
     [Fact]
+    public async Task FetchAsksForHtmlSoANegotiatingServerDoesNotSendAnotherRepresentation()
+    {
+        string? accept = null;
+        await Fetcher(request =>
+        {
+            accept = request.Headers.Accept.ToString();
+            return Html(HttpStatusCode.OK);
+        }).Fetch(TestData.Url(), default);
+
+        accept.Should().Be(HttpFetcher.Accept);
+    }
+
+    [Fact]
     public async Task FetchReportsTheLocationOfARedirectAndDoesNotThrow()
     {
         var response = await Fetcher(_ =>

@@ -45,6 +45,22 @@ public class CrawlJobTests
     }
 
     [Theory]
+    [InlineData(CrawlJobStatus.Completed, true)]
+    [InlineData(CrawlJobStatus.Pending, false)]
+    [InlineData(CrawlJobStatus.Running, false)]
+    [InlineData(CrawlJobStatus.Paused, false)]
+    [InlineData(CrawlJobStatus.Cancelled, false)]
+    public void ReprocessIsAllowedOnlyFromCompletedAndClearsTheCompletionTime(CrawlJobStatus from, bool allowed)
+    {
+        var job = JobIn(from);
+        var completedAt = job.CompletedAt;
+
+        job.Reprocess(Now.AddHours(1)).IsSuccess.Should().Be(allowed);
+        job.Status.Should().Be(allowed ? CrawlJobStatus.Running : from);
+        job.CompletedAt.Should().Be(allowed ? null : completedAt);
+    }
+
+    [Theory]
     [InlineData(CrawlJobStatus.Running, true)]
     [InlineData(CrawlJobStatus.Pending, false)]
     [InlineData(CrawlJobStatus.Paused, false)]

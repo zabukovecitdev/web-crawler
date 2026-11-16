@@ -36,6 +36,7 @@ public class ObjectNameGeneratorTests
     [Theory]
     [InlineData("application/pdf", "https://example.com/x", "pdf")]
     [InlineData("text/plain; charset=utf-8", "https://example.com/x", "txt")]
+    [InlineData("text/markdown; charset=utf-8", "https://example.com/x", "md")]
     [InlineData(null, "https://example.com/file.PDF", "pdf")]
     [InlineData("application/unknown", "https://example.com/x", "html")]
     public void GenerateHierarchicalChoosesTheExtensionFromTheMediaTypeThenThePath(string? contentType, string url, string extension)

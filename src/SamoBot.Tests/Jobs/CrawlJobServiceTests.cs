@@ -28,6 +28,11 @@ public class CrawlJobServiceTests
             job.Start(TestData.Now);
         }
 
+        if (status is CrawlJobStatus.Completed)
+        {
+            job.Complete(TestData.Now);
+        }
+
         _jobs.Add(job);
         return job;
     }
@@ -105,6 +110,32 @@ public class CrawlJobServiceTests
 
         (await _service.Pause(5, default)).IsFailed.Should().BeTrue();
 
+        _jobs.Saved.Should().BeEmpty();
+        _events.Published.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ReprocessRequeuesTheStoredTypesSavesRunningJobAndPublishes()
+    {
+        var job = AddJob(CrawlJobStatus.Completed);
+
+        var result = await _service.Reprocess(5, default);
+
+        result.IsSuccess.Should().BeTrue();
+        job.Status.Should().Be(CrawlJobStatus.Running);
+        _frontier.Reprocessed.Should().ContainSingle(r => r.JobId == 5 && r.MediaTypes == StoredMediaTypes.All);
+        _jobs.Saved.Should().ContainSingle();
+        _events.Published.Should().ContainSingle(e => e.EventType == CrawlEventTypes.JobStarted);
+    }
+
+    [Fact]
+    public async Task ReprocessOfARunningJobFailsWithoutRequeueing()
+    {
+        AddJob(CrawlJobStatus.Running);
+
+        (await _service.Reprocess(5, default)).IsFailed.Should().BeTrue();
+
+        _frontier.Reprocessed.Should().BeEmpty();
         _jobs.Saved.Should().BeEmpty();
         _events.Published.Should().BeEmpty();
     }

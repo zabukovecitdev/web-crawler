@@ -15,7 +15,7 @@ A polite web crawler with a dashboard. PostgreSQL is the only queue.
         claim with a lease     |     record one result
    +---------------------------+--------------------------+
    |  Worker                                              |
-   |  crawl loop --> RustFS (HTML)                        |
+   |  crawl loop --> RustFS (HTML, Markdown, plain text)  |
    |  parse loop <-- RustFS, adds links to the frontier   |
    |  index loop --> Meilisearch                          |
    |  completion loop (marks finished jobs)               |
@@ -113,6 +113,12 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 - **Parse:** a claim leases stored fetches with `FOR UPDATE SKIP LOCKED`. One transaction stores the page, replaces the links of the page in `Links` (all of them, for the link lists of the dashboard),
   adds the in-scope links and marks the fetch parsed.
 - **Index:** pages with no `IndexedAt` go to Meilisearch in one batch. Indexing is idempotent.
+
+- **Stored formats:** HTML, Markdown and plain text (`StoredMediaTypes`). Page requests send `Accept` with HTML first,
+  then Markdown, then plain text. Markdown and plain text are converted to HTML at parse time. Other types are fetched
+  and skipped.
+- **Recrawl:** the job action `recrawl` runs a completed job again with the current code. It fetches again the URLs
+  whose body was skipped for a type that is stored now, and parses (and so indexes) the stored pages again.
 
 A worker that dies leaves a lease. When the lease ends, the next claim takes the row again.
 A job is complete when no URL is in flight, no URL waits for its first fetch or a retry, and no page waits for the parser.

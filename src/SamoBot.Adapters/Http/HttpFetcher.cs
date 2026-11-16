@@ -24,6 +24,12 @@ public sealed class HttpFetcher(
     public const string UserAgent = "SamoBot/1.0 (+https://github.com/zabukovecitdev/web-crawler)";
     public const int MaxBodyBytes = 5 * 1024 * 1024;
 
+    /// <summary>
+    /// Asks for the media types that <see cref="StoredMediaTypes"/> keeps: HTML first, then Markdown, then plain text. A server
+    /// that negotiates on Accept (Vary: Accept) then sends HTML when it has it. */* keeps other types possible.
+    /// </summary>
+    public const string Accept = "text/html,application/xhtml+xml;q=0.9,text/markdown;q=0.8,text/plain;q=0.7,*/*;q=0.6";
+
     public bool Supports(ClaimedUrl url) => !url.UseJsRendering || !chrome.Value.IsAvailable;
 
     public async Task<FetchResponse> Fetch(ClaimedUrl url, CancellationToken ct)
@@ -66,6 +72,7 @@ public sealed class HttpFetcher(
     private async Task<FetchResponse> Send(ClaimedUrl url, long started, RequestDeadline deadline)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url.Url);
+        request.Headers.TryAddWithoutValidation("Accept", Accept);
         using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token);
         deadline.HeadersReceived();
 

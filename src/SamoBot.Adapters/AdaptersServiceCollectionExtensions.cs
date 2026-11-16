@@ -23,7 +23,7 @@ public static class AdaptersServiceCollectionExtensions
         .AddFetchers(configuration)
         .AddStorage(configuration)
         .AddSamoBotSearch(configuration)
-        .AddSingleton<IHtmlParser, HtmlAgilityPackParser>();
+        .AddSingleton<IPageParser, HtmlAgilityPackParser>();
 
     private static IServiceCollection AddPostgresAdapters(this IServiceCollection services) => services
         .AddSingleton<IUrlFrontier, PostgresUrlFrontier>()

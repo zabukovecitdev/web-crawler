@@ -36,28 +36,11 @@ public sealed record FetchResponse
     public bool HasContent => Content is { Length: > 0 };
 
     /// <summary>True when the media type is HTML. A missing or wrong media type falls back to a look at the first bytes.</summary>
-    public bool IsHtml => HasHtmlMediaType() || LooksLikeHtml();
+    public bool IsHtml => StoredMediaTypes.IsHtml(StoredMediaTypes.MediaType(ContentType)) || LooksLikeHtml();
 
-    private bool HasHtmlMediaType()
-    {
-        if (string.IsNullOrWhiteSpace(ContentType))
-        {
-            return false;
-        }
+    /// <summary>True when the crawler keeps the body: HTML (see <see cref="IsHtml"/>) or another <see cref="StoredMediaTypes"/> type.</summary>
+    public bool IsStoredType => IsHtml || StoredMediaTypes.IsStored(StoredMediaTypes.MediaType(ContentType));
 
-        var mediaType = ContentType.Split(';')[0].Trim();
-        return StoredMediaTypes.IsStored(mediaType);
-    }
-
-    private bool LooksLikeHtml()
-    {
-        if (!HasContent)
-        {
-            return false;
-        }
-
-        var snippet = Encoding.UTF8.GetString(Content!, 0, Math.Min(Content!.Length, SniffLength));
-        return snippet.Contains("<!doctype html", StringComparison.OrdinalIgnoreCase)
-               || snippet.Contains("<html", StringComparison.OrdinalIgnoreCase);
-    }
+    private bool LooksLikeHtml() =>
+        HasContent && StoredMediaTypes.LooksLikeHtml(Encoding.UTF8.GetString(Content!, 0, Math.Min(Content!.Length, SniffLength)));
 }
