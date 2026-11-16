@@ -1,22 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { CrawlJobAction, CrawlJobStatus } from '@/types/api'
-import { crawlKeys, errorMessage, sendAction } from './crawl-api'
+import { errorMessage } from './crawl-api'
+import { useJobAction } from './useJobAction'
 
 type Props = { jobId: number; host: string; status: CrawlJobStatus }
-
-function useJobAction(jobId: number) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: CrawlJobAction) => sendAction(jobId, action),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.job(jobId) })
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.jobs })
-    },
-  })
-}
 
 type CancelProps = { host: string; open: boolean; busy: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }
 
@@ -67,31 +56,5 @@ export function CrawlActions({ jobId, host, status }: Props) {
       ) : null}
       <CancelDialog host={host} open={confirming} busy={action.isPending} onOpenChange={setConfirming} onConfirm={() => run('cancel')} />
     </>
-  )
-}
-
-/**
- * Processes a completed crawl again with the current crawler: pages skipped for a format it reads now are fetched again,
- * and stored pages are parsed and indexed again. Nothing stored is fetched again.
- */
-export function ReprocessAction({ jobId }: { jobId: number }) {
-  const action = useJobAction(jobId)
-
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button
-        variant="outline"
-        disabled={action.isPending}
-        title="Fetch skipped pages again and parse stored pages again"
-        onClick={() => action.mutate('reprocess')}
-      >
-        {action.isPending ? 'Starting…' : 'Reprocess'}
-      </Button>
-      {action.isError ? (
-        <p role="alert" className="m-0 w-full text-[13px] text-signal-ink">
-          <strong>Error:</strong> {errorMessage(action.error)}
-        </p>
-      ) : null}
-    </div>
   )
 }

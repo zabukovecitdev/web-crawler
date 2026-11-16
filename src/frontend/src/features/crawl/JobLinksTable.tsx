@@ -7,7 +7,7 @@ import { LINK, TD, TH } from '../sites/table-styles'
 import { formatClock } from './crawl-format'
 import { linkLook } from './link-format'
 
-type RowProps = { link: JobLinkDto; busy: boolean; onRecrawl: (link: JobLinkDto) => void }
+type RowProps = { link: JobLinkDto; busy: boolean; disabledReason?: string; onRecrawl: (link: JobLinkDto) => void }
 
 function pathOf(url: string): string {
   try {
@@ -22,7 +22,7 @@ function retryNote(link: JobLinkDto): string | null {
   return link.state === 'Retrying' && link.nextCrawlAt ? ` Next try at ${formatClock(link.nextCrawlAt)}.` : null
 }
 
-function LinkRow({ link, busy, onRecrawl }: RowProps) {
+function LinkRow({ link, busy, disabledReason, onRecrawl }: RowProps) {
   const look = linkLook(link.state)
   return (
     <TableRow>
@@ -42,7 +42,12 @@ function LinkRow({ link, busy, onRecrawl }: RowProps) {
         {retryNote(link)}
       </TableCell>
       <TableCell className={`${TD} whitespace-nowrap text-right`}>
-        <Button variant="outline" size="sm" disabled={busy || !link.canRecrawl} onClick={() => onRecrawl(link)}>
+        <Button
+          variant="outline"
+          size="sm"
+          title={disabledReason}
+          disabled={busy || !link.canRecrawl || disabledReason !== undefined}
+          onClick={() => onRecrawl(link)}>
           Recrawl
         </Button>
       </TableCell>
@@ -50,10 +55,10 @@ function LinkRow({ link, busy, onRecrawl }: RowProps) {
   )
 }
 
-type Props = { links: JobLinkDto[]; busy: boolean; onRecrawl: (link: JobLinkDto) => void }
+type Props = { links: JobLinkDto[]; busy: boolean; disabledReason?: string; onRecrawl: (link: JobLinkDto) => void }
 
 /** One row for each link: its state, the page it leads to, the reason in words, and a recrawl. */
-export function JobLinksTable({ links, busy, onRecrawl }: Props) {
+export function JobLinksTable({ links, busy, disabledReason, onRecrawl }: Props) {
   return (
     <Table className="min-w-[860px]">
       <TableHeader>
@@ -68,7 +73,7 @@ export function JobLinksTable({ links, busy, onRecrawl }: Props) {
       </TableHeader>
       <TableBody>
         {links.map((link) => (
-          <LinkRow key={link.id} link={link} busy={busy} onRecrawl={onRecrawl} />
+          <LinkRow key={link.id} link={link} busy={busy} disabledReason={disabledReason} onRecrawl={onRecrawl} />
         ))}
       </TableBody>
     </Table>

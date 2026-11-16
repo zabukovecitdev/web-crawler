@@ -3,14 +3,14 @@ import { ErrorState, LoadingRows } from '@/components/shared/States'
 import { Panel } from '../sites/Panel'
 import type { CrawlJobDto, CrawlProgress } from '@/types/api'
 import { ConnectionIndicator } from './ConnectionIndicator'
-import { CrawlActions, ReprocessAction } from './CrawlActions'
+import { CrawlActions } from './CrawlActions'
 import { CurrentRequestCard } from './CurrentRequestCard'
 import { FinalSummary } from './FinalSummary'
 import { JobLinksPanel } from './JobLinksPanel'
 import { JobStatusBadge } from './JobStatusBadge'
 import { JobSteps } from './JobSteps'
 import { PolitenessCard } from './PolitenessCard'
-import { RecrawlActions } from './RecrawlActions'
+import { RunAgainMenu } from './RunAgainMenu'
 import { RequestLog } from './RequestLog'
 import { ResponseBar } from './ResponseBar'
 import { StatCards } from './StatCards'
@@ -40,8 +40,7 @@ function CrawlHeader({ job, progress, live }: HeaderProps) {
       </div>
       <div className="flex flex-wrap items-start justify-end gap-3">
         {isFinished(progress.status) ? null : <CrawlActions jobId={job.id} host={job.host} status={progress.status} />}
-        {progress.status === 'Completed' ? <ReprocessAction jobId={job.id} /> : null}
-        <RecrawlActions job={job} />
+        <RunAgainMenu job={job} />
       </div>
     </div>
   )
