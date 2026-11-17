@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { HostLinkEdge } from '@/types/api'
-import { buildHostGraph, GRAPH_HEIGHT, GRAPH_WIDTH, neighbours } from './host-graph'
+import { buildHostGraph, busiest, neighbours } from './host-graph'
 
 const edge = (fromHost: string, toHost: string, links: number, pages = 1): HostLinkEdge => ({
   fromHost,
@@ -11,60 +11,46 @@ const edge = (fromHost: string, toHost: string, links: number, pages = 1): HostL
 
 const EDGES = [edge('a.example', 'b.example', 30), edge('a.example', 'c.example', 5), edge('b.example', 'c.example', 1)]
 
-describe('buildHostGraph nodes', () => {
-  it('makes one node per host and counts links in and out', () => {
-    const graph = buildHostGraph(EDGES)
-    const byHost = Object.fromEntries(graph.nodes.map((n) => [n.host, n]))
+describe('buildHostGraph', () => {
+  it('makes one node per host, sorted, and counts links in and out', () => {
+    const { nodes, links } = buildHostGraph(EDGES)
+    const byId = Object.fromEntries(nodes.map((n) => [n.id, n]))
 
-    expect(graph.nodes.map((n) => n.host)).toEqual(['a.example', 'b.example', 'c.example'])
-    expect(byHost['a.example']).toMatchObject({ out: 35, in: 0 })
-    expect(byHost['b.example']).toMatchObject({ out: 1, in: 30 })
-    expect(byHost['c.example']).toMatchObject({ out: 0, in: 6 })
-    expect(graph.edges).toHaveLength(3)
+    expect(nodes.map((n) => n.id)).toEqual(['a.example', 'b.example', 'c.example'])
+    expect(byId['a.example']).toMatchObject({ out: 35, in: 0, val: 35 })
+    expect(byId['b.example']).toMatchObject({ out: 1, in: 30, val: 31 })
+    expect(byId['c.example']).toMatchObject({ out: 0, in: 6, val: 6 })
+    expect(links).toHaveLength(3)
   })
 
-})
+  it('points each link from the linking host to the linked host', () => {
+    const [first] = buildHostGraph(EDGES).links
 
-describe('buildHostGraph layout', () => {
-  it('keeps every node inside the canvas', () => {
-    const { nodes } = buildHostGraph(EDGES)
-
-    for (const n of nodes) {
-      expect(n.x).toBeGreaterThanOrEqual(0)
-      expect(n.x).toBeLessThanOrEqual(GRAPH_WIDTH)
-      expect(n.y).toBeGreaterThanOrEqual(0)
-      expect(n.y).toBeLessThanOrEqual(GRAPH_HEIGHT)
-    }
+    expect(first).toMatchObject({ source: 'a.example', target: 'b.example', links: 30 })
   })
 
-  it('gives the same picture for the same edges', () => {
-    const a = buildHostGraph(EDGES).nodes.map((n) => [n.x, n.y])
-    const b = buildHostGraph(EDGES).nodes.map((n) => [n.x, n.y])
+  it('draws strong connections wider, within 1 to 5', () => {
+    const { links } = buildHostGraph(EDGES)
 
-    expect(a).toEqual(b)
+    expect(links[0].width).toBe(5)
+    expect(links[0].width).toBeGreaterThan(links[2].width)
+    expect(links[2].width).toBeGreaterThanOrEqual(1)
   })
 
-  it('sizes busy hosts and strong edges larger', () => {
-    const graph = buildHostGraph(EDGES)
-    const radius = (h: string) => graph.nodes.find((n) => n.host === h)!.radius
-
-    expect(radius('b.example')).toBeGreaterThan(radius('c.example'))
-    expect(graph.edges[0].width).toBeGreaterThan(graph.edges[2].width)
-  })
-
-  it('handles no edges and a single edge', () => {
-    expect(buildHostGraph([])).toMatchObject({ nodes: [], edges: [] })
-    const one = buildHostGraph([edge('a.example', 'b.example', 1)])
-    expect(one.nodes).toHaveLength(2)
-    expect(one.nodes.every((n) => Number.isFinite(n.x) && Number.isFinite(n.y))).toBe(true)
+  it('handles no edges', () => {
+    expect(buildHostGraph([])).toEqual({ nodes: [], links: [] })
   })
 })
 
-describe('neighbours', () => {
-  it('returns the host and the hosts it is linked with in either direction', () => {
-    const graph = buildHostGraph(EDGES)
+describe('neighbours and busiest', () => {
+  it('neighbours returns the host and the hosts it is linked with in either direction', () => {
+    const graph = buildHostGraph([...EDGES, edge('d.example', 'e.example', 1)])
 
     expect([...neighbours(graph, 'c.example')].sort()).toEqual(['a.example', 'b.example', 'c.example'])
-    expect([...neighbours(graph, 'a.example')].sort()).toEqual(['a.example', 'b.example', 'c.example'])
+    expect([...neighbours(graph, 'd.example')].sort()).toEqual(['d.example', 'e.example'])
+  })
+
+  it('busiest returns the sites with the most links in plus out', () => {
+    expect([...busiest(buildHostGraph(EDGES), 2)].sort()).toEqual(['a.example', 'b.example'])
   })
 })
