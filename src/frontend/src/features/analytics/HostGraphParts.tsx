@@ -12,7 +12,7 @@ export const ARROW_ID = 'host-graph-arrow'
 export function ArrowMarker() {
   return (
     <defs>
-      <marker id={ARROW_ID} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <marker id={ARROW_ID} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
         <path d="M0 0 L10 5 L0 10 z" fill={FAINT} />
       </marker>
     </defs>
@@ -76,7 +76,7 @@ export function NodeMark({ node, dim, selected, labelled, onToggle, onHover }: N
     >
       <circle r={node.radius} fill={selected ? SIGNAL : NODE} stroke={INK} strokeWidth={selected ? 2 : 1} />
       {labelled ? (
-        <text y={-node.radius - 5} textAnchor="middle" fontSize={11} fill={INK} className="pointer-events-none select-none">
+        <text y={-node.radius - 5} textAnchor="middle" fontSize={11} fill={INK} stroke="rgb(var(--card))" strokeWidth={3} paintOrder="stroke" className="pointer-events-none select-none">
           {node.host}
         </text>
       ) : null}
