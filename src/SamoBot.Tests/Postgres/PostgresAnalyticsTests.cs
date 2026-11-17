@@ -209,4 +209,39 @@ public class PostgresAnalyticsTests(PostgresFixture postgres) : IAsyncLifetime
         points[0].Requests.Should().Be(1);
         points.Sum(p => p.Requests).Should().Be(overview.Requests);
     }
+
+    private Task<int> Link(int fromUrlId, string toUrl, string toHost, bool isInternal, TimeSpan age) =>
+        PostgresTestData.Scalar<int>(
+            postgres.DataSource,
+            """
+            INSERT INTO "Links" ("FromUrlId", "ToUrl", "ToHost", "IsInternal", "NoFollow", "FirstSeenAt")
+            VALUES (@fromUrlId, @toUrl, @toHost, @isInternal, false, @at) RETURNING 1
+            """,
+            new { fromUrlId, toUrl, toHost, isInternal, at = Now - age });
+
+    [Fact]
+    public async Task HostLinksGroupExternalLinksBySourceAndTargetHost()
+    {
+        var (a1, a2, b1) = await Seed();
+        await Link(a1, "https://b.example/1", "b.example", false, TimeSpan.FromHours(1));
+        await Link(a1, "https://b.example/2", "b.example", false, TimeSpan.FromHours(1));
+        await Link(a2, "https://b.example/1", "b.example", false, TimeSpan.FromDays(10));
+        await Link(a1, "https://a.example/2", "a.example", true, TimeSpan.FromHours(1));
+        await Link(b1, "https://c.example/", "c.example", false, TimeSpan.FromHours(1));
+
+        var all = await Analytics.HostLinks(AnalyticsRange.All, null, default);
+        var week = await Analytics.HostLinks(AnalyticsRange.Week, null, default);
+        var forC = await Analytics.HostLinks(AnalyticsRange.All, "C.example", default);
+
+        all.Should().Equal(
+            new HostLinkEdge { FromHost = "a.example", ToHost = "b.example", Links = 3, Pages = 2 },
+            new HostLinkEdge { FromHost = "b.example", ToHost = "c.example", Links = 1, Pages = 1 });
+        week.Single(e => e.FromHost == "a.example").Should().Be(
+            new HostLinkEdge { FromHost = "a.example", ToHost = "b.example", Links = 2, Pages = 1 });
+        forC.Should().ContainSingle().Which.FromHost.Should().Be("b.example");
+    }
+
+    [Fact]
+    public async Task HostLinksOfNothingIsEmpty() =>
+        (await Analytics.HostLinks(AnalyticsRange.All, null, default)).Should().BeEmpty();
 }

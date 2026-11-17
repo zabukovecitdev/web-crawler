@@ -1,24 +1,27 @@
 import { ErrorState } from '@/components/shared/States'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { formatDate } from '@/lib/format'
-import { useContentTypes, useHostAnalytics, useOverview, useStatusCodes, useTimeseries } from './analytics-api'
+import { useContentTypes, useHostAnalytics, useHostLinks, useOverview, useStatusCodes, useTimeseries } from './analytics-api'
 import { ContentTypeCard } from './ContentTypeCard'
 import { DurationByHostCard, PagesByHostCard } from './HostBarCards'
+import { HostGraphCard } from './HostGraphCard'
 import { HostFilter } from './HostFilter'
 import { HostsTable } from './HostsTable'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RangeTabs } from './RangeTabs'
 import { StatCards } from './StatCards'
 import { StatusCard } from './StatusCard'
 import { TimeseriesCard } from './TimeseriesCard'
-import { rangePhrase, useFilters } from './range'
+import { parseView, rangePhrase, useFilters } from './range'
 
 export function AnalyticsPage() {
-  const { range, host, setRange, setHost } = useFilters()
+  const { view, setView, range, host, setRange, setHost } = useFilters()
   const overview = useOverview(range)
   const hosts = useHostAnalytics(range)
   const status = useStatusCodes(range, host)
   const content = useContentTypes(range, host)
   const series = useTimeseries(range, host)
+  const links = useHostLinks(range, host, view === 'graph')
   const o = overview.data
   const period = o?.from && o.to ? `${formatDate(o.from)} to ${formatDate(o.to)}` : rangePhrase(range)
   return (
@@ -33,18 +36,30 @@ export function AnalyticsPage() {
           </>
         }
       />
-      {overview.isError ? <ErrorState error={overview.error} onRetry={() => void overview.refetch()} /> : null}
-      <StatCards overview={o} failed={overview.isError} />
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <DurationByHostCard query={hosts} />
-        <PagesByHostCard query={hosts} />
-      </div>
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <StatusCard query={status} />
-        <ContentTypeCard query={content} />
-        <TimeseriesCard query={series} range={range} />
-      </div>
-      <HostsTable query={hosts} />
+      <Tabs value={view} onValueChange={(v) => setView(parseView(v))}>
+        <TabsList aria-label="Analytics view">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="graph">Link graph</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {view === 'graph' ? (
+        <HostGraphCard query={links} focus={host} onFocus={setHost} />
+      ) : (
+        <>
+        {overview.isError ? <ErrorState error={overview.error} onRetry={() => void overview.refetch()} /> : null}
+        <StatCards overview={o} failed={overview.isError} />
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+          <DurationByHostCard query={hosts} />
+          <PagesByHostCard query={hosts} />
+        </div>
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+          <StatusCard query={status} />
+          <ContentTypeCard query={content} />
+          <TimeseriesCard query={series} range={range} />
+        </div>
+        <HostsTable query={hosts} />
+        </>
+      )}
     </div>
   )
 }

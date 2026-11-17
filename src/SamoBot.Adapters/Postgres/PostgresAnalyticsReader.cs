@@ -18,6 +18,9 @@ public sealed class PostgresAnalyticsReader(NpgsqlDataSource dataSource, TimePro
     public async Task<IReadOnlyList<HostAnalytics>> Hosts(AnalyticsRange range, CancellationToken ct) =>
         await Query<HostAnalytics>(AnalyticsSql.Hosts, Parameters(Window(range), null), ct);
 
+    public async Task<IReadOnlyList<HostLinkEdge>> HostLinks(AnalyticsRange range, string? host, CancellationToken ct) =>
+        await Query<HostLinkEdge>(AnalyticsSql.HostLinks, Parameters(Window(range), host), ct);
+
     public Task<StatusClassCounts> StatusCodes(AnalyticsRange range, string? host, CancellationToken ct) =>
         QuerySingle<StatusClassCounts>(AnalyticsSql.StatusClasses, Parameters(Window(range), host), ct);
 

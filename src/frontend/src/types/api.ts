@@ -252,6 +252,7 @@ export type HostAnalytics = {
   failureRate: number
   crawlDelayMs: number
 }
+export type HostLinkEdge = { fromHost: string; toHost: string; links: number; pages: number }
 export type StatusClassCounts = { ok: number; redirect: number; clientError: number; serverError: number }
 export type ContentTypeCount = { contentType: string; requests: number; stored: boolean }
 export type TimeseriesPoint = { bucket: string; requests: number }

@@ -19,7 +19,15 @@ export function rangePhrase(range: AnalyticsRange): string {
   return RANGES.find((r) => r.value === range)?.phrase ?? ''
 }
 
+export type AnalyticsView = 'overview' | 'graph'
+
+export function parseView(value: string | null): AnalyticsView {
+  return value === 'graph' ? 'graph' : 'overview'
+}
+
 export type Filters = {
+  view: AnalyticsView
+  setView: (view: AnalyticsView) => void
   range: AnalyticsRange
   host: string | undefined
   setRange: (range: AnalyticsRange) => void
@@ -47,6 +55,8 @@ export function useFilters(): Filters {
     [setParams],
   )
   return {
+    view: parseView(params.get('view')),
+    setView: (view) => update('view', view === 'overview' ? undefined : view),
     range: parseRange(params.get('range')),
     host: params.get('host') ?? undefined,
     setRange: (range) => update('range', range),

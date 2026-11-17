@@ -5,6 +5,7 @@ import type {
   AnalyticsRange,
   ContentTypeCount,
   HostAnalytics,
+  HostLinkEdge,
   StatusClassCounts,
   TimeseriesPoint,
 } from '@/types/api'
@@ -29,6 +30,14 @@ export function useHostAnalytics(range: AnalyticsRange) {
   return useQuery({
     queryKey: ['analytics', 'hosts', range],
     queryFn: () => get<HostAnalytics[]>('hosts', { range }),
+  })
+}
+
+export function useHostLinks(range: AnalyticsRange, host: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['analytics', 'host-links', range, host ?? null],
+    queryFn: () => get<HostLinkEdge[]>('host-links', { range, host }),
+    enabled,
   })
 }
 
