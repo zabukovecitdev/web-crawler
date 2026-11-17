@@ -42,7 +42,7 @@ Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard i
 - **Cookie:** compose serves plain http on localhost, so `AUTH_ALLOW_INSECURE_COOKIE` defaults to `true` (the session cookie is sent without `Secure`). Set it to `false` behind HTTPS. Outside Development without this flag the cookie is always `Secure`.
 - **Allowlist changes:** the allowlist is checked on every request, so removing an account signs it out on its next call. `appsettings.json` changes are picked up at once; environment variables (compose) are read once, so restart the `api` container after editing `AUTH_ALLOWED_EMAILS` or `AUTH_ALLOWED_DOMAINS`. A session also ends 24 hours after sign-in.
 - **Swagger** is served only in Development (`dotnet run`).
-- **Rate limits** (details in "Rate limiting" below): nginx limits per client address, the API adds a backstop per user; over a limit the answer is `429` with `Retry-After`.
+- **Rate limits:** token buckets in the API (`Hosting/RateLimitingExtensions.cs`, section `RateLimiting`), answering `429` with `Retry-After`. 300 requests per minute per signed-in user (`PermitsPerMinute`), 120 per anonymous client address (`AnonymousPermitsPerMinute`), 10 per minute on `POST /api/v1/auth/google` (`SignInPermitsPerMinute`) and 10 per minute for an `X-Api-Key` that does not match (`ApiKeyFailuresPerMinute`). A bucket holds a burst (a fifth of the per-minute rate, at least 3) and refills steadily. The limiter runs after authentication and before authorization, so unauthenticated calls to protected endpoints are counted too. A signed-in hub connection is exempt. The API reads the client address from `X-Forwarded-For` only from the networks in `ForwardedHeaders:KnownProxies` and `ForwardedHeaders:KnownNetworks` (compose trusts the private ranges, and the dashboard's nginx sends the address); otherwise every client behind a proxy would share one bucket. Keep the API port off the internet. Counters are in memory, so limits are per API instance.
 - **Dashboard container:** nginx serves the built dashboard and forwards `/api` and `/hubs` to the API, so the browser sees one origin and needs no CORS. Vite builds `GOOGLE_CLIENT_ID` into the bundle: rebuild the image (`docker compose up --build frontend`) after you change it, and add `http://localhost:8081` to the authorised JavaScript origins of the Google client. The container has no API-key sign-in; use the Vite dev server for that (see below).
 - **Dashboard in dev:** the API listens on http://localhost:5080 with both `dotnet run` and compose. With `dotnet run` it allows the origins in `appsettings.Development.json`; with compose it allows `CORS_ORIGIN`.
 
@@ -105,31 +105,6 @@ dotnet build SamoBot.sln -warnaserror
 dotnet test src/SamoBot.Tests --filter "Category!=Integration"
 dotnet test src/SamoBot.Tests --filter "Category=Integration"   # needs Docker
 ```
-
-## Rate limiting
-
-Two layers, so that no single mistake leaves the login or any other public endpoint open. Both answer `429` with `Retry-After`.
-
-| Layer | Where | Key | What it limits |
-|---|---|---|---|
-| Edge (leaky bucket, `limit_req`) | `src/frontend/nginx-limits.conf` (zones) and `nginx.conf` (which location uses which zone) | client address | `/api/`: 10 requests/s, burst 50. `POST /api/v1/auth/google`: 6/min, burst 3 (plus the `/api/` limit). `/hubs/`: 1/s, burst 10, at most 20 open connections |
-| API (token bucket) | `Hosting/RateLimitingExtensions.cs`, section `RateLimiting` | signed-in user, otherwise client address | `PermitsPerMinute` 300 per user (cookie or API key). `AnonymousPermitsPerMinute` 120 per address, `SignInPermitsPerMinute` 10 on sign-in, `ApiKeyFailuresPerMinute` 10 for an `X-Api-Key` that does not match. The hub is exempt for a signed-in user. |
-
-A bucket holds a burst (a fifth of the per-minute rate, at least 3) and refills steadily, so there is no window edge where a caller can double its rate. The API limiter runs after authentication and before authorization, so unauthenticated calls to protected endpoints and wrong API keys are counted. An IPv6 client is limited as a whole /64.
-
-Both layers must see the real client address, not the proxy's. nginx trusts `X-Forwarded-For` only from private networks (`set_real_ip_from` in `nginx-limits.conf`) and passes the address on; the API trusts it only from `ForwardedHeaders:KnownProxies` and `ForwardedHeaders:KnownNetworks` (compose sets the private ranges). A header from any other peer is ignored. For that reason never publish the dashboard or API container port to the internet directly: put a proxy in front (next section). Behind a cloud load balancer or CDN, add its address ranges to both settings. nginx keeps its counters in memory, so the limits are per nginx instance.
-
-## Production
-
-`compose.prod.yaml` adds a TLS edge to the stack on a single host. Only Caddy publishes ports (80 and 443) and gets a Let's Encrypt certificate by itself; the dashboard, API and backing services are reachable only on the compose network, so every request passes the rate limits.
-
-```bash
-# .env: DOMAIN, DASHBOARD_API_KEY, GOOGLE_CLIENT_ID, AUTH_ALLOWED_EMAILS or AUTH_ALLOWED_DOMAINS,
-#       POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY, MEILI_MASTER_KEY (16+ bytes). Compose stops when one is missing.
-docker compose -f compose.yaml -f compose.prod.yaml up -d --build
-```
-
-The DNS name `DOMAIN` must point at the host, and `https://DOMAIN` must be an authorised JavaScript origin of the Google client. The override also sets `AUTH_ALLOW_INSECURE_COOKIE` to false and CORS to `https://DOMAIN`. It needs Docker Compose 2.24.4 or newer. CI builds and signs the four images (`samobot-api`, `-worker`, `-migrations`, `-frontend`) in `ghcr.io`; the frontend image needs the repository variable `GOOGLE_CLIENT_ID` because Vite builds it into the bundle. To run the published images instead of building, point the `image:` of each service at them. Back up the `postgres_data` volume and the RustFS bucket; neither is backed up for you.
 
 ## The claim pattern
 
