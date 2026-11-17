@@ -67,7 +67,7 @@ export function sendAction(jobId: number, action: CrawlJobAction): Promise<void>
   return apiFetch<void>(`${base(jobId)}/actions`, { method: 'POST', body: JSON.stringify({ action }) })
 }
 
-/** One page of the links of a job, each with its state, the reason and its steps. */
+/** One page of the links of a job, each with its state, and the reason. */
 export function fetchLinks(jobId: number, query: LinksQuery): Promise<Page<JobLinkDto>> {
   return apiFetch<Page<JobLinkDto>>(`${base(jobId)}/links${queryString(query)}`)
 }

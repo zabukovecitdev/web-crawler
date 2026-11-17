@@ -8,7 +8,7 @@ import { JobLinksPanel } from './JobLinksPanel'
 import { JobStatusBadge } from './JobStatusBadge'
 import { JobSteps } from './JobSteps'
 import { jobHeadline, jobSteps } from './link-format'
-import { RecrawlActions } from './RecrawlActions'
+import { RunAgainMenu } from './RunAgainMenu'
 import { StepRing } from './StepRing'
 import { ringLabel } from './step-ring'
 
@@ -83,7 +83,7 @@ function JobItem({ job }: { job: CrawlJobDto }) {
           </button>
           <Summary job={job} />
         </div>
-        <RecrawlActions job={job} />
+        <RunAgainMenu job={job} />
       </div>
       {open ? (
         <div id={detailsId}>

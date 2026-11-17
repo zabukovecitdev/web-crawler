@@ -4,15 +4,20 @@ import { EmptyState, ErrorState, LoadingRows } from '@/components/shared/States'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatNumber } from '@/lib/format'
-import type { CrawlJobDto, JobLinkDto, JobLinkFilter } from '@/types/api'
+import type { CrawlJobDto, JobLinkFilter } from '@/types/api'
 import { Pager } from '../sites/Pager'
 import { useDebounced } from '../sites/useDebounced'
 import { JobLinksTable } from './JobLinksTable'
-import { NewCrawlForLinkDialog } from './NewCrawlForLinkDialog'
 import { crawlKeys, errorMessage, fetchLinks, recrawlLink } from './crawl-api'
 import { pendingLinks } from './link-format'
 
 const PAGE_SIZE = 25
+const CANCELLED_REASON = 'This crawl was cancelled. Use Run again on the crawl, or request a new crawl.'
+
+/** A cancelled crawl cannot fetch one link again: the table disables the button and says why. */
+function cancelledReason(job: CrawlJobDto): string | undefined {
+  return job.status === 'Cancelled' ? CANCELLED_REASON : undefined
+}
 
 function filtersOf(job: CrawlJobDto): { value: JobLinkFilter; label: string }[] {
   const { links } = job
@@ -78,16 +83,13 @@ function Toolbar({ job, filter, search, onFilter, onSearch }: ToolbarProps) {
   )
 }
 
-/** The links of a job with their state and steps, filtered and paged, each with a recrawl button. */
+/** The links of a job with their state, filtered and paged, each with a recrawl button. */
 export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
   const [filter, setFilter] = useState<JobLinkFilter>('all')
   const [search, setSearch] = useState('')
   const [offset, setOffset] = useState(0)
   const links = useLinks(job, filter, search, offset)
   const recrawl = useRecrawlLink(job.id)
-  const [asNewCrawl, setAsNewCrawl] = useState<JobLinkDto | null>(null)
-  // A cancelled crawl is not run again for one link: offer a new crawl of that link instead.
-  const onRecrawl = (link: JobLinkDto) => (job.status === 'Cancelled' ? setAsNewCrawl(link) : recrawl.mutate(link.id))
   const restart = <T,>(set: (value: T) => void) => (value: T) => {
     set(value)
     setOffset(0)
@@ -105,11 +107,13 @@ export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
       {links.data?.items.length === 0 ? <EmptyState title="No links match">Choose another filter or clear the search.</EmptyState> : null}
       {links.data && links.data.items.length > 0 ? (
         <>
-          <JobLinksTable links={links.data.items} busy={recrawl.isPending} onRecrawl={onRecrawl} />
+          <JobLinksTable links={links.data.items} busy={recrawl.isPending}
+            disabledReason={cancelledReason(job)}
+            onRecrawl={(link) => recrawl.mutate(link.id)}
+          />
           <Pager total={links.data.total} offset={offset} limit={PAGE_SIZE} shown={links.data.items.length} onChange={setOffset} />
         </>
       ) : null}
-      <NewCrawlForLinkDialog job={job} link={asNewCrawl} onClose={() => setAsNewCrawl(null)} />
     </div>
   )
 }

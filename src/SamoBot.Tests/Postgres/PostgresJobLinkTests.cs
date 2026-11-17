@@ -1,6 +1,8 @@
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using SamoBot.Adapters.Postgres;
+using SamoBot.Api.Contracts;
 using SamoBot.Core.Domain;
 using SamoBot.Tests.Fakes;
 
@@ -12,6 +14,8 @@ namespace SamoBot.Tests.Postgres;
 public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private const string NoIndex = """{"index":false,"directives":["noindex (meta robots)"]}""";
+
+    private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
     private readonly FakeTimeProvider _time = new(TestData.Now);
 
@@ -179,5 +183,64 @@ public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
         await Frontier.Requeue(job, RequeueScope.All, default);
 
         (await jobs.CompleteFinishedJobs(TestData.Now, default)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ARequeuedLinkKeepsItsLastFetchForThePageAndSiteScreens()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource, "Running");
+        var url = await Url(job, "page");
+        await Parsed(await Fetch(url), indexed: true);
+        var pages = new PostgresPageReader(postgres.DataSource);
+        var sites = new PostgresSiteReader(postgres.DataSource, SiteOverviewCache.Disabled);
+
+        await Frontier.Requeue(job, RequeueScope.All, default);
+
+        var page = await pages.FindPage(url, default);
+        page!.StatusCode.Should().Be(200);
+        page.Parsed!.Title.Should().Be("Title");
+        var site = (await sites.ListSites(new SiteQuery(null, SiteSort.Host, 50, 0), default)).Items.Single();
+        site.Pages.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ARequeuedLinkIsQueuedAndCountedAsWaitingUntilItIsFetchedAgain()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource, "Running");
+        var url = await Url(job, "page");
+        await Parsed(await Fetch(url), indexed: true);
+        var progress = new PostgresJobProgressReader(postgres.DataSource);
+        var jobs = new PostgresCrawlJobRepository(postgres.DataSource);
+
+        await Frontier.Requeue(job, RequeueScope.All, default);
+
+        (await Reader.List(job, new JobLinkQuery(JobLinkFilter.All, null, 50, 0), default)).Items.Single().State.Should().Be(LinkState.Queued);
+        (await progress.Read(job, default))!.Queued.Should().Be(1);
+        (await jobs.CompleteFinishedJobs(TestData.Now, default)).Should().BeEmpty();
+
+        var newFetch = await Fetch(url);
+
+        (await PostgresTestData.Scalar<int>(postgres.DataSource, """SELECT "LastFetchId" FROM "DiscoveredUrls" WHERE "Id" = @url""", new { url })).Should().Be(newFetch);
+        (await Reader.List(job, new JobLinkQuery(JobLinkFilter.All, null, 50, 0), default)).Items.Single().State.Should().Be(LinkState.Parsing);
+        (await progress.Read(job, default))!.Queued.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task TheSummaryOfAJobKeepsItsJsonShapeForTheDashboard()
+    {
+        var jobId = await JobWithEveryState();
+        var summary = (await Reader.Summarize([jobId], default))[jobId];
+        var job = CrawlJob.Create(new NewCrawlJob("u1", ["https://a.example/"], 2, 10, false), TestData.Now).Value;
+
+        var links = JsonSerializer.SerializeToElement(CrawlJobDto.From(job, summary), Web).GetProperty("links");
+
+        links.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
+            "total", "queued", "fetching", "retrying", "parsing", "indexing", "indexed", "notIndexed", "skipped", "failed", "problems");
+        links.EnumerateObject().Where(p => p.Name != "problems").Select(p => (p.Name, p.Value.GetInt32())).Should().BeEquivalentTo(
+            [("total", 9), ("queued", 1), ("fetching", 1), ("retrying", 1), ("parsing", 1), ("indexing", 1), ("indexed", 1), ("notIndexed", 1), ("skipped", 1), ("failed", 1)]);
+        links.GetProperty("problems").EnumerateArray()
+            .Select(p => (p.GetProperty("reason").GetString(), p.GetProperty("label").GetString(), p.GetProperty("count").GetInt32()))
+            .Should().BeEquivalentTo([("http-404", "HTTP 404", 1), ("timeout", "Timed out", 1)]);
+        links.GetProperty("problems").EnumerateArray().First().EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("reason", "label", "count");
     }
 }

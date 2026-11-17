@@ -1,22 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatNumber } from '@/lib/format'
-import type { CrawlJobAction, CrawlJobDto } from '@/types/api'
-import { crawlKeys, errorMessage, sendAction } from './crawl-api'
-
-/** Sends a recrawl action and refreshes everything that shows the job. */
-function useRecrawl(jobId: number) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: CrawlJobAction) => sendAction(jobId, action),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.job(jobId) })
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.jobs })
-    },
-  })
-}
+import type { CrawlJobDto } from '@/types/api'
+import { errorMessage } from './crawl-api'
+import { runAgainItems } from './run-again'
+import { useJobAction } from './useJobAction'
 
 type ConfirmProps = { job: CrawlJobDto; open: boolean; busy: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }
 
@@ -45,37 +35,49 @@ function ConfirmDialog({ job, open, busy, onOpenChange, onConfirm }: ConfirmProp
   )
 }
 
-/** Retry the failed links, or fetch every link of the job again (behind a confirmation). */
-export function RecrawlActions({ job }: { job: CrawlJobDto }) {
+/** One "Run again" menu: retry the failed links, fetch every link again (confirmed), or re-read the stored pages. */
+export function RunAgainMenu({ job }: { job: CrawlJobDto }) {
   const [confirming, setConfirming] = useState(false)
-  const recrawl = useRecrawl(job.id)
-  const failed = job.links.failed + job.links.retrying
-  if (job.status === 'Draft' || job.status === 'Pending' || job.links.total === 0) {
+  const action = useJobAction(job.id)
+  const items = runAgainItems(job)
+  if (items.length === 0) {
     return null
   }
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="flex flex-wrap items-center gap-3">
-        {failed > 0 ? (
-          <Button disabled={recrawl.isPending} onClick={() => recrawl.mutate('retry-failed')}>
-            Retry {formatNumber(failed)} failed
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" disabled={action.isPending}>
+            {action.isPending ? 'Starting…' : 'Run again'}
+            <span aria-hidden="true" className="ml-2 text-[10px]">
+              ▾
+            </span>
           </Button>
-        ) : null}
-        <Button variant="outline" disabled={recrawl.isPending} onClick={() => setConfirming(true)}>
-          Recrawl all
-        </Button>
-      </div>
-      {recrawl.isError && !confirming ? (
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-72">
+          {items.map((item) => (
+            <DropdownMenuItem
+              key={item.action}
+              className="flex-col items-start gap-0.5"
+              onSelect={() => (item.action === 'recrawl' ? setConfirming(true) : action.mutate(item.action))}
+            >
+              <span className="font-medium">{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.description}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {action.isError && !confirming ? (
         <p role="alert" className="m-0 text-[13px] text-signal-ink">
-          <strong>Error:</strong> {errorMessage(recrawl.error)}
+          <strong>Error:</strong> {errorMessage(action.error)}
         </p>
       ) : null}
       <ConfirmDialog
         job={job}
         open={confirming}
-        busy={recrawl.isPending}
+        busy={action.isPending}
         onOpenChange={setConfirming}
-        onConfirm={() => recrawl.mutate('recrawl', { onSuccess: () => setConfirming(false) })}
+        onConfirm={() => action.mutate('recrawl', { onSuccess: () => setConfirming(false) })}
       />
     </div>
   )

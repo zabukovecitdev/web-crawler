@@ -29,9 +29,9 @@ public class PostgresJobProgressReaderTests(PostgresFixture postgres) : IAsyncLi
         await PostgresTestData.Scalar<int>(
             postgres.DataSource,
             """
-            UPDATE "DiscoveredUrls" SET "LastFetchId" = @fetchId, "FailReason" = @failReason WHERE "Id" = @urlId RETURNING "Id"
+            UPDATE "DiscoveredUrls" SET "LastFetchId" = @fetchId, "LastCrawlAt" = @at, "FailReason" = @failReason WHERE "Id" = @urlId RETURNING "Id"
             """,
-            new { fetchId, urlId, failReason });
+            new { fetchId, urlId, failReason, at = TestData.Now });
         return urlId;
     }
 

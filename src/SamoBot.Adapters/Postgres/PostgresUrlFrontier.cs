@@ -88,12 +88,12 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE "Id" = @UrlId
         """;
 
-    // A requeued link looks like a link that was never fetched (no last fetch), so the queue counters, the completion
-    // check and the dashboard all see it as waiting. Its fetch history stays in UrlFetches.
+    // A requeued link waits because LastCrawlAt is null, so the queue counters, the completion check and the dashboard
+    // all see it as waiting. Its last fetch stays, so the page screens keep showing it until the link is fetched again.
     private const string RequeueSql = $"""
         UPDATE "{TableNames.DiscoveredUrls}"
         SET "Status" = 'Idle', "NextCrawlAt" = @Now, "FailCount" = 0, "FailReason" = NULL, "LeaseUntil" = NULL,
-            "LastCrawlAt" = NULL, "LastFetchId" = NULL, "StatusUpdatedAt" = @Now
+            "LastCrawlAt" = NULL, "StatusUpdatedAt" = @Now
         WHERE "CrawlJobId" = @JobId
           AND "Status" <> 'InFlight'
           AND (@UrlId::int IS NULL OR "Id" = @UrlId)

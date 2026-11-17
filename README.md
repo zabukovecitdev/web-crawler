@@ -119,8 +119,14 @@ Every stage does the same three steps: claim rows with a lease, do the work, rec
 - **Stored formats:** HTML, Markdown and plain text (`StoredMediaTypes`). Page requests send `Accept` with HTML first,
   then Markdown, then plain text. Markdown and plain text are converted to HTML at parse time. Other types are fetched
   and skipped.
-- **Recrawl:** the job action `recrawl` runs a completed job again with the current code. It fetches again the URLs
-  whose body was skipped for a type that is stored now, and parses (and so indexes) the stored pages again.
+- **Run again:** the dashboard has one **Run again** menu on each crawl, for three job actions:
+  - `retry-failed` asks the site again for the links that failed;
+  - `recrawl` asks the site for every link again. Each page keeps its last fetch, so the page screens stay filled
+    until the new fetch replaces it;
+  - `reprocess` (completed jobs) parses and indexes the stored pages again with the current code, and fetches only the
+    URLs whose body was skipped for a type that is stored now.
+
+  One link can be recrawled on its own (`POST /api/v1/crawl-jobs/{id}/links/{linkId}/recrawl`), except in a cancelled job.
 
 A worker that dies leaves a lease. When the lease ends, the next claim takes the row again.
 A job is complete when no URL is in flight, no URL waits for its first fetch or a retry, and no page waits for the parser.
