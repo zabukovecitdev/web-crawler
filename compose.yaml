@@ -140,6 +140,11 @@ services:
       # Compose serves plain http on localhost. Set AUTH_ALLOW_INSECURE_COOKIE=false behind HTTPS.
       Auth__AllowInsecureCookie: ${AUTH_ALLOW_INSECURE_COOKIE:-true}
       Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:5173}
+      # The API sees the dashboard's nginx, not the client. Trust X-Forwarded-For from the private networks
+      # compose uses, so the rate limits count real client addresses. Never expose the API port directly.
+      ForwardedHeaders__KnownNetworks__0: 10.0.0.0/8
+      ForwardedHeaders__KnownNetworks__1: 172.16.0.0/12
+      ForwardedHeaders__KnownNetworks__2: 192.168.0.0/16
     depends_on:
       migrations:
         condition: service_completed_successfully

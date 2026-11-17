@@ -14,6 +14,8 @@ ENV VITE_API_BASE="" \
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS final
+# 00-limits.conf is http-level (zones, real client address) and must load before default.conf.
+COPY nginx-limits.conf /etc/nginx/conf.d/00-limits.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080

@@ -52,30 +52,35 @@ public class AuthHardeningTests
     }
 
     [Fact]
-    public async Task TheThirdCallInAMinuteIs429WithRetryAfter()
+    public async Task TheCallAfterTheBurstIs429WithTheWaitInRetryAfter()
     {
-        var settings = new Dictionary<string, string?> { [RateLimitingExtensions.PermitsKey] = "2" };
+        var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "2" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
-        var first = await host.Client.SendAsync(Authorized("/api/v1/me"));
-        var second = await host.Client.SendAsync(Authorized("/api/v1/me"));
-        var third = await host.Client.SendAsync(Authorized("/api/v1/me"));
+        // A bucket never holds fewer than 3 tokens, so the fourth call is the first one refused.
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 3; i++)
+        {
+            statuses.Add((await host.Client.SendAsync(Authorized("/api/v1/me"))).StatusCode);
+        }
 
-        first.StatusCode.Should().Be(HttpStatusCode.OK);
-        second.StatusCode.Should().Be(HttpStatusCode.OK);
-        third.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
-        third.Headers.GetValues("Retry-After").Should().Equal("60");
+        var refused = await host.Client.SendAsync(Authorized("/api/v1/me"));
+
+        statuses.Should().OnlyContain(s => s == HttpStatusCode.OK);
+        refused.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        var wait = refused.Headers.RetryAfter!.Delta!.Value.TotalSeconds;
+        wait.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(60);
     }
 
     [Fact]
-    public async Task TheHubPathIsNeverLimited()
+    public async Task TheHubPathIsNeverLimitedForASignedInUser()
     {
-        var settings = new Dictionary<string, string?> { [RateLimitingExtensions.PermitsKey] = "1" };
+        var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "1" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
         for (var i = 0; i < 5; i++)
         {
-            var response = await host.Client.SendAsync(AuthTestHost.Request(HttpMethod.Get, "/hubs/test"));
+            var response = await host.Client.SendAsync(Authorized("/hubs/test"));
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
     }

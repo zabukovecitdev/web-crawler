@@ -33,9 +33,13 @@ public static class AuthServiceCollectionExtensions
         return services;
     }
 
-    public static IApplicationBuilder UseSamoBotAuth(this IApplicationBuilder app)
-    {
+    /// <summary>Who is calling. Rate limiting goes right after this, so it knows the caller but still sees 401s.</summary>
+    public static IApplicationBuilder UseSamoBotAuthentication(this IApplicationBuilder app) =>
         app.UseAuthentication();
+
+    /// <summary>The origin and CSRF checks, then the <c>[Authorize]</c> decision.</summary>
+    public static IApplicationBuilder UseSamoBotAuthorization(this IApplicationBuilder app)
+    {
         app.UseMiddleware<OriginCheckMiddleware>();
         app.UseMiddleware<CsrfHeaderMiddleware>();
         app.UseAuthorization();

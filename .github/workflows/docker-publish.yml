@@ -94,11 +94,20 @@ jobs:
       matrix:
         image:
           - name: samobot-worker
+            context: .
             dockerfile: src/SamoBot.Worker/Dockerfile
           - name: samobot-api
+            context: .
             dockerfile: src/SamoBot.Api/Dockerfile
           - name: samobot-migrations
+            context: .
             dockerfile: src/SamoBot.Migrations/Dockerfile
+          # nginx: the dashboard, the rate limits and the proxy to the API. Vite bakes the Google client id
+          # into the bundle, so it is a build argument (repository variable GOOGLE_CLIENT_ID).
+          - name: samobot-frontend
+            context: src/frontend
+            dockerfile: src/frontend/Dockerfile
+            build_args: VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
 
     steps:
       - name: Checkout repository
@@ -124,8 +133,9 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
-          context: .
+          context: ${{ matrix.image.context }}
           file: ${{ matrix.image.dockerfile }}
+          build-args: ${{ matrix.image.build_args }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.image.name }}:${{ env.COMMIT_HASH }}
           cache-from: type=gha
