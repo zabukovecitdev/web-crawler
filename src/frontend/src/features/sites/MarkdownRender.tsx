@@ -1,4 +1,5 @@
 import ReactMarkdown, { type Components } from 'react-markdown'
+import remarkFrontmatter from 'remark-frontmatter'
 import remarkGfm from 'remark-gfm'
 import { safeHref, safeImageSrc } from './markdown-urls'
 
@@ -23,11 +24,14 @@ const components: Components = {
   },
 }
 
-/** Renders Markdown as React elements. Raw HTML is dropped, links and images are restricted to safe URLs. */
+/**
+ * Renders Markdown as React elements. Raw HTML is dropped, links and images are restricted to safe URLs.
+ * YAML front matter (a `---` block at the start, common in stored .md pages) is metadata, so it is not rendered.
+ */
 export function MarkdownRender({ markdown }: { markdown: string }) {
   return (
     <div className="markdown-body max-w-[72ch]">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml components={components}>
+      <ReactMarkdown remarkPlugins={[remarkFrontmatter, remarkGfm]} skipHtml components={components}>
         {markdown}
       </ReactMarkdown>
     </div>
