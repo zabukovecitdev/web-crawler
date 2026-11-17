@@ -31,6 +31,15 @@ public sealed class AnalyticsController(IAnalyticsReader analytics) : Controller
         return query is null ? BadRequest(BadQuery) : Ok(await analytics.Hosts(query.Range, ct));
     }
 
+    [HttpGet("host-links")]
+    [ProducesResponseType<IReadOnlyList<HostLinkEdge>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> HostLinks([FromQuery] string? range, [FromQuery] string? host, CancellationToken ct)
+    {
+        var query = AnalyticsQueries.Parse(range, host, null);
+        return query is null ? BadRequest(BadQuery) : Ok(await analytics.HostLinks(query.Range, query.Host, ct));
+    }
+
     [HttpGet("status-codes")]
     [ProducesResponseType<StatusClassCounts>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

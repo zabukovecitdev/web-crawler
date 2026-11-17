@@ -15,6 +15,15 @@ public sealed record AnalyticsOverview
     public DateTimeOffset? To { get; init; }
 }
 
+/// <summary>The external links from one host to another: how many links, on how many distinct pages of the source host.</summary>
+public sealed record HostLinkEdge
+{
+    public string FromHost { get; init; } = string.Empty;
+    public string ToHost { get; init; } = string.Empty;
+    public int Links { get; init; }
+    public int Pages { get; init; }
+}
+
 public sealed record HostAnalytics
 {
     public string Host { get; init; } = string.Empty;

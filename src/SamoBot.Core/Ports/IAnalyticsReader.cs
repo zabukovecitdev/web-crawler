@@ -9,6 +9,9 @@ public interface IAnalyticsReader
 
     Task<IReadOnlyList<HostAnalytics>> Hosts(AnalyticsRange range, CancellationToken ct);
 
+    /// <summary>Links between different hosts, strongest first. A host keeps only the edges that touch it.</summary>
+    Task<IReadOnlyList<HostLinkEdge>> HostLinks(AnalyticsRange range, string? host, CancellationToken ct);
+
     Task<StatusClassCounts> StatusCodes(AnalyticsRange range, string? host, CancellationToken ct);
 
     Task<IReadOnlyList<AnalyticsContentType>> ContentTypes(AnalyticsRange range, string? host, CancellationToken ct);

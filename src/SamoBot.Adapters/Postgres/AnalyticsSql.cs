@@ -53,6 +53,26 @@ internal static class AnalyticsSql
         LIMIT 500
         """;
 
+    /// <summary>
+    /// Links that leave their host, grouped by source and target host. This reads Links, not UrlFetches, so the window is
+    /// the time the link was first seen. At most 300 edges, so the graph stays drawable.
+    /// </summary>
+    public const string HostLinks = $"""
+        SELECT u."Host" AS "FromHost",
+               l."ToHost" AS "ToHost",
+               count(*)::int AS "Links",
+               count(DISTINCT l."FromUrlId")::int AS "Pages"
+        FROM "{TableNames.Links}" l
+        JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = l."FromUrlId"
+        WHERE NOT l."IsInternal"
+          AND u."Host" <> l."ToHost"
+          AND (@From::timestamptz IS NULL OR l."FirstSeenAt" >= @From::timestamptz)
+          AND (@Host::text IS NULL OR u."Host" = @Host::text OR l."ToHost" = @Host::text)
+        GROUP BY u."Host", l."ToHost"
+        ORDER BY count(*) DESC, u."Host", l."ToHost"
+        LIMIT 300
+        """;
+
     public const string StatusClasses = $"""
         SELECT count(*) FILTER (WHERE f."StatusCode" BETWEEN 200 AND 299) AS "Ok",
                count(*) FILTER (WHERE f."StatusCode" BETWEEN 300 AND 399) AS "Redirect",

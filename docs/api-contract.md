@@ -37,6 +37,7 @@ Transport notes:
 | `GET /api/v1/crawl-jobs/{id}/events?after&limit` | | `CrawlEvent[]` with `id`, ascending. `limit` defaults to 100 (1..500). Without `after`: the newest `limit` events. With `after` (negative counts as 0): events with `id > after`, at most `limit`; the next cursor is the largest `id` returned. |
 | `GET /api/v1/analytics/overview?range` | | `AnalyticsOverview` |
 | `GET /api/v1/analytics/hosts?range` | | `HostAnalytics[]` |
+| `GET /api/v1/analytics/host-links?range&host` | | `HostLinkEdge[]` (external links grouped by source and target host, max 300, by first-seen time) |
 | `GET /api/v1/analytics/status-codes?range&host` | | `StatusClassCounts` |
 | `GET /api/v1/analytics/content-types?range&host` | | `ContentTypeCount[]` |
 | `GET /api/v1/analytics/timeseries?range&host&bucket=hour\|day` | | `TimeseriesPoint[]` |
