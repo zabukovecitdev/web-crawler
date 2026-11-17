@@ -73,15 +73,18 @@ public class AuthHardeningTests
     }
 
     [Fact]
-    public async Task TheHubPathIsNeverLimitedForASignedInUser()
+    public async Task TheHubPathIsLimitedLikeAnyOther()
     {
         var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "1" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
-        for (var i = 0; i < 5; i++)
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 4; i++)
         {
-            var response = await host.Client.SendAsync(Authorized("/hubs/test"));
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            statuses.Add((await host.Client.SendAsync(Authorized("/hubs/test"))).StatusCode);
         }
+
+        statuses.Take(3).Should().OnlyContain(s => s == HttpStatusCode.NoContent);
+        statuses[3].Should().Be(HttpStatusCode.TooManyRequests);
     }
 }

@@ -9,18 +9,16 @@ using SamoBot.Api.Authentication;
 namespace SamoBot.Api.Hosting;
 
 /// <summary>
-/// The API's backstop limiter. The edge (nginx, see <c>src/frontend/nginx.conf</c>) is the first line of
-/// defence and limits per client address; this one only has to hold when a request reaches the API anyway,
-/// and it can do what the edge cannot: key on the signed-in user and tell a bad API key from a good one.
-/// All limiters are token buckets: a short burst is allowed, then requests are admitted at a steady rate.
-/// It runs after authentication and before authorization, so unauthenticated calls to protected
-/// endpoints (a 401) and wrong API keys are counted too.
+/// The API's rate limiter, and the only one: the dashboard's nginx does not limit. It keys on the signed-in
+/// user, otherwise on the client address, and counts a wrong <c>X-Api-Key</c> separately with far fewer
+/// attempts. All limiters are token buckets: a short burst is allowed, then requests are admitted at a steady
+/// rate. It runs after authentication and before authorization, so unauthenticated calls to protected
+/// endpoints (a 401) are counted too. The hub is limited like any path, which only counts the HTTP requests
+/// that open a connection (negotiate, upgrade), not the messages inside it.
 /// </summary>
 public static partial class RateLimitingExtensions
 {
     public const string SignInPolicy = "auth-signin";
-
-    private const string HubPrefix = "/hubs";
 
     private const int MinimumBurst = 3;
 
@@ -48,11 +46,6 @@ public static partial class RateLimitingExtensions
     private static RateLimitPartition<string> Partition(HttpContext context, RateLimitOptions limits)
     {
         var signedIn = context.User.Identity?.IsAuthenticated == true;
-        if (signedIn && context.Request.Path.StartsWithSegments(HubPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return RateLimitPartition.GetNoLimiter("hubs");
-        }
-
         var user = signedIn ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
         if (user is not null)
         {

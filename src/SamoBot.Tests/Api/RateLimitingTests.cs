@@ -118,21 +118,16 @@ public class RateLimitingTests
     }
 
     [Fact]
-    public async Task AnAnonymousHubConnectionIsLimitedButASignedInOneIsNot()
+    public async Task AnAnonymousHubConnectionIsLimitedPerAddress()
     {
         await using var host = await StartAsync(new() { ["RateLimiting:AnonymousPermitsPerMinute"] = "5" });
-        var anonymous = new List<HttpStatusCode>();
-        var signedIn = new List<HttpStatusCode>();
+        var statuses = new List<HttpStatusCode>();
         for (var i = 0; i <= Burst; i++)
         {
-            anonymous.Add((await host.Client.SendAsync(From("203.0.113.7", HttpMethod.Get, "/hubs/test"))).StatusCode);
-            var request = From("203.0.113.8", HttpMethod.Get, "/hubs/test");
-            request.Headers.Add(ApiKeyAuthenticationHandler.HeaderName, AuthTestHost.ApiKey);
-            signedIn.Add((await host.Client.SendAsync(request)).StatusCode);
+            statuses.Add((await host.Client.SendAsync(From("203.0.113.7", HttpMethod.Get, "/hubs/test"))).StatusCode);
         }
 
-        anonymous[^1].Should().Be(HttpStatusCode.TooManyRequests);
-        signedIn.Should().OnlyContain(s => s == HttpStatusCode.NoContent);
+        statuses[^1].Should().Be(HttpStatusCode.TooManyRequests);
     }
 
     [Fact]
