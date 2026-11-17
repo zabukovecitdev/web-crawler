@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Contracts;
+using SamoBot.Api.Hosting;
 
 namespace SamoBot.Api.Controllers;
 
@@ -26,6 +28,8 @@ public partial class AuthController : ControllerBase
 
     [HttpPost("google")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.SignInPolicy)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SignInWithGoogle(GoogleSignInRequest request, CancellationToken cancellationToken)
     {

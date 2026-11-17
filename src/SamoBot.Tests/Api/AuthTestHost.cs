@@ -32,6 +32,8 @@ public sealed class AuthTestHost : IAsyncDisposable
 
     public const string ListedOrigin = "https://dash.example";
 
+    public const string RemoteHeader = "X-Test-Remote";
+
     private readonly WebApplication _app;
 
     private AuthTestHost(WebApplication app, FakeGoogleTokenValidator validator, IConfigurationRoot configuration)
@@ -60,6 +62,7 @@ public sealed class AuthTestHost : IAsyncDisposable
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(Settings(emails, domains));
         builder.Configuration.AddInMemoryCollection(extraSettings ?? new Dictionary<string, string?>());
+        builder.Services.AddSamoBotForwardedHeaders(builder.Configuration);
         builder.Services.AddSamoBotRateLimiting(builder.Configuration);
         if (time is not null)
         {
@@ -72,8 +75,20 @@ public sealed class AuthTestHost : IAsyncDisposable
         builder.Services.AddControllers().AddApplicationPart(typeof(AuthController).Assembly);
 
         var app = builder.Build();
-        app.UseSamoBotAuth();
+        app.Use((context, next) =>
+        {
+            // TestServer has no peer address: a test sets one with this header to play a client or a proxy.
+            if (context.Request.Headers.TryGetValue(RemoteHeader, out var peer))
+            {
+                context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(peer.ToString());
+            }
+
+            return next(context);
+        });
+        app.UseSamoBotForwardedHeaders(builder.Configuration);
+        app.UseSamoBotAuthentication();
         app.UseSamoBotRateLimiting();
+        app.UseSamoBotAuthorization();
         app.MapControllers();
         app.MapPost("/api/v1/test/echo", () => Results.NoContent()).RequireAuthorization();
         app.MapGet("/hubs/test", () => Results.NoContent());

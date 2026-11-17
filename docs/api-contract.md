@@ -6,7 +6,7 @@ Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keep
 
 Transport notes:
 - Sessions last at most 24 hours from sign-in and the account is checked against the allowlist on every request, so removing an account signs it out on the next call (`401`).
-- Rate limit: 300 requests per minute per signed-in user (per client address when anonymous), configurable with `RateLimiting:PermitsPerMinute`. Over the limit the answer is `429` with `Retry-After: 60`. The SignalR hub is not limited.
+- Rate limits (token buckets, per signed-in user, otherwise per client address): 300 requests per minute per signed-in user (`RateLimiting:PermitsPerMinute`), 120 per anonymous address, 10 per minute on `POST /api/v1/auth/google`, 10 per minute for an `X-Api-Key` that does not match. The hub is limited like any path (the requests that open a connection). Over a limit the answer is `429` with `Retry-After` (seconds) and a body with `title`, `status` and `detail`.
 - Every cookie-authenticated `POST`, `PUT`, `PATCH` and `DELETE` needs `X-Requested-With: samobot`. That includes the SignalR negotiate request: the client sends the header through the `headers` option of `withUrl`.
 - The hub (`/hubs/*`) and `POST /api/v1/auth/google` check the `Origin` header when a browser sends one. It must be the API's own origin or one of `Cors:Origins`, otherwise `403`. Calls without `Origin` (scripts, the MCP server) pass.
 - Cross-origin browsers can read the response headers `X-Content-Truncated` and `X-Content-Stored-Bytes` (exposed by CORS).
