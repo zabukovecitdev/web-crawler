@@ -49,8 +49,8 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
         PostgresTestData.Scalar<int>(
             postgres.DataSource,
             """
-            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Language", "BodyText", "Headings", "Images", "OpenGraphData", "IndexedAt")
-            VALUES (@fetchId, @title, 'en', 'a b c', '[{"level":2,"text":"Sub"}]', '[{"src":"x"}]', '{"og:title":"T"}', @indexedAt)
+            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Language", "BodyText", "Headings", "Images", "OpenGraphData", "IndexedAt", "Policy")
+            VALUES (@fetchId, @title, 'en', 'a b c', '[{"level":2,"text":"Sub"}]', '[{"src":"x"}]', '{"og:title":"T"}', @indexedAt, '{}')
             RETURNING "Id"
             """,
             new { fetchId, title, indexedAt = indexed ? TestData.Now : (DateTimeOffset?)null });

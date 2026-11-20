@@ -17,6 +17,8 @@ function completed(id: number, url = `https://a.test/${id}`): CrawlEvent {
     crawlJobId: 1,
     eventType: 'FetchCompleted',
     at: `2026-01-01T00:00:${String(id).padStart(2, '0')}Z`,
+    pageId: id,
+    host: 'a.test',
     url,
     depth: 1,
     statusCode: 200,

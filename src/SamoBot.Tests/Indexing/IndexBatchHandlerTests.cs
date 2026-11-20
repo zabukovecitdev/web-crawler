@@ -12,8 +12,8 @@ public class IndexBatchHandlerTests
     public async Task HandleBatchIndexesAllPagesInOneCallThenMarksThemIndexed()
     {
         var queue = new FakeIndexBacklog(
-            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1 },
-            new PageToIndex { PageId = 11, UrlFetchId = 2, DiscoveredUrlId = 2 });
+            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1, Policy = PagePolicy.Default },
+            new PageToIndex { PageId = 11, UrlFetchId = 2, DiscoveredUrlId = 2, Policy = PagePolicy.Default });
         var index = new FakeSearchIndex();
 
         var count = await new IndexBatchHandler(queue, index, TimeProvider.System).HandleBatch(default);
@@ -40,7 +40,7 @@ public class IndexBatchHandlerTests
     {
         var time = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(TestData.Now);
         var queue = new FakeIndexBacklog(
-            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1 },
+            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1, Policy = PagePolicy.Default },
             new PageToIndex { PageId = 11, UrlFetchId = 2, DiscoveredUrlId = 2, Policy = PagePolicy.Default with { Index = false } },
             new PageToIndex { PageId = 12, UrlFetchId = 3, DiscoveredUrlId = 3, Policy = PagePolicy.Default with { IndexUntil = TestData.Now } },
             new PageToIndex { PageId = 13, UrlFetchId = 4, DiscoveredUrlId = 4, Policy = PagePolicy.Default with { IndexUntil = TestData.Now.AddDays(1) } });
@@ -57,7 +57,7 @@ public class IndexBatchHandlerTests
     public async Task TheNewestPageOfAUrlDecides()
     {
         var queue = new FakeIndexBacklog(
-            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1 },
+            new PageToIndex { PageId = 10, UrlFetchId = 1, DiscoveredUrlId = 1, Policy = PagePolicy.Default },
             new PageToIndex { PageId = 11, UrlFetchId = 2, DiscoveredUrlId = 1, Policy = PagePolicy.Default with { Index = false } });
         var index = new FakeSearchIndex();
 
