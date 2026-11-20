@@ -8,6 +8,8 @@ public sealed record StoredContent(byte[] Bytes, bool Truncated, long TotalBytes
 
     public const string StoredBytesHeader = "X-Content-Stored-Bytes";
 
+    public const string CutAtCrawlHeader = "X-Content-Cut-At-Crawl";
+
     public static async Task<StoredContent> Read(Stream stream, int maxBytes, CancellationToken ct)
     {
         var buffer = new byte[maxBytes + 1];

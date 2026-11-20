@@ -48,7 +48,7 @@ public sealed class HttpSitemapSource(
         }
 
         await using var body = await response.Content.ReadAsStreamAsync(ct);
-        var bytes = await BodyReader.ReadLimited(body, SitemapLimits.MaxCompressedBytes + 1, ct);
-        return bytes.Length > SitemapLimits.MaxCompressedBytes ? Failed : new SitemapDownload(status, bytes);
+        var read = await BodyReader.ReadLimited(body, SitemapLimits.MaxCompressedBytes, ct);
+        return read.Truncated ? Failed : new SitemapDownload(status, read.Bytes);
     }
 }

@@ -19,7 +19,6 @@ internal sealed class PageRow
     public int? StatusCode { get; init; }
     public string? ContentType { get; init; }
     public long? ContentLength { get; init; }
-    public bool BodyTruncated { get; init; }
     public long? ResponseTimeMs { get; init; }
     public string? ObjectName { get; init; }
     public bool HasParsedDocument { get; init; }
@@ -68,7 +67,6 @@ internal sealed class PageRow
         NextCrawlAt = NextCrawlAt,
         FailReason = FailReason,
         UsedJsRendering = UseJsRendering,
-        BodyTruncated = BodyTruncated,
         Fetches = fetches,
         Parsed = HasParsedDocument ? ParsedPageMapper.Map(this, counts) : null,
         FoundOn = foundOn
