@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
 using SamoBot.Api.Authentication;
@@ -100,10 +102,12 @@ public class RateLimitingTests
         (await host.Client.SendAsync(signedIn)).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact]
-    public async Task SignedInUsersAreLimitedPerUserAtTheConfiguredRate()
+    [Theory]
+    [InlineData("UserPermitsPerMinute")]
+    [InlineData("PermitsPerMinute")]
+    public async Task SignedInUsersAreLimitedPerUserAtTheConfiguredRate(string key)
     {
-        await using var host = await StartAsync(new() { ["RateLimiting:UserPermitsPerMinute"] = "5" });
+        await using var host = await StartAsync(new() { [$"RateLimiting:{key}"] = "5" });
 
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i <= Burst; i++)
@@ -215,21 +219,85 @@ public class RateLimitingTests
     }
 
     [Theory]
-    [InlineData(null, "7", 7, true)]
-    [InlineData("9", "7", 9, false)]
-    [InlineData(null, null, 300, false)]
-    public void TheDeprecatedUserKeyStillCountsUntilTheNewOneIsSet(string? userKey, string? legacyKey, int expected, bool legacy)
+    [InlineData(null, "7", 7, LegacyKeyUse.Used)]
+    [InlineData("", "7", 7, LegacyKeyUse.Used)]
+    [InlineData("9", "7", 9, LegacyKeyUse.Ignored)]
+    [InlineData(" ", null, 300, LegacyKeyUse.NotSet)]
+    [InlineData(null, null, 300, LegacyKeyUse.NotSet)]
+    public void TheDeprecatedUserKeyCountsOnlyWhileTheNewOneIsBlank(string? userKey, string? legacyKey, int expected, LegacyKeyUse use)
+    {
+        var options = RateLimitOptions.From(Section(userKey, legacyKey));
+
+        options.UserPermitsPerMinute.Should().Be(expected);
+        options.LegacyUserKey.Should().Be(use);
+    }
+
+    [Fact]
+    public void AnInvalidDeprecatedKeyIsReportedUnderItsOwnName()
+    {
+        var validate = () => RateLimitOptions.From(Section(null, "0")).Validate();
+
+        validate.Should().Throw<InvalidOperationException>().WithMessage("RateLimiting:PermitsPerMinute (deprecated) must be at least 1.");
+    }
+
+    [Fact]
+    public void ANonNumericLimitStopsTheStartup()
+    {
+        var read = () => RateLimitOptions.From(Section("lots", null));
+
+        read.Should().Throw<InvalidOperationException>().WithMessage("*UserPermitsPerMinute*whole number*");
+    }
+
+    [Theory]
+    [InlineData(null, "7", "Rename it")]
+    [InlineData("9", "7", "Remove the deprecated key")]
+    [InlineData("9", null, null)]
+    public void StartupWarnsWhileTheDeprecatedKeyIsConfigured(string? userKey, string? legacyKey, string? warning)
+    {
+        var logs = new CapturingLoggerProvider();
+        var services = new ServiceCollection()
+            .AddLogging(logging => logging.AddProvider(logs))
+            .AddSingleton(RateLimitOptions.From(Section(userKey, legacyKey)))
+            .BuildServiceProvider();
+
+        services.LogIfLegacyRateLimitKey();
+
+        if (warning is null)
+        {
+            logs.Messages.Should().BeEmpty();
+        }
+        else
+        {
+            logs.Messages.Should().ContainSingle().Which.Should().Contain(warning);
+        }
+    }
+
+    private static IConfigurationSection Section(string? userKey, string? legacyKey)
     {
         var settings = new Dictionary<string, string?>
         {
             ["RateLimiting:UserPermitsPerMinute"] = userKey,
             ["RateLimiting:PermitsPerMinute"] = legacyKey
         }.Where(setting => setting.Value is not null);
-        var section = new ConfigurationBuilder().AddInMemoryCollection(settings).Build().GetSection(RateLimitOptions.SectionName);
+        return new ConfigurationBuilder().AddInMemoryCollection(settings).Build().GetSection(RateLimitOptions.SectionName);
+    }
 
-        var options = RateLimitOptions.From(section);
+    private sealed class CapturingLoggerProvider : ILoggerProvider, ILogger
+    {
+        public List<string> Messages { get; } = [];
 
-        options.UserPermitsPerMinute.Should().Be(expected);
-        options.UsesLegacyUserKey.Should().Be(legacy);
+        public ILogger CreateLogger(string categoryName) => this;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Messages.Add(formatter(state, exception));
+
+        public void Dispose()
+        {
+            Messages.Clear();
+        }
     }
 }

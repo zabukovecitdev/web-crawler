@@ -38,9 +38,15 @@ public static partial class RateLimitingExtensions
 
     public static void LogIfLegacyRateLimitKey(this IServiceProvider services)
     {
-        if (services.GetRequiredService<RateLimitOptions>().UsesLegacyUserKey)
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("SamoBot.Api.RateLimiting");
+        switch (services.GetRequiredService<RateLimitOptions>().LegacyUserKey)
         {
-            LogLegacyKey(services.GetRequiredService<ILoggerFactory>().CreateLogger("SamoBot.Api.RateLimiting"));
+            case LegacyKeyUse.Used:
+                LogLegacyKeyUsed(logger);
+                break;
+            case LegacyKeyUse.Ignored:
+                LogLegacyKeyIgnored(logger);
+                break;
         }
     }
 
@@ -116,50 +122,11 @@ public static partial class RateLimitingExtensions
         EventId = 2,
         Level = LogLevel.Warning,
         Message = "RateLimiting:PermitsPerMinute is deprecated and will be removed. Rename it to RateLimiting:UserPermitsPerMinute.")]
-    private static partial void LogLegacyKey(ILogger logger);
-}
+    private static partial void LogLegacyKeyUsed(ILogger logger);
 
-public sealed class RateLimitOptions
-{
-    public const string SectionName = "RateLimiting";
-
-    public const string LegacyUserKey = "PermitsPerMinute";
-
-    public int UserPermitsPerMinute { get; set; } = 300;
-
-    public int AnonymousPermitsPerMinute { get; set; } = 120;
-
-    public int SignInPermitsPerMinute { get; set; } = 10;
-
-    public int ApiKeyFailuresPerMinute { get; set; } = 10;
-
-    public bool UsesLegacyUserKey { get; private set; }
-
-    public static RateLimitOptions From(IConfigurationSection section)
-    {
-        var options = section.Get<RateLimitOptions>() ?? new RateLimitOptions();
-        if (section[nameof(UserPermitsPerMinute)] is null && section.GetValue<int?>(LegacyUserKey) is { } legacy)
-        {
-            options.UserPermitsPerMinute = legacy;
-            options.UsesLegacyUserKey = true;
-        }
-
-        return options;
-    }
-
-    public void Validate()
-    {
-        Require(UserPermitsPerMinute, nameof(UserPermitsPerMinute));
-        Require(AnonymousPermitsPerMinute, nameof(AnonymousPermitsPerMinute));
-        Require(SignInPermitsPerMinute, nameof(SignInPermitsPerMinute));
-        Require(ApiKeyFailuresPerMinute, nameof(ApiKeyFailuresPerMinute));
-    }
-
-    private static void Require(int value, string name)
-    {
-        if (value < 1)
-        {
-            throw new InvalidOperationException($"{SectionName}:{name} must be at least 1.");
-        }
-    }
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Warning,
+        Message = "RateLimiting:PermitsPerMinute is ignored because RateLimiting:UserPermitsPerMinute is set. Remove the deprecated key.")]
+    private static partial void LogLegacyKeyIgnored(ILogger logger);
 }
