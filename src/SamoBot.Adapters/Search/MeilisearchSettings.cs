@@ -1,10 +1,14 @@
 using Meilisearch;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace SamoBot.Adapters.Search;
 
-public sealed class MeilisearchSettings(MeilisearchClient client, IOptions<MeilisearchOptions> options) : IDisposable
+public sealed partial class MeilisearchSettings(
+    MeilisearchClient client, IOptions<MeilisearchOptions> options, ILogger<MeilisearchSettings> logger) : IDisposable
 {
+    public static readonly IReadOnlyList<string> RetiredIndexes = ["parsed_documents"];
+
     public const string HostAttribute = "host";
     public const string IndexUntilAttribute = "indexUntil";
 
@@ -52,5 +56,33 @@ public sealed class MeilisearchSettings(MeilisearchClient client, IOptions<Meili
         {
             throw new InvalidOperationException("Meilisearch rejected the index settings.");
         }
+
+        foreach (var retired in RetiredIndexes.Where(name => name != options.Value.IndexName))
+        {
+            await DeleteRetired(retired, ct);
+        }
     }
+
+    private async Task DeleteRetired(string index, CancellationToken ct)
+    {
+        var accepted = await client.DeleteIndexAsync(index, ct);
+        var task = await client.WaitForTaskAsync(accepted.TaskUid, cancellationToken: ct);
+        if (task.Status == TaskInfoStatus.Succeeded)
+        {
+            LogRetiredIndexDeleted(index);
+        }
+        else if (ErrorCode(task) != "index_not_found")
+        {
+            LogRetiredIndexKept(index, ErrorCode(task));
+        }
+    }
+
+    private static string? ErrorCode(TaskResource task) =>
+        task.Error is not null && task.Error.TryGetValue("code", out var code) ? code : null;
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Deleted the retired search index {Index}.")]
+    private partial void LogRetiredIndexDeleted(string index);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Could not delete the retired search index {Index} ({Code}). It is retried on the next start.")]
+    private partial void LogRetiredIndexKept(string index, string? code);
 }
