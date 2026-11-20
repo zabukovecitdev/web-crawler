@@ -1,6 +1,6 @@
 import type { ConnectionState } from '@/features/crawl/crawl-hub'
 import type { CrawlEvent } from '@/types/api'
-import { completedEvent, HISTORY_SIZE, startedEvent } from './data/crawl'
+import { eventById, recordEmitted, streamEventId } from './data/crawl'
 
 export type MockCrawlStream = {
   subscribe: (listener: (event: CrawlEvent) => void) => () => void
@@ -23,12 +23,16 @@ function emit(core: Core, event: CrawlEvent): void {
   }
 }
 
+function send(core: Core, jobId: number, id: number): void {
+  recordEmitted(id)
+  emit(core, eventById(jobId, id))
+}
+
 function step(core: Core, jobId: number, intervalMs: number): void {
   const i = core.tick
   core.tick += 1
-  const id = HISTORY_SIZE + 2 * i + 1
-  emit(core, startedEvent(jobId, i, id))
-  setTimeout(() => emit(core, completedEvent(jobId, i, id + 1)), intervalMs / 2)
+  send(core, jobId, streamEventId(i, false))
+  setTimeout(() => send(core, jobId, streamEventId(i, true)), intervalMs / 2)
 }
 
 function close(core: Core): void {

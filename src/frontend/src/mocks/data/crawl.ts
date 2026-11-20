@@ -78,18 +78,18 @@ const ROWS: Row[] = [
   { path: '/api/crawl-jobs', statusCode: 200, ms: 201, length: 74000, content: 'Stored', type: 'text/html' },
 ]
 
-export function startedEvent(jobId: number, i: number, id: number): CrawlEvent {
+function startedEvent(jobId: number, i: number, id: number): CrawlEvent {
   const row = ROWS[i % ROWS.length]
   return { id, crawlJobId: jobId, eventType: 'FetchStarted', at: new Date().toISOString(), url: `https://docs.example.com${row.path}`, depth: 2 }
 }
 
-export function completedEvent(jobId: number, i: number, id: number): CrawlEvent {
+function completedEvent(jobId: number, i: number, id: number, at: string): CrawlEvent {
   const row = ROWS[i % ROWS.length]
   return {
     id,
     crawlJobId: jobId,
     eventType: 'FetchCompleted',
-    at: new Date().toISOString(),
+    at,
     pageId: 3,
     host: 'docs.example.com',
     url: `https://docs.example.com${row.path}`,
@@ -106,10 +106,25 @@ export function completedEvent(jobId: number, i: number, id: number): CrawlEvent
 
 export const HISTORY_SIZE = ROWS.length
 
+let emittedUpTo = HISTORY_SIZE
+
+export function streamEventId(tick: number, completed: boolean): number {
+  return HISTORY_SIZE + 2 * tick + (completed ? 2 : 1)
+}
+
+export function eventById(jobId: number, id: number): CrawlEvent {
+  if (id <= HISTORY_SIZE) {
+    return completedEvent(jobId, id - 1, id, ago((HISTORY_SIZE - id + 1) * 1500))
+  }
+  const tick = Math.floor((id - HISTORY_SIZE - 1) / 2)
+  return id === streamEventId(tick, true) ? completedEvent(jobId, tick, id, new Date().toISOString()) : startedEvent(jobId, tick, id)
+}
+
+export function recordEmitted(id: number): void {
+  emittedUpTo = Math.max(emittedUpTo, id)
+}
+
 export function recentEvents(jobId: number, after?: number, limit = 100): CrawlEvent[] {
-  const events = Array.from({ length: ROWS.length }, (_, i) => ({
-    ...completedEvent(jobId, i, i + 1),
-    at: ago((ROWS.length - i) * 1500),
-  }))
+  const events = Array.from({ length: emittedUpTo }, (_, i) => eventById(jobId, i + 1))
   return after === undefined ? events.slice(-limit) : events.filter((event) => event.id > after).slice(0, limit)
 }

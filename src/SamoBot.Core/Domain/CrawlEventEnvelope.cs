@@ -7,14 +7,10 @@ public static class CrawlEventEnvelope
 {
     private static readonly string[] Reserved = ["id", "crawlJobId", "eventType", "at"];
 
-    public static JsonObject Build(int crawlJobId, string eventType, DateTimeOffset at, string? payloadJson, long? id = null)
+    public static JsonObject Build(long id, int crawlJobId, string eventType, DateTimeOffset at, string? payloadJson)
     {
         var envelope = new JsonObject();
-        if (id is { } eventId)
-        {
-            envelope["id"] = eventId;
-        }
-
+        envelope["id"] = id;
         envelope["crawlJobId"] = crawlJobId;
         envelope["eventType"] = eventType;
         envelope["at"] = at.UtcDateTime.ToString("O");

@@ -29,33 +29,32 @@ function completed(id: number, url = `https://a.test/${id}`): CrawlEvent {
   }
 }
 
-const stored = (id: number) => completed(id)
 const base: CrawlState = { ...initialCrawlState, progress: PROGRESS }
 const okCount = (s: CrawlState) => s.progress?.statusCounts.ok
 
 it('counts a live event once and ignores the same id in history', () => {
   const live = crawlReducer(base, { type: 'live', event: completed(5) })
-  const after = crawlReducer(live, { type: 'history', events: [stored(5)] })
+  const after = crawlReducer(live, { type: 'history', events: [completed(5)] })
   expect(after.log).toHaveLength(1)
   expect(okCount(after)).toBe(11)
   expect(after.lastEventId).toBe(5)
 })
 
 it('ignores a live event whose id history already applied', () => {
-  const history = crawlReducer(base, { type: 'history', events: [stored(5)] })
+  const history = crawlReducer(base, { type: 'history', events: [completed(5)] })
   const after = crawlReducer(history, { type: 'live', event: completed(5) })
   expect(after).toBe(history)
   expect(okCount(after)).toBe(10)
 })
 
 it('keeps history out of the counters and moves the cursor to the largest id', () => {
-  const after = crawlReducer(base, { type: 'history', events: [stored(2), stored(9), stored(4)] })
+  const after = crawlReducer(base, { type: 'history', events: [completed(2), completed(9), completed(4)] })
   expect(okCount(after)).toBe(10)
   expect(after.lastEventId).toBe(9)
 })
 
 it('remembers at most 500 ids', () => {
-  const events = Array.from({ length: 600 }, (_, i) => stored(i + 1))
+  const events = Array.from({ length: 600 }, (_, i) => completed(i + 1))
   const after = crawlReducer(base, { type: 'history', events })
   expect(after.seen).toHaveLength(500)
   expect(after.seen[0]).toBe(101)
