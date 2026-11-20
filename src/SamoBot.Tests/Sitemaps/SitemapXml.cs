@@ -4,7 +4,6 @@ using System.Text;
 
 namespace SamoBot.Tests.Sitemaps;
 
-/// <summary>Builds sitemap documents for the tests.</summary>
 public static class SitemapXml
 {
     private const string Namespace = "http://www.sitemaps.org/schemas/sitemap/0.9";

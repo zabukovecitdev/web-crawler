@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils'
 
 type Props = { title: string; kicker?: string; children: ReactNode; className?: string }
 
-/** A card with an optional mono kicker over a heading. */
 export function Panel({ title, kicker, children, className }: Props) {
   return (
     <Card className={cn('flex min-w-0 flex-col gap-5 p-6 shadow-zb-1', className)}>

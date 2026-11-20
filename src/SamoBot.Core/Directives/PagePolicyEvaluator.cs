@@ -1,9 +1,5 @@
 namespace SamoBot.Core.Directives;
 
-/// <summary>
-/// Gathers the directives every source found for this crawler and lets every rule tighten the policy, in registration order.
-/// It knows no directive by name: what a directive means lives in its rule.
-/// </summary>
 public sealed class PagePolicyEvaluator(IEnumerable<IRobotsDirectiveSource> sources, IEnumerable<IPagePolicyRule> rules)
 {
     private readonly IReadOnlyList<IRobotsDirectiveSource> _sources = sources.ToList();

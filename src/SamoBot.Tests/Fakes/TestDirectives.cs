@@ -4,7 +4,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Tests.Fakes;
 
-/// <summary>The crawl directives exactly as production composes them (<see cref="DirectivesServiceCollectionExtensions.AddCrawlDirectives"/>).</summary>
 public static class TestDirectives
 {
     private static readonly ServiceProvider Provider = new ServiceCollection().AddCrawlDirectives().BuildServiceProvider();
@@ -14,7 +13,6 @@ public static class TestDirectives
     public static LinkSelector Links => Provider.GetRequiredService<LinkSelector>();
     public static ResponseHeaderSelection Headers => Provider.GetRequiredService<ResponseHeaderSelection>();
 
-    /// <summary>The context of a page at <paramref name="url"/>, with optional kept response headers.</summary>
     public static PageContext Context(ParsedPage page, string url = "https://a.example/x", ResponseHeaders? headers = null) =>
         Contexts.Create(Fetch(url, headers), page);
 

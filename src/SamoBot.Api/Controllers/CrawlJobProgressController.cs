@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Api.Controllers;
 
-/// <summary>The progress snapshot of a job. SignalR events update it, and this endpoint gives the start values.</summary>
 [ApiController]
 [Route("api/v1/crawl-jobs")]
 [Authorize]

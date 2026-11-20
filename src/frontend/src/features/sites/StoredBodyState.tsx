@@ -14,7 +14,6 @@ type Query = {
 
 type Props = {
   query: Query
-  /** Shown above the body when the stored source was cut at the size limit. */
   truncatedNote?: string
   children: (data: PageContent) => ReactNode
 }
@@ -35,7 +34,6 @@ function StoredBodyError({ query }: { query: Query }) {
   return <ErrorState error={query.error} onRetry={() => void query.refetch()} />
 }
 
-/** The loading, hidden, error and truncated states that every view of the stored body shares. */
 export function StoredBodyState({ query, truncatedNote = DEFAULT_NOTE, children }: Props) {
   if (query.isError) {
     return <StoredBodyError query={query} />

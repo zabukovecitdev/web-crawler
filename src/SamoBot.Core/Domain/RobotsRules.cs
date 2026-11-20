@@ -2,7 +2,6 @@ using RobotsTxtParser;
 
 namespace SamoBot.Core.Domain;
 
-/// <summary>The robots.txt rules of one host. The constructor parses the content one time.</summary>
 public sealed class RobotsRules
 {
     private const string AllowAllContent = "User-agent: *\nDisallow:\n";

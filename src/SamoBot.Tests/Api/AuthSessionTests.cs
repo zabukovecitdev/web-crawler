@@ -46,7 +46,6 @@ public class AuthSessionTests
         host.Validator.Accept("good", Ann);
         var cookie = await host.SignInAsync("good");
 
-        // The cookie slides (8 h), so keep using the session: the 24 h limit is absolute from sign-in.
         var latest = await UseSessionAsync(host, time, cookie, TimeSpan.FromHours(23));
         time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromSeconds(1));
         var beyond = await MeAsync(host, latest);

@@ -8,11 +8,6 @@ public class CreateIndexForUnparsedHtmlFetches : Migration
 {
     public override void Up()
     {
-        // Create a partial composite index optimized for GetUnparsedHtmlFetches query
-        // The index covers:
-        // - ContentType (for filtering text/html)
-        // - FetchedAt (for ordering)
-        // Partial index condition: ParsedAt IS NULL AND ObjectName IS NOT NULL
         Execute.Sql($@"
             CREATE INDEX IX_UrlFetches_UnparsedHtml 
             ON ""{TableNames.Database.UrlFetches}"" (""ContentType"", ""FetchedAt"")

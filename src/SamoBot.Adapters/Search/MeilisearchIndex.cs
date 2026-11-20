@@ -6,7 +6,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Search;
 
-/// <summary>The Meilisearch index of parsed pages. It writes with <see cref="ISearchIndex"/> and reads with <see cref="ISearchQuery"/>.</summary>
 public sealed class MeilisearchIndex(
     MeilisearchClient client,
     IOptions<MeilisearchOptions> options,
@@ -59,7 +58,6 @@ public sealed class MeilisearchIndex(
         }
     }
 
-    /// <summary>A recrawl parses the same URL again. Only the newest parsed document of each URL is sent, because the document id is the URL id.</summary>
     internal static IReadOnlyList<PageToIndex> LatestPerUrl(IReadOnlyList<PageToIndex> pages) =>
         pages.GroupBy(p => p.DiscoveredUrlId).Select(g => g.MaxBy(p => p.PageId)!).ToList();
 

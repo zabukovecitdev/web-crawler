@@ -4,7 +4,6 @@ using SamoBot.Core.Jobs;
 
 namespace SamoBot.Api.Contracts;
 
-/// <summary>The answer to a job action that was refused: 404 for an unknown job, else 409 with the reason.</summary>
 public static class JobActionResults
 {
     public static ObjectResult Failed(IEnumerable<IError> errors)

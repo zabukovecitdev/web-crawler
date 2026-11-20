@@ -1,7 +1,6 @@
 import type { SiteDetail, SiteSummary, SitesOverview } from '@/types/api'
 import { HOUR, MINUTE, ago } from '../util'
 
-// Sample data from docs/design/Main.dc.html. docs.example.com is crawled live by job #42.
 export const LIVE_JOB_ID = 42
 
 export const SITES: SiteSummary[] = [

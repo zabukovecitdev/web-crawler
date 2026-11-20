@@ -16,7 +16,6 @@ function useRecrawlPage(page: PageDetail) {
   })
 }
 
-/** Fetches this one page again. The result shows up in its crawl job. */
 export function RecrawlPageButton({ page }: { page: PageDetail }) {
   const recrawl = useRecrawlPage(page)
   if (page.crawlJobId === null) {

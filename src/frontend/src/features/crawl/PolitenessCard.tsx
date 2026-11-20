@@ -23,7 +23,6 @@ function rows(progress: CrawlProgress, now: number): [string, string][] {
   ]
 }
 
-/** How politely SamoBot is crawling: the delay, where it came from and how fast the site answers. */
 export function PolitenessCard({ progress }: { progress: CrawlProgress }) {
   const now = useNow(progress.status === 'Running', 100)
   return (

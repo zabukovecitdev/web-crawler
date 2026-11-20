@@ -3,16 +3,11 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Adapters.Search;
 
-/// <summary>
-/// Applies the index settings once per process, before the first read or write. Applying the same settings again is a no-op
-/// for Meilisearch, so every service that touches the index can call <see cref="Ensure"/>. A failure is retried on the next call.
-/// </summary>
 public sealed class MeilisearchSettings(MeilisearchClient client, IOptions<MeilisearchOptions> options) : IDisposable
 {
     public const string HostAttribute = "host";
     public const string IndexUntilAttribute = "indexUntil";
 
-    /// <summary>Hides pages past their unavailable_after date: they stay in the index until the next crawl removes them.</summary>
     public static string AvailableFilter(DateTimeOffset now) =>
         $"{IndexUntilAttribute} > {now.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 

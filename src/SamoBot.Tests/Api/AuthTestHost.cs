@@ -25,7 +25,6 @@ public sealed class FakeGoogleTokenValidator : IGoogleTokenValidator
         Task.FromResult(_tokens.GetValueOrDefault(credential));
 }
 
-/// <summary>A minimal in-memory API with only the auth wiring, the auth and me controllers and one echo endpoint.</summary>
 public sealed class AuthTestHost : IAsyncDisposable
 {
     public const string ApiKey = "test-key";
@@ -48,7 +47,6 @@ public sealed class AuthTestHost : IAsyncDisposable
 
     public HttpClient Client { get; }
 
-    /// <summary>The host configuration; change a value and call <c>Reload()</c> to simulate a config change.</summary>
     public IConfigurationRoot Configuration { get; }
 
     public static async Task<AuthTestHost> StartAsync(
@@ -77,7 +75,6 @@ public sealed class AuthTestHost : IAsyncDisposable
         var app = builder.Build();
         app.Use((context, next) =>
         {
-            // TestServer has no peer address: a test sets one with this header to play a client or a proxy.
             if (context.Request.Headers.TryGetValue(RemoteHeader, out var peer))
             {
                 context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(peer.ToString());

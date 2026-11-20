@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Ports;
 
-/// <summary>Read model of crawl analytics over UrlFetches. A null host means all hosts.</summary>
 public interface IAnalyticsReader
 {
     Task<AnalyticsOverview> Overview(AnalyticsRange range, CancellationToken ct);

@@ -1,10 +1,5 @@
 namespace SamoBot.Api.Authentication;
 
-/// <summary>
-/// Cookie sessions need CSRF protection on state-changing calls. A cross-site form cannot set a custom
-/// header, and a cross-site fetch with one triggers a CORS preflight that only allowed origins pass.
-/// Requests authenticated with the API key (not a cookie) are exempt.
-/// </summary>
 public sealed class CsrfHeaderMiddleware
 {
     public const string HeaderName = "X-Requested-With";

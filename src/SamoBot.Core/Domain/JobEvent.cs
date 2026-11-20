@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>One event of a crawl job. The property names match the existing API.</summary>
 public sealed record JobEvent
 {
     public long Id { get; init; }

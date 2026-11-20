@@ -34,8 +34,6 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
         WHERE "Id" = @Id
         """;
 
-    // A job is finished when no URL is in flight, no URL waits for its first fetch or for a retry,
-    // and no fetched page waits for the parser. The parser can still add links to such a page.
     private const string CompleteSql = $"""
         UPDATE "{TableNames.CrawlJobs}" j
         SET "Status" = 'Completed', "CompletedAt" = @Now, "UpdatedAt" = @Now

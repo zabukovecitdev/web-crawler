@@ -3,7 +3,6 @@ import { formatNumber } from '@/lib/format'
 
 type Props = { total: number; offset: number; limit: number; shown: number; onChange: (offset: number) => void }
 
-/** "1–8 of 4 812" with Previous and Next. */
 export function Pager({ total, offset, limit, shown, onChange }: Props) {
   if (total === 0) {
     return null

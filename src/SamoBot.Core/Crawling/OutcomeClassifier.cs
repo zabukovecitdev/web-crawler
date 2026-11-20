@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>The only place that maps a fetch response to a crawl outcome.</summary>
 public static class OutcomeClassifier
 {
     public const int MaxFailures = 5;

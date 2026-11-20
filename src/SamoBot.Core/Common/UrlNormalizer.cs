@@ -5,7 +5,6 @@ namespace SamoBot.Core.Common;
 
 public static class UrlNormalizer
 {
-    // Note: This URL normalization could be done with some sort of pipeline which can be easily extended and configured
     private static readonly HashSet<string> TrackingParameters = new(StringComparer.OrdinalIgnoreCase)
     {
         "utm_source",
@@ -87,8 +86,6 @@ public static class UrlNormalizer
             builder.Port = -1;
         }
 
-        // Keep trailing slashes as-is for web crawler accuracy
-        // Some sites treat /page and /page/ as different resources
         if (!string.IsNullOrEmpty(builder.Query))
         {
             builder.Query = SortQuery(builder.Query, removeTracking);

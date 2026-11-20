@@ -51,7 +51,6 @@ function stepStatus(done: number, of: number, started: boolean): JobStep['status
   return started ? 'active' : 'waiting'
 }
 
-/** The four steps of a job as counts: how many links passed each step, out of how many that could. */
 export function jobSteps(links: JobLinkSummary): JobStep[] {
   const stored = links.parsing + links.indexing + links.indexed + links.notIndexed
   const parsed = stored - links.parsing
@@ -65,7 +64,6 @@ export function jobSteps(links: JobLinkSummary): JobStep[] {
   ]
 }
 
-/** Links that still move on their own: queued, in flight, waiting for a retry, the parser or the index. */
 export function pendingLinks(links: JobLinkSummary): number {
   return links.queued + links.fetching + links.retrying + links.parsing + links.indexing
 }
@@ -100,12 +98,10 @@ const HEADLINES: Record<CrawlJobDto['status'], (links: JobLinkSummary) => string
   Failed: () => 'The crawl failed.',
 }
 
-/** One sentence that says where the job stands, for the first thing a person reads. */
 export function jobHeadline(job: Pick<CrawlJobDto, 'status' | 'links'>): string {
   return HEADLINES[job.status](job.links)
 }
 
-/** "HTTP 404 × 2, Timed out × 1", the reasons of the failed and retrying links. */
 export function problemsText(links: JobLinkSummary): string {
   return links.problems.map((problem) => `${problem.label} × ${formatNumber(problem.count)}`).join(', ')
 }

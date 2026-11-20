@@ -25,7 +25,6 @@ function slowest(current: number | null, next: number | null): number | null {
   return Math.max(current ?? 0, next ?? 0) || null
 }
 
-/** Moves the counters on by one finished request. The next snapshot replaces them. */
 export function applyCompleted(progress: CrawlProgress, event: FetchCompletedEvent): CrawlProgress {
   return {
     ...progress,

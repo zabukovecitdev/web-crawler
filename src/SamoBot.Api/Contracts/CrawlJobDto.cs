@@ -3,7 +3,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-/// <summary>The JSON shape of a job. It matches the TypeScript type <c>CrawlJobDto</c>.</summary>
 public sealed record CrawlJobDto(
     int Id,
     string Status,
@@ -17,7 +16,6 @@ public sealed record CrawlJobDto(
     DateTimeOffset? CompletedAt,
     JobLinkSummary Links)
 {
-    /// <summary>A job without a summary (just created) has no links yet.</summary>
     public static CrawlJobDto From(CrawlJob job, JobLinkSummary? links = null) => new(
         job.Id,
         job.Status.ToString(),
@@ -31,7 +29,6 @@ public sealed record CrawlJobDto(
         job.CompletedAt,
         links ?? JobLinkSummary.Empty);
 
-    /// <summary>The host of the first seed URL.</summary>
     private static string HostOf(CrawlJob job)
     {
         if (job.SeedUrls.Count > 0 && UrlNormalizer.TryClean(job.SeedUrls[0], out var clean))

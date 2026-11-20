@@ -1,6 +1,5 @@
 import * as React from "react"
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 export const THEMES = { light: "", dark: ".dark" } as const
 
 export type ChartConfig = {
@@ -40,7 +39,6 @@ function stringAt(source: Record<string, unknown> | undefined, key: string) {
   return typeof value === "string" ? value : undefined
 }
 
-// Helper to extract item config from a payload.
 export function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,

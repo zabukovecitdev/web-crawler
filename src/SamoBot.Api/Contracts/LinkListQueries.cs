@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-/// <summary>Turns the query string of the page links endpoint into a read-model query.</summary>
 public static class LinkListQueries
 {
     private const int MaxLimit = 200;

@@ -6,13 +6,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>
-/// Downloads robots.txt. The host key can include a non-default port, so the source tries https first and then http.
-/// A found file gives its rules. A missing file (4xx, or a redirect that never ends) allows everything.
-/// A server error, a network error or a timeout blocks the host for a short time. Each attempt runs under a
-/// <see cref="RequestDeadline"/> (<c>Crawler:RobotsTimeoutSeconds</c> in total, the body read included).
-/// A host (or a redirect hop) with only disallowed addresses throws <see cref="BlockedAddressException"/>.
-/// </summary>
 public sealed class HttpRobotsSource(
     HttpClient httpClient,
     IOptions<CrawlerNetworkOptions> network,

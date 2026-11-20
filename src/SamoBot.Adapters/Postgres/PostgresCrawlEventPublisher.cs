@@ -8,15 +8,10 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Stores a job event and tells the listeners with <c>pg_notify</c>.
-/// The notification is the flat event JSON of <see cref="CrawlEventEnvelope"/>, the shape that the dashboard reads.
-/// </summary>
 public sealed class PostgresCrawlEventPublisher(NpgsqlDataSource dataSource) : ICrawlEventPublisher
 {
     public const string Channel = "crawl_events";
 
-    // PostgreSQL rejects a notification of 8000 bytes or more. The event is stored anyway, and the poll endpoint returns it.
     private const int MaxNotifyBytes = 7900;
 
     private const string InsertSql = $"""

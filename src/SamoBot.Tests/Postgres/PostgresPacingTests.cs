@@ -7,7 +7,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter "Category=Integration"</c>.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresPacingTests(PostgresFixture postgres) : IAsyncLifetime

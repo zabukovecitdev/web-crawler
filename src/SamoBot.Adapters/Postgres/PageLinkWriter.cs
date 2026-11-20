@@ -4,10 +4,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Replaces the stored links of one page inside the caller's transaction. The new links are upserted in one statement
-/// (a link that was already stored keeps its FirstSeenAt), then the links that are no longer on the page are deleted.
-/// </summary>
 internal static class PageLinkWriter
 {
     private const string UpsertSql = $"""

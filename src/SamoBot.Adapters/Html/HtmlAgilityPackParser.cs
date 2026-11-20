@@ -6,11 +6,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>
-/// Parses HTML with HtmlAgilityPack. The work of each part of the page is in its own extractor.
-/// A Markdown body is first rendered to HTML (<see cref="MarkdownPage"/>), and plain text goes into a &lt;pre&gt; block,
-/// so every stored format goes through the same extractors. Plain text that starts like HTML is parsed as HTML.
-/// </summary>
 public sealed class HtmlAgilityPackParser : IPageParser
 {
     public ParsedPage Parse(Stream content, string? contentType)

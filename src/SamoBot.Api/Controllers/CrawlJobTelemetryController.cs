@@ -6,7 +6,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Api.Controllers;
 
-/// <summary>The live view of a job: frontier pages and the event log. Events without <c>after</c> are the newest ones, oldest first.</summary>
 [ApiController]
 [Route("api/v1/crawl-jobs")]
 [Authorize]

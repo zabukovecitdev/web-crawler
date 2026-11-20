@@ -1,7 +1,6 @@
 import type { LinkSteps } from '@/types/api'
 import { STEP_NAMES, stepLook } from './link-format'
 
-/** Fetch, Store, Parse and Index of one link, each with a mark and a word for screen readers. */
 export function LinkStepPips({ steps }: { steps: LinkSteps }) {
   return (
     <ol className="m-0 flex list-none flex-wrap gap-1 p-0">

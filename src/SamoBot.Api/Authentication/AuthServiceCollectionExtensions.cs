@@ -33,11 +33,9 @@ public static class AuthServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Who is calling. Rate limiting goes right after this, so it knows the caller but still sees 401s.</summary>
     public static IApplicationBuilder UseSamoBotAuthentication(this IApplicationBuilder app) =>
         app.UseAuthentication();
 
-    /// <summary>The origin and CSRF checks, then the <c>[Authorize]</c> decision.</summary>
     public static IApplicationBuilder UseSamoBotAuthorization(this IApplicationBuilder app)
     {
         app.UseMiddleware<OriginCheckMiddleware>();
@@ -51,7 +49,6 @@ public static class AuthServiceCollectionExtensions
             ? ApiKeyAuthenticationHandler.SchemeName
             : AuthSchemes.Cookie;
 
-    /// <summary>Development, or an explicit <c>Auth:AllowInsecureCookie</c>, allows the cookie over plain http.</summary>
     private static CookieSecurePolicy SecurePolicy(IConfiguration configuration, IHostEnvironment environment)
     {
         var allowInsecure = configuration.GetValue<bool>($"{AuthOptions.SectionName}:{nameof(AuthOptions.AllowInsecureCookie)}");

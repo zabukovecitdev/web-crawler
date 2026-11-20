@@ -3,7 +3,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>Machine-readable data of a page: Open Graph, Twitter cards and JSON-LD.</summary>
 internal static class StructuredData
 {
     public static IReadOnlyDictionary<string, string> OpenGraph(HtmlDocument document) =>

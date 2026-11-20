@@ -56,7 +56,6 @@ function LinkRow({ link, busy, onRecrawl }: RowProps) {
 
 type Props = { links: JobLinkDto[]; busy: boolean; onRecrawl: (link: JobLinkDto) => void }
 
-/** One row for each link: its state, the page it leads to, the four steps, the reason in words, and a recrawl. */
 export function JobLinksTable({ links, busy, onRecrawl }: Props) {
   return (
     <Table className="min-w-[860px]">

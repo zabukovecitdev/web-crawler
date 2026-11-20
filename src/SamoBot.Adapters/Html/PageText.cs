@@ -5,7 +5,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>The readable text of a page: headings and body text.</summary>
 internal static partial class PageText
 {
     private static readonly string[] UnwantedTags = ["script", "style", "noscript", "svg", "path"];

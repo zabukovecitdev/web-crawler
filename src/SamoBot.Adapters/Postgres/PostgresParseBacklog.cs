@@ -7,7 +7,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The parse work queue. A fetch is claimed with a lease. One transaction stores the page with its policy, its links and the parsed mark.</summary>
 public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IParseBacklog
 {
     private const string ClaimSql = $"""
@@ -55,7 +54,6 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
         UPDATE "{TableNames.UrlFetches}" SET "ParsedAt" = @Now, "LeaseUntil" = NULL WHERE "Id" = @FetchId
         """;
 
-    /// <summary>A canonical URL longer than the column is dropped, not cut: a cut URL would point somewhere else.</summary>
     private const int MaxCanonicalLength = 2048;
 
     static PostgresParseBacklog() => DapperTypeHandlers.Register();

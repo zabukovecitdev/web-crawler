@@ -3,7 +3,6 @@ using SamoBot.Core.Common;
 
 namespace SamoBot.Core.Domain;
 
-/// <summary>A crawl job. The job owns the rules for its status transitions.</summary>
 public sealed class CrawlJob
 {
     public int Id { get; init; }
@@ -20,7 +19,6 @@ public sealed class CrawlJob
     public DateTimeOffset? StartedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
 
-    /// <summary>Creates a pending job. Invalid seed URLs are dropped. The hosts of the valid seeds become the allowed hosts.</summary>
     public static Result<CrawlJob> Create(NewCrawlJob request, DateTimeOffset now)
     {
         var seeds = request.SeedUrls.Where(seed => !string.IsNullOrWhiteSpace(seed)).ToList();
@@ -43,7 +41,6 @@ public sealed class CrawlJob
         });
     }
 
-    /// <summary>Returns the valid seed URLs as depth-0 frontier entries.</summary>
     public IReadOnlyList<NewUrl> ToSeedUrls() =>
         SeedUrls
             .Select(seed => UrlNormalizer.TryClean(seed, out var clean) ? clean : null)
@@ -63,7 +60,6 @@ public sealed class CrawlJob
         return result;
     }
 
-    /// <summary>Opens a completed job again for a reprocess, so that the stages can process its URLs with the current code.</summary>
     public Result Reprocess(DateTimeOffset now)
     {
         var result = Transition(Status is CrawlJobStatus.Completed, CrawlJobStatus.Running, now);
@@ -89,10 +85,6 @@ public sealed class CrawlJob
         return result;
     }
 
-    /// <summary>
-    /// Opens the job for a recrawl. A finished job runs again; a running or paused job keeps its status. One link of a
-    /// cancelled job cannot be recrawled alone: running the job again would also fetch everything that was still queued.
-    /// </summary>
     public Result Reopen(DateTimeOffset now, bool wholeJob)
     {
         if (Status is CrawlJobStatus.Draft or CrawlJobStatus.Pending)

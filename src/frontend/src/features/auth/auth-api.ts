@@ -3,7 +3,6 @@ import type { GoogleSignInRequest, Me } from '@/types/api'
 
 export const meKey = ['me'] as const
 
-/** Returns null when nobody is signed in (401). */
 export async function fetchMe(): Promise<Me | null> {
   try {
     return await apiFetch<Me>('/api/v1/me')

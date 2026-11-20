@@ -6,14 +6,8 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Reads the links of crawl jobs with their state. The state is one SQL expression (<see cref="StateExpression"/>), used by the
-/// list, its filters and the counts, so that they cannot disagree.
-/// </summary>
 public sealed class PostgresJobLinkReader(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IJobLinkReader
 {
-    // The order matters: the frontier state comes first (in flight, waiting for a retry, queued, stopped for good),
-    // then the last fetch, then the parsed document and its policy.
     private const string StateExpression = """
         CASE
             WHEN u."Status" = 'InFlight' THEN 'Fetching'

@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Keeps the sites overview for a short time. It scans every URL, so one load at a time serves all callers.</summary>
 public sealed class SiteOverviewCache(TimeProvider time, TimeSpan ttl) : IDisposable
 {
     public static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(30);

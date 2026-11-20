@@ -4,7 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Sitemaps;
 
-/// <summary>Builds the sitemap view of a host. A URL that is not crawled is Blocked when robots.txt disallows it for our user agent.</summary>
 public sealed class SitemapOverviewService(ISitemapReader reader, RobotsGate robots)
 {
     public async Task<SitemapOverview> Read(string host, int limit, int offset, CancellationToken ct)

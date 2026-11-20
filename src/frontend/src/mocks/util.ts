@@ -3,7 +3,6 @@ import { HttpResponse } from 'msw'
 export const MINUTE = 60_000
 export const HOUR = 60 * MINUTE
 
-/** ISO timestamp `ms` milliseconds before now. */
 export function ago(ms: number): string {
   return new Date(Date.now() - ms).toISOString()
 }

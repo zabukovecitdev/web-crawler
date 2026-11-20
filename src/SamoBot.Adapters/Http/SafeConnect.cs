@@ -4,15 +4,6 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>
-/// The <see cref="SocketsHttpHandler.ConnectCallback"/> of the crawler. It takes the allowed addresses of the host
-/// (cached or from DNS), and connects to the first one that works. Redirect hops open their own connection,
-/// so each hop is checked. The callback only supplies the stream: the request URL, the Host header and the
-/// TLS server name stay those of the original request, although the connection is made by IP address.
-/// DNS and connect (the cache refresh included) must finish within <c>Crawler:ConnectTimeoutSeconds</c>, else the callback
-/// throws a <see cref="TimeoutException"/>. TLS runs after the callback and is covered by the first-byte deadline.
-/// When every cached address fails, it resolves once more, updates the cache and tries the new addresses.
-/// </summary>
 public sealed class SafeConnect(SafeResolver resolver, ISocketConnector connector, IOptions<CrawlerNetworkOptions> options)
 {
     public ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken ct) =>

@@ -150,7 +150,6 @@ function SubTabs({ value, onChange }: { value: PageLinkDirection; onChange: (v: 
   )
 }
 
-/** Links on this page and pages linking to it. The list remounts (paging resets) when the page or direction changes. */
 export function PageLinksView({ id }: { id: number }) {
   const [direction, setDirection] = useState<PageLinkDirection>('out')
   return (

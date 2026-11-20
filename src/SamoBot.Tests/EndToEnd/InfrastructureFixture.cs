@@ -3,7 +3,6 @@ using DotNet.Testcontainers.Containers;
 
 namespace SamoBot.Tests.EndToEnd;
 
-/// <summary>RustFS (S3 storage) and Meilisearch for the end-to-end test. PostgreSQL comes from the shared Postgres fixture.</summary>
 public sealed class InfrastructureFixture : IAsyncLifetime
 {
     public const string MeilisearchKey = "masterKey";

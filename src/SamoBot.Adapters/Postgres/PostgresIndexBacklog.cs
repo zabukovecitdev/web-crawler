@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The pages that wait for the search index. Indexing is idempotent, so a claim needs no lease.</summary>
 public sealed class PostgresIndexBacklog(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IIndexBacklog
 {
     private const string ClaimSql = $"""

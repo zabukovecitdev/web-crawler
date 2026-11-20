@@ -5,7 +5,6 @@ import { connectCrawlHub, type ConnectionState } from './crawl-hub'
 
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
 
-/** The in-memory stream, loaded on demand so it stays out of the normal bundle path. */
 function connectMock(
   jobId: number,
   onEvent: (event: LiveEvent) => void,
@@ -29,10 +28,6 @@ function connectMock(
   }
 }
 
-/**
- * Live CrawlEvents for one job. SignalR against the API, or the in-memory stream when mocks are on.
- * Returns the connection state; the page keeps itself in step with it (see useEventSync).
- */
 export function useCrawlStream(
   jobId: number,
   onEvent: (event: LiveEvent) => void,

@@ -3,7 +3,6 @@ import { Card } from '@/components/ui/card'
 
 type Props = { kicker: string; value: ReactNode; note?: ReactNode }
 
-/** Kicker label + large mono readout + optional one-line note. */
 export function StatCard({ kicker, value, note }: Props) {
   return (
     <Card className="flex flex-col gap-1 p-5 shadow-zb-1">

@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-/// <summary>The JSON of GET /api/v1/search. Snippet holds encoded text and mark tags only.</summary>
 public sealed record SearchHitDto(int PageId, string Host, string Url, string Title, string Snippet, string Language, DateTimeOffset? FetchedAt)
 {
     public static SearchHitDto From(SearchResult result) =>

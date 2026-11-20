@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>A validated dashboard search. Create it with <see cref="TryCreate"/>; the limits keep a query cheap.</summary>
 public sealed record SearchRequest(string Text, string? Host, int Limit, int Offset)
 {
     public const int MaxTextLength = 200;

@@ -10,7 +10,6 @@ public enum SitemapCrawlState
     Blocked
 }
 
-/// <summary>A sitemap URL as the database knows it. A page id and status code mean that the URL was fetched.</summary>
 public sealed record SitemapUrlRow
 {
     public string Loc { get; init; } = string.Empty;

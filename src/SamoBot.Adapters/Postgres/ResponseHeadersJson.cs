@@ -5,7 +5,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The kept response headers as a JSON object of name to values. No headers is NULL; unreadable JSON is no headers.</summary>
 internal static class ResponseHeadersJson
 {
     public static string? Write(ResponseHeaders? headers) =>
@@ -30,7 +29,6 @@ internal static class ResponseHeadersJson
     }
 }
 
-/// <summary>The stored page policy. A page parsed before policies were stored, or an unreadable value, has the default policy.</summary>
 internal static class PagePolicyJson
 {
     public static PagePolicy Read(string? json)

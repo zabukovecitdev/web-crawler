@@ -2,10 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace SamoBot.Core.Directives.Canonical;
 
-/// <summary>
-/// The HTTP Link header with rel="canonical" (RFC 8288), the way PDFs and other non-HTML files name a canonical URL.
-/// A relative target resolves against the page URL, not the &lt;base&gt; of the HTML.
-/// </summary>
 public sealed partial class LinkHeaderCanonicalSource : ICanonicalSource, IResponseHeaderConsumer
 {
     public const string HeaderName = "Link";

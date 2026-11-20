@@ -1,9 +1,7 @@
 export type TokenKind = 'text' | 'tag' | 'attr' | 'value' | 'comment'
 export type Token = { kind: TokenKind; text: string }
 
-// A comment, a doctype or declaration, or a whole tag. Quoted attribute values may hold ">".
 const MARKUP = /<!--[\s\S]*?(?:-->|$)|<![^>]*>|<\/?[A-Za-z](?:"[^"]*"|'[^']*'|[^>"'])*>?/g
-// Inside a tag: the name, then attributes with an optional value, then the closing bracket.
 const TAG_PART = /^<\/?[^\s/>]+|\/?>$|=|"[^"]*"|'[^']*'|[^\s=/>"']+|\s+|./g
 const RAW_TEXT = /^<(script|style)\b/i
 
@@ -31,7 +29,6 @@ function markupTokens(markup: string): Token[] {
   return markup.startsWith('<!--') ? [{ kind: 'comment', text: markup }] : tagTokens(markup)
 }
 
-/** The end of the body of a script or style element that starts at `from`: its closing tag, or the end of the text. */
 function rawTextEnd(html: string, from: number, name: string): number {
   const close = html.toLowerCase().indexOf(`</${name.toLowerCase()}`, from)
   return close === -1 ? html.length : close
@@ -43,7 +40,6 @@ function pushText(tokens: Token[], text: string): void {
   }
 }
 
-/** Splits HTML source into coloured tokens. It never changes the text: the tokens joined are the input. */
 export function tokenizeHtml(html: string): Token[] {
   const tokens: Token[] = []
   const pattern = new RegExp(MARKUP.source, 'g')
@@ -63,7 +59,6 @@ export function tokenizeHtml(html: string): Token[] {
   return tokens
 }
 
-/** The tokens of each line. A token that spans lines is cut at the line breaks. */
 export function tokenLines(tokens: Token[]): Token[][] {
   const lines: Token[][] = [[]]
   for (const token of tokens) {
@@ -80,7 +75,6 @@ export function tokenLines(tokens: Token[]): Token[][] {
   return lines
 }
 
-/** Above this many lines the source is shown without colours, to keep the page fast. */
 export const HIGHLIGHT_LINE_LIMIT = 6000
 
 export function sourceLines(html: string): Token[][] {

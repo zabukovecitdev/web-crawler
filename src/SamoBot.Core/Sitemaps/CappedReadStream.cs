@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Sitemaps;
 
-/// <summary>A read-only stream wrapper that throws <see cref="InvalidDataException"/> once more than the limit was read.</summary>
 public sealed class CappedReadStream(Stream inner, long limit) : Stream
 {
     private long _total;

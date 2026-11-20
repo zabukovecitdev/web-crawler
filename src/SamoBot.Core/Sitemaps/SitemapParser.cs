@@ -9,10 +9,6 @@ namespace SamoBot.Core.Sitemaps;
 
 public sealed record SitemapParseResult(SitemapKind Kind, IReadOnlyList<SitemapEntry> Entries);
 
-/// <summary>
-/// Parses a urlset or a sitemapindex, plain or gzip. Bad input gives null. DTDs are prohibited and no resolver is set (XXE safe).
-/// Only http and https URLs of the same host stay. A file keeps at most 50,000 entries.
-/// </summary>
 public static class SitemapParser
 {
     public static SitemapParseResult? Parse(byte[] raw, string host)
@@ -27,7 +23,6 @@ public static class SitemapParser
 
     private static bool IsGzip(byte[] raw) => raw.Length > 2 && raw[0] == 0x1f && raw[1] == 0x8b;
 
-    /// <summary>A gzip is streamed into the XML reader, capped at 50 MB. A larger stream (a gzip bomb) gives null.</summary>
     private static Stream Open(byte[] raw) => IsGzip(raw)
         ? new CappedReadStream(new GZipStream(new MemoryStream(raw), CompressionMode.Decompress), SitemapLimits.MaxDecompressedBytes)
         : new MemoryStream(raw);

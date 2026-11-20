@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Directives;
 
-/// <summary>The response headers the fetchers keep: the union of what every registered <see cref="IResponseHeaderConsumer"/> asks for.</summary>
 public sealed class ResponseHeaderSelection(IEnumerable<IResponseHeaderConsumer> consumers)
 {
     public IReadOnlyList<string> Names { get; } =

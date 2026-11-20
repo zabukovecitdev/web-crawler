@@ -5,11 +5,6 @@ using SamoBot.Core.Common;
 
 namespace SamoBot.Worker;
 
-/// <summary>
-/// Runs one <see cref="IWorkHandler"/> in a loop. Each batch gets its own DI scope.
-/// The loop waits 1 second when a batch has no work and 5 seconds after an error.
-/// This is the only place in the worker that catches <see cref="Exception"/>.
-/// </summary>
 public sealed partial class PollingWorker<THandler>(
     IServiceScopeFactory scopes,
     TimeProvider timeProvider,
@@ -47,17 +42,8 @@ public sealed partial class PollingWorker<THandler>(
         }
     }
 
-    private async Task WaitFor(TimeSpan delay, CancellationToken ct)
-    {
-        try
-        {
-            await Task.Delay(delay, timeProvider, ct);
-        }
-        catch (OperationCanceledException)
-        {
-            // The host is stopping. The loop ends at the next check.
-        }
-    }
+    private async Task WaitFor(TimeSpan delay, CancellationToken ct) =>
+        await Task.Delay(delay, timeProvider, ct).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "The batch of {Handler} failed. The worker retries after a delay.")]
     private partial void LogBatchFailed(Exception exception, string handler);

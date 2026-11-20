@@ -12,7 +12,6 @@ public sealed class HostSitemapsController(SitemapOverviewService sitemaps) : Co
 {
     private const int MaxLimit = 200;
 
-    /// <summary>A host that has no stored sitemap gives an empty result, not 404.</summary>
     [HttpGet("{host}/sitemaps")]
     [ProducesResponseType<SitemapDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

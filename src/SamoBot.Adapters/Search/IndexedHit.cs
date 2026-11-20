@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace SamoBot.Adapters.Search;
 
-/// <summary>A search result as Meilisearch returns it: the stored fields and the highlighted, cropped copy.</summary>
 internal sealed class IndexedHit
 {
     public int DiscoveredUrlId { get; init; }
@@ -11,7 +10,6 @@ internal sealed class IndexedHit
     public string Title { get; init; } = string.Empty;
     public string Language { get; init; } = string.Empty;
     public DateTimeOffset? FetchedAt { get; init; }
-    /// <summary>The snippet limit of the page; -1 (also for documents indexed before the limit existed) means none.</summary>
     public int SnippetMaxLength { get; init; } = -1;
 
     [JsonPropertyName("_formatted")]

@@ -20,7 +20,6 @@ function whenText(job: CrawlJobDto): string {
 }
 
 function Summary({ job }: { job: CrawlJobDto }) {
-  // A finished job's headline already counts its failed links.
   const problems = groupOf(job.status) === 'active' ? job.links.failed + job.links.retrying : 0
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -94,7 +93,6 @@ function JobItem({ job }: { job: CrawlJobDto }) {
   )
 }
 
-/** One compact row for each crawl: a progress ring, the host, the status and one sentence. The ring opens the steps and links. */
 export function CrawlsTable({ jobs }: { jobs: CrawlJobDto[] }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0">

@@ -3,7 +3,6 @@ using SamoBot.Adapters.Postgres;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter "Category=Integration"</c>.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresJobEventsTests(PostgresFixture postgres) : IAsyncLifetime

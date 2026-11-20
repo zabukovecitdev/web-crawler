@@ -4,10 +4,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Maps the JSON text columns of a parsed document. The link counts come from the Links table (0 for pages parsed before it existed).
-/// A column that is missing or not valid JSON reads as empty.
-/// </summary>
 internal static class ParsedPageMapper
 {
     public static PageParsed Map(PageRow row, LinkCounts counts) => new()
@@ -33,10 +29,6 @@ internal static class ParsedPageMapper
     private static List<PageHeading> Headings(string? json) =>
         (Read<List<ParsedHeading>>(json) ?? []).Select(h => new PageHeading(h.Level, h.Text)).ToList();
 
-    /// <summary>
-    /// The directives that applied, with their source. Pages parsed before policies were stored show the robots meta
-    /// content that was stored then.
-    /// </summary>
     private static string Directives(PageRow row) =>
         row.Policy is not null
             ? string.Join(", ", PagePolicyJson.Read(row.Policy).Directives)

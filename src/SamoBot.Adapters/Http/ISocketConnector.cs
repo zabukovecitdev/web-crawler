@@ -3,7 +3,6 @@ using System.Net.Sockets;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>Opens a TCP connection to one address. A small seam so that tests need no network.</summary>
 public interface ISocketConnector
 {
     ValueTask<Stream> Connect(IPAddress address, int port, CancellationToken ct);

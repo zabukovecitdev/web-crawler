@@ -9,7 +9,6 @@ type Props = {
   peak: number
 }
 
-/** Direct label above the single peak column; every other column stays unlabelled. */
 export function PeakLabel({ x, y, width, value, index, peak }: Props) {
   if (index !== peak) {
     return null

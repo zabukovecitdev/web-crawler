@@ -43,7 +43,6 @@ function CancelDialog({ host, open, busy, onOpenChange, onConfirm }: CancelProps
   )
 }
 
-/** Pause or resume, and cancel behind a confirmation dialog. */
 export function CrawlActions({ jobId, host, status }: Props) {
   const [confirming, setConfirming] = useState(false)
   const action = useJobAction(jobId)
@@ -70,10 +69,6 @@ export function CrawlActions({ jobId, host, status }: Props) {
   )
 }
 
-/**
- * Processes a completed crawl again with the current crawler: pages skipped for a format it reads now are fetched again,
- * and stored pages are parsed and indexed again. Nothing stored is fetched again.
- */
 export function ReprocessAction({ jobId }: { jobId: number }) {
   const action = useJobAction(jobId)
 

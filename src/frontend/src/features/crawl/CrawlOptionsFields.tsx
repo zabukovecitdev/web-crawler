@@ -55,7 +55,6 @@ function Toggle({ id, label, checked, disabled, onChange }: ToggleProps) {
   )
 }
 
-/** The crawl options, set apart from the address by a rule and an engraved label. */
 export function CrawlOptionsFields({ options, errors, disabled, onChange }: Props) {
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 border-t p-0 pt-5">

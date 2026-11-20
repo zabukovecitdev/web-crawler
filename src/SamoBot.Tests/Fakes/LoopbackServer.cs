@@ -4,7 +4,6 @@ using System.Text;
 
 namespace SamoBot.Tests.Fakes;
 
-/// <summary>A raw TCP server on loopback. The test chooses what each connection does, so it can stall or drip.</summary>
 public sealed class LoopbackServer : IAsyncDisposable
 {
     private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
@@ -21,10 +20,8 @@ public sealed class LoopbackServer : IAsyncDisposable
 
     public string Authority => $"127.0.0.1:{Port}";
 
-    /// <summary>Accepts connections and never answers.</summary>
     public static LoopbackServer Silent() => new((_, ct) => Task.Delay(Timeout.Infinite, ct));
 
-    /// <summary>Sends valid headers at once, then one body byte every <paramref name="interval"/>.</summary>
     public static LoopbackServer SlowDrip(TimeSpan interval) => new(async (stream, ct) =>
     {
         await Write(stream, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100000\r\n\r\n", ct);
@@ -35,7 +32,6 @@ public sealed class LoopbackServer : IAsyncDisposable
         }
     });
 
-    /// <summary>Answers a request at once with the given status line and headers, and the body.</summary>
     public static LoopbackServer Fast(string body, string contentType = "text/html", string status = "200 OK", string extraHeaders = "") =>
         new(async (stream, ct) =>
         {
@@ -61,17 +57,21 @@ public sealed class LoopbackServer : IAsyncDisposable
 
     private async Task Accept(Func<NetworkStream, CancellationToken, Task> onConnection)
     {
+        while (!_stop.IsCancellationRequested && await NextClient() is { } client)
+        {
+            _ = Serve(client, onConnection);
+        }
+    }
+
+    private async Task<TcpClient?> NextClient()
+    {
         try
         {
-            while (!_stop.IsCancellationRequested)
-            {
-                var client = await _listener.AcceptTcpClientAsync(_stop.Token);
-                _ = Serve(client, onConnection);
-            }
+            return await _listener.AcceptTcpClientAsync(_stop.Token);
         }
         catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or SocketException)
         {
-            // The test ended.
+            return null;
         }
     }
 
@@ -79,14 +79,7 @@ public sealed class LoopbackServer : IAsyncDisposable
     {
         using (client)
         {
-            try
-            {
-                await onConnection(client.GetStream(), _stop.Token);
-            }
-            catch (Exception ex) when (ex is OperationCanceledException or IOException or SocketException or ObjectDisposedException)
-            {
-                // The client closed the connection, or the test ended.
-            }
+            await onConnection(client.GetStream(), _stop.Token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         }
     }
 }

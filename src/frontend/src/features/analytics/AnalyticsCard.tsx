@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 
 type Props = { kicker?: string; title: string; children: ReactNode; className?: string }
 
-/** Card with an engraved kicker and an h2 title, shared by every analytics panel. */
 export function AnalyticsCard({ kicker, title, children, className }: Props) {
   return (
     <Card className={cn('flex min-w-0 flex-col gap-4 p-5 shadow-zb-1', className)}>
@@ -20,7 +19,6 @@ export function AnalyticsCard({ kicker, title, children, className }: Props) {
 
 type Query = { isPending: boolean; isError: boolean; error: unknown; refetch: () => unknown }
 
-/** Renders loading / error, or the children once data is there. */
 export function PanelState({ query, children }: { query: Query; children: ReactNode }) {
   if (query.isPending) {
     return <LoadingRows rows={4} />

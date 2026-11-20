@@ -7,13 +7,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>
-/// Downloads a URL with a plain HTTP request. It does not follow redirects. The frontier decides what to do with them.
-/// A network error or a timeout gives status code 0. The fetcher does not throw for them.
-/// A <see cref="RequestDeadline"/> limits the time to the first byte and the total time, the body read included.
-/// A cancellation by the caller (shutdown) is not a timeout and still throws. The response headers that the crawl directives
-/// read (<see cref="ResponseHeaderSelection"/>) are kept raw: NonValidated keeps each header value whole.
-/// </summary>
 public sealed class HttpFetcher(
     HttpClient httpClient,
     IOptions<ChromeRenderingOptions> chrome,
@@ -24,10 +17,6 @@ public sealed class HttpFetcher(
     public const string UserAgent = "SamoBot/1.0 (+https://github.com/zabukovecitdev/web-crawler)";
     public const int MaxBodyBytes = 5 * 1024 * 1024;
 
-    /// <summary>
-    /// Asks for the media types that <see cref="StoredMediaTypes"/> keeps: HTML first, then Markdown, then plain text. A server
-    /// that negotiates on Accept (Vary: Accept) then sends HTML when it has it. */* keeps other types possible.
-    /// </summary>
     public const string Accept = "text/html,application/xhtml+xml;q=0.9,text/markdown;q=0.8,text/plain;q=0.7,*/*;q=0.6";
 
     public bool Supports(ClaimedUrl url) => !url.UseJsRendering || !chrome.Value.IsAvailable;
@@ -91,7 +80,6 @@ public sealed class HttpFetcher(
         };
     }
 
-    /// <summary>Retry-After is delta seconds or an HTTP date. A date in the past gives zero.</summary>
     private TimeSpan? RetryAfter(HttpResponseMessage response)
     {
         var header = response.Headers.RetryAfter;

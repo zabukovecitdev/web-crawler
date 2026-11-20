@@ -36,7 +36,6 @@ public sealed record StatusClassCounts
     public long ServerError { get; init; }
 }
 
-/// <summary>A media type and how many fetches returned it. Stored is true when the crawler keeps that type.</summary>
 public sealed record AnalyticsContentType(string ContentType, long Requests, bool Stored);
 
 public sealed record TimeseriesPoint

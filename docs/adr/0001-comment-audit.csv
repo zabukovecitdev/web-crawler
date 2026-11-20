@@ -1,0 +1,760 @@
+file,line,lines,category,moved_to,comment
+src/SamoBot.Adapters/AdaptersServiceCollectionExtensions.cs,20,1,Tautology,,"/// <summary>Registers every adapter. The configuration needs the sections Database, MinIO, Meilisearch and ChromeRendering.</summary>"
+src/SamoBot.Adapters/AdaptersServiceCollectionExtensions.cs,48,2,Decision Record,ADR 0002,"// The fetcher does not follow redirects, because the frontier handles them. The robots source follows a few. // Both connect through SafeConnect, so every hop "
+src/SamoBot.Adapters/AdaptersServiceCollectionExtensions.cs,57,1,Decision Record,ADR 0008,"// The sitemap source gets the raw bytes: no redirects and no decompression, so that the parser caps the decompressed size."
+src/SamoBot.Adapters/AdaptersServiceCollectionExtensions.cs,85,1,Tautology,,/// <summary>Registers only the search index. The MCP server needs nothing else.</summary>
+src/SamoBot.Adapters/Browser/BrowserFetcher.cs,12,1,Decision Record,ADR 0003,"/// <summary>Renders a page in a Chrome browser that Playwright reaches over CDP. A render error or a timeout (navigation, or the total cap) gives status code 0"
+src/SamoBot.Adapters/Browser/BrowserFetcher.cs,89,1,Decision Record,ADR 0002,"/// <summary>Service workers would answer requests the guard never sees, and a crawler has no use for downloads.</summary>"
+src/SamoBot.Adapters/Browser/BrowserRequestGuard.cs,7,6,Decision Record,ADR 0002,"/// <summary> /// Validates the host of every request that a browser context makes (navigation, redirect hops, sub-requests, popups) /// with the address policy"
+src/SamoBot.Adapters/Browser/BrowserRequestGuard.cs,15,1,Tautology,,/// <summary>True when the page itself (not only a sub-resource) was refused.</summary>
+src/SamoBot.Adapters/Browser/BrowserRequestGuard.cs,51,1,Decision Record,ADR 0002,"// data: and blob: need no network. Every other scheme (file:, ftp:, ws: ...) is refused."
+src/SamoBot.Adapters/Browser/BrowserRequestGuard.cs,63,1,Decision Record,ADR 0002,"// Our resolver cannot resolve it. Refuse the request, but do not call the page blocked."
+src/SamoBot.Adapters/Browser/ChromeRenderingOptions.cs,7,1,Tautology,,"/// <summary>When set, Playwright connects over CDP (for example http://chrome:9222).</summary>"
+src/SamoBot.Adapters/Browser/ChromeRenderingOptions.cs,10,1,Decision Record,ADR 0003,"/// <summary>The navigation timeout of a page, and the default of every other browser call. Default 30000.</summary>"
+src/SamoBot.Adapters/Browser/ChromeRenderingOptions.cs,13,1,Decision Record,ADR 0003,"/// <summary>One cap around the whole render (connect, navigation, reading the page). Default 45000.</summary>"
+src/SamoBot.Adapters/Browser/ChromeRenderingOptions.cs,18,1,Decision Record,ADR 0006,/// <summary>The one rule that decides if the browser fetcher is in use. The HTTP fetcher is the fallback.</summary>
+src/SamoBot.Adapters/Html/HtmlAgilityPackParser.cs,9,5,Decision Record,ADR 0006,/// <summary> /// Parses HTML with HtmlAgilityPack. The work of each part of the page is in its own extractor. /// A Markdown body is first rendered to HTML (<s
+src/SamoBot.Adapters/Html/HtmlDocumentExtensions.cs,7,1,Tautology,,/// <summary>Selects nodes by XPath. HtmlAgilityPack returns null for no match. This returns an empty sequence.</summary>
+src/SamoBot.Adapters/Html/MarkdownPage.cs,10,5,Decision Record,ADR 0006,"/// <summary> /// Renders a Markdown body as an HTML page for <see cref=""HtmlAgilityPackParser""/>. The title comes from the front matter /// (<c>title</c>) or e"
+src/SamoBot.Adapters/Html/PageMetadata.cs,7,1,Tautology,,/// <summary>The single-value metadata of a page.</summary>
+src/SamoBot.Adapters/Html/PageMetadata.cs,19,1,Tautology,,"/// <summary>The href of the first link whose rel contains ""canonical"", in any case and next to other values.</summary>"
+src/SamoBot.Adapters/Html/PageMetadata.cs,25,1,Decision Record,ADR 0006,/// <summary>The href of the first &lt;base&gt; with one; browsers ignore the others.</summary>
+src/SamoBot.Adapters/Html/PageMetadata.cs,28,1,Decision Record,ADR 0005,"/// <summary>Every meta tag with a name or http-equiv, as written. Interpreting them is the job of the crawl directives.</summary>"
+src/SamoBot.Adapters/Html/PageReferences.cs,6,1,Tautology,,/// <summary>The links and images of a page.</summary>
+src/SamoBot.Adapters/Html/PageText.cs,8,1,Tautology,,/// <summary>The readable text of a page: headings and body text.</summary>
+src/SamoBot.Adapters/Html/StructuredData.cs,6,1,Tautology,,"/// <summary>Machine-readable data of a page: Open Graph, Twitter cards and JSON-LD.</summary>"
+src/SamoBot.Adapters/Http/BodyReader.cs,5,1,Tautology,,"/// <summary>Reads at most <paramref name=""limit""/> bytes. It stops reading after the limit.</summary>"
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,3,1,Tautology,,/// <summary>Network safety settings of the crawler (configuration section <c>Crawler</c>).</summary>
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,8,4,Decision Record,ADR 0002,"/// <summary> /// Development and tests only. When true, the address policy allows every address (loopback, private, metadata). /// The worker and the API log a"
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,14,4,Decision Record,ADR 0002,/// <summary> /// Use the system or environment HTTP proxy for fetching. Default false. A proxy would make the connect check /// see the proxy address instead o
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,20,4,Decision Record,ADR 0002,/// <summary> /// How long resolved addresses of a host are reused before DNS is asked again. Default 60. 0 turns the cache off. /// Cached addresses are checke
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,26,4,Decision Record,ADR 0004,"/// <summary> /// The cap of the adaptive part of the delay between requests to a host (slow host, failures). Default 60. /// The delay of robots.txt is always "
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,32,4,Decision Record,ADR 0004,/// <summary> /// Added to the longest possible fetch (the larger of the request deadline and the browser total deadline) to get the /// in-flight hold of a hos
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,38,1,Decision Record,ADR 0003,/// <summary>DNS resolution and connect together. Default 5. 0 turns it off.</summary>
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,41,1,Decision Record,ADR 0003,/// <summary>From sending the request until the response headers arrive. Default 10. 0 turns it off.</summary>
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,44,1,Decision Record,ADR 0003,"/// <summary>One deadline for a whole page request, the body read included. Default 20. 0 turns it off.</summary>"
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,47,1,Decision Record,ADR 0003,"/// <summary>One deadline for a robots.txt request (each of the https and http attempts), body included. Default 10.</summary>"
+src/SamoBot.Adapters/Http/CrawlerNetworkOptions.cs,50,1,Decision Record,ADR 0003,"/// <summary>One deadline for each sitemap file, body included. Default 30.</summary>"
+src/SamoBot.Adapters/Http/HttpFetcher.cs,10,7,Decision Record,ADR 0003,/// <summary> /// Downloads a URL with a plain HTTP request. It does not follow redirects. The frontier decides what to do with them. /// A network error or a t
+src/SamoBot.Adapters/Http/HttpFetcher.cs,27,4,Decision Record,ADR 0006,"/// <summary> /// Asks for the media types that <see cref=""StoredMediaTypes""/> keeps: HTML first, then Markdown, then plain text. A server /// that negotiates o"
+src/SamoBot.Adapters/Http/HttpFetcher.cs,94,1,Tautology,,/// <summary>Retry-After is delta seconds or an HTTP date. A date in the past gives zero.</summary>
+src/SamoBot.Adapters/Http/HttpRobotsSource.cs,9,7,Decision Record,ADR 0003,"/// <summary> /// Downloads robots.txt. The host key can include a non-default port, so the source tries https first and then http. /// A found file gives its r"
+src/SamoBot.Adapters/Http/HttpSitemapSource.cs,8,5,Decision Record,ADR 0008,"/// <summary> /// Downloads one sitemap. It does not follow redirects and does not decompress, so the parser sees the raw bytes and caps /// the decompressed si"
+src/SamoBot.Adapters/Http/IDnsResolver.cs,5,1,Tautology,,/// <summary>Resolves a host name to all of its addresses. A small seam so that tests can fake DNS.</summary>
+src/SamoBot.Adapters/Http/ISocketConnector.cs,6,1,Tautology,,/// <summary>Opens a TCP connection to one address. A small seam so that tests need no network.</summary>
+src/SamoBot.Adapters/Http/MemoryHostAddressCache.cs,6,5,Decision Record,ADR 0002,"/// <summary> /// A small in-memory layer in front of another cache, so that a connect does not query PostgreSQL each time. /// It keeps what it saw or saved an"
+src/SamoBot.Adapters/Http/NetworkSafetyWarning.cs,9,1,Tautology,,/// <summary>Call once after the host is built. It logs a warning when the address policy is switched off.</summary>
+src/SamoBot.Adapters/Http/RequestDeadline.cs,3,7,Decision Record,ADR 0003,"/// <summary> /// The time limits of one HTTP request. One total deadline covers everything, the body read included, and a shorter /// first-byte deadline cover"
+src/SamoBot.Adapters/Http/RequestDeadline.cs,25,1,Tautology,,/// <summary>Switches the first-byte deadline off. The total deadline keeps running.</summary>
+src/SamoBot.Adapters/Http/RequestDeadline.cs,30,1,Tautology,,"/// <summary>True when the exception, or one of its inner exceptions, is the timeout of <see cref=""SafeConnect""/>.</summary>"
+src/SamoBot.Adapters/Http/RequestDeadline.cs,61,1,Decision Record,ADR 0003,// The request finished while the timer fired.
+src/SamoBot.Adapters/Http/SafeConnect.cs,7,9,Decision Record,ADR 0002,"/// <summary> /// The <see cref=""SocketsHttpHandler.ConnectCallback""/> of the crawler. It takes the allowed addresses of the host /// (cached or from DNS), and "
+src/SamoBot.Adapters/Http/SafeHttpClientExtensions.cs,10,1,Tautology,,"/// <summary>Registers the pieces of the connect-time address check (options, DNS, <see cref=""SafeConnect""/>).</summary>"
+src/SamoBot.Adapters/Http/SafeHttpClientExtensions.cs,20,6,Decision Record,ADR 0002,"/// <summary> /// The one way to add an HTTP client that fetches from the open web (fetcher, robots, sitemaps). /// Every connection of the client, redirect hop"
+src/SamoBot.Adapters/Http/SafeHttpClientExtensions.cs,32,1,Decision Record,ADR 0003,"// a RequestDeadline enforces the deadlines, the body read included"
+src/SamoBot.Adapters/Http/SafeResolver.cs,9,1,Decision Record,ADR 0002,"/// <summary>The allowed addresses of a host, and whether they came from the cache (a failed connect may then retry with fresh DNS).</summary>"
+src/SamoBot.Adapters/Http/SafeResolver.cs,12,5,Decision Record,ADR 0002,"/// <summary> /// Gives the addresses that the crawler may connect to. Cached addresses (younger than <c>Crawler:DnsCacheMinutes</c>) /// are used before DNS, a"
+src/SamoBot.Adapters/Http/SafeResolver.cs,23,1,Tautology,,"/// <summary>Throws <see cref=""BlockedAddressException""/> when the host has no allowed address.</summary>"
+src/SamoBot.Adapters/Http/SafeResolver.cs,35,1,Decision Record,ADR 0002,"/// <summary>Resolves with DNS, ignores the cache, stores the allowed addresses. When none is allowed it clears the cache and throws.</summary>"
+src/SamoBot.Adapters/Http/SafeResolver.cs,55,1,Decision Record,ADR 0002,"/// <summary>True when every address of the host is allowed. The browser needs this, because it picks the address itself. DNS only, no cache.</summary>"
+src/SamoBot.Adapters/Http/SafeResolver.cs,76,1,Tautology,,/// <summary>The cached addresses that are still fresh and still allowed. Empty means: resolve again.</summary>
+src/SamoBot.Adapters/Markdown/HtmlCleaner.cs,6,1,Tautology,,"/// <summary>Prepares page HTML for the Markdown converter: picks the main content, removes noise and makes URLs absolute.</summary>"
+src/SamoBot.Adapters/Markdown/HtmlCleaner.cs,53,1,Decision Record,ADR 0006,"/// <summary>One walk over the tree: removes noise and cleans images. The anchors are cleaned after it, because an anchor is empty only once its images are know"
+src/SamoBot.Adapters/Markdown/MarkdownTidy.cs,5,1,Tautology,,"/// <summary>Normalises Markdown text: line endings, trailing spaces, blank lines and empty links and bullets.</summary>"
+src/SamoBot.Adapters/Markdown/ReverseMarkdownConverter.cs,6,1,Decision Record,ADR 0006,"/// <summary>HTML to Markdown in three steps: <see cref=""HtmlCleaner""/> removes the noise and makes URLs absolute, ReverseMarkdown converts, <see cref=""Markdown"
+src/SamoBot.Adapters/Markdown/ReverseMarkdownConverter.cs,11,1,Decision Record,ADR 0006,// Flavor = MarkdownFlavor.GitHub makes 6.3.0 return the HTML unconverted. GithubFlavored gives the same pipe tables and fenced code.
+src/SamoBot.Adapters/Markdown/ReverseMarkdownConverter.cs,26,1,Decision Record,ADR 0006,"// A new converter for each call: the library does not document its thread safety, and this class is a singleton."
+src/SamoBot.Adapters/Postgres/AnalyticsSql.cs,3,4,Decision Record,ADR 0010,/// <summary> /// The SQL of the analytics read model. Every query reads UrlFetches in a FetchedAt window (IX_UrlFetches_FetchedAt) /// and joins DiscoveredUrls
+src/SamoBot.Adapters/Postgres/AnalyticsSql.cs,65,1,Tautology,,"/// <summary>The media type without parameters, lower case. Missing types group as unknown.</summary>"
+src/SamoBot.Adapters/Postgres/AnalyticsSql.cs,77,4,Decision Record,ADR 0010,"/// <summary> /// Buckets are UTC. The series runs from the first bucket of the window to the bucket of @To, one row per bucket, /// with zero where nothing was"
+src/SamoBot.Adapters/Postgres/DapperTypeHandlers.cs,10,1,Decision Record,ADR 0010,"/// <summary>Maps JSON text columns to their types: string lists, kept response headers and page policies. Dapper keeps the handlers in global state.</summary>"
+src/SamoBot.Adapters/Postgres/DapperTypeHandlers.cs,49,1,Excuse,#41,/// <summary>A missing or unreadable policy (a page parsed before policies were stored) is the default policy.</summary>
+src/SamoBot.Adapters/Postgres/LikePattern.cs,3,1,Decision Record,ADR 0010,/// <summary>Builds a LIKE pattern from user text. The text matches literally; only the outer wildcards remain.</summary>
+src/SamoBot.Adapters/Postgres/NewUrlInserter.cs,9,4,Decision Record,ADR 0010,/// <summary> /// The one place that adds URLs to the frontier. It applies the scope of the job: /// the allowed hosts and the maximum number of URLs. It also a
+src/SamoBot.Adapters/Postgres/PageLinkWriter.cs,7,4,Decision Record,ADR 0010,/// <summary> /// Replaces the stored links of one page inside the caller's transaction. The new links are upserted in one statement /// (a link that was alread
+src/SamoBot.Adapters/Postgres/PageRow.cs,5,1,Tautology,,/// <summary>The stored link counts of a page.</summary>
+src/SamoBot.Adapters/Postgres/PageRow.cs,8,1,Tautology,,/// <summary>One page query row. The parsed columns are only set by the detail query.</summary>
+src/SamoBot.Adapters/Postgres/PageSql.cs,3,1,Decision Record,ADR 0010,/// <summary>The SQL of the page read model. A page is a DiscoveredUrls row; its latest fetch is the row at LastFetchId.</summary>
+src/SamoBot.Adapters/Postgres/PageSql.cs,62,2,Decision Record,ADR 0010,"// Incoming links of a page: the md5 equality uses the index, the text equality rules out a collision. // Only pages of the same job count: the same normalized "
+src/SamoBot.Adapters/Postgres/ParsedPageMapper.cs,7,4,Excuse,#41,/// <summary> /// Maps the JSON text columns of a parsed document. The link counts come from the Links table (0 for pages parsed before it existed). /// A colum
+src/SamoBot.Adapters/Postgres/ParsedPageMapper.cs,36,4,Excuse,#41,"/// <summary> /// The directives that applied, with their source. Pages parsed before policies were stored show the robots meta /// content that was stored then"
+src/SamoBot.Adapters/Postgres/PostgresAnalyticsReader.cs,8,1,Tautology,,/// <summary>Read-only crawl analytics over UrlFetches.</summary>
+src/SamoBot.Adapters/Postgres/PostgresCrawlEventPublisher.cs,11,4,Decision Record,ADR 0010,"/// <summary> /// Stores a job event and tells the listeners with <c>pg_notify</c>. /// The notification is the flat event JSON of <see cref=""CrawlEventEnvelope"
+src/SamoBot.Adapters/Postgres/PostgresCrawlEventPublisher.cs,19,1,Decision Record,ADR 0010,"// PostgreSQL rejects a notification of 8000 bytes or more. The event is stored anyway, and the poll endpoint returns it."
+src/SamoBot.Adapters/Postgres/PostgresCrawlJobRepository.cs,37,2,Decision Record,ADR 0011,"// A job is finished when no URL is in flight, no URL waits for its first fetch or for a retry, // and no fetched page waits for the parser. The parser can stil"
+src/SamoBot.Adapters/Postgres/PostgresHostAddressCache.cs,8,5,Decision Record,ADR 0002,"/// <summary> /// Stores the resolved addresses in the Hosts table. The cache key is the DNS name. A row of the host key /// (the authority, with or without a p"
+src/SamoBot.Adapters/Postgres/PostgresHostAddressCache.cs,55,1,Tautology,,/// <summary>An address that does not parse is dropped. The caller then resolves again.</summary>
+src/SamoBot.Adapters/Postgres/PostgresHostAddressCache.cs,64,1,Tautology,,/// <summary>The cached columns of a Hosts row. Dapper fills the properties.</summary>
+src/SamoBot.Adapters/Postgres/PostgresIndexBacklog.cs,8,1,Decision Record,ADR 0010,"/// <summary>The pages that wait for the search index. Indexing is idempotent, so a claim needs no lease.</summary>"
+src/SamoBot.Adapters/Postgres/PostgresJobLinkReader.cs,9,4,Decision Record,ADR 0011,"/// <summary> /// Reads the links of crawl jobs with their state. The state is one SQL expression (<see cref=""StateExpression""/>), used by the /// list, its fil"
+src/SamoBot.Adapters/Postgres/PostgresJobLinkReader.cs,15,2,Decision Record,ADR 0011,"// The order matters: the frontier state comes first (in flight, waiting for a retry, queued, stopped for good), // then the last fetch, then the parsed documen"
+src/SamoBot.Adapters/Postgres/PostgresJobPageReader.cs,8,1,Tautology,,/// <summary>Read-only queries for the dashboard.</summary>
+src/SamoBot.Adapters/Postgres/PostgresJobProgressReader.cs,8,6,Decision Record,ADR 0011,/// <summary> /// Reads the live counters of one job with one query. The counts come from the frontier and from the fetches of the job. /// A URL counts by its 
+src/SamoBot.Adapters/Postgres/PostgresPageReader.cs,8,1,Tautology,,/// <summary>Read-only queries about crawled pages.</summary>
+src/SamoBot.Adapters/Postgres/PostgresParseBacklog.cs,10,1,Decision Record,ADR 0010,"/// <summary>The parse work queue. A fetch is claimed with a lease. One transaction stores the page with its policy, its links and the parsed mark.</summary>"
+src/SamoBot.Adapters/Postgres/PostgresParseBacklog.cs,58,1,Decision Record,ADR 0010,"/// <summary>A canonical URL longer than the column is dropped, not cut: a cut URL would point somewhere else.</summary>"
+src/SamoBot.Adapters/Postgres/PostgresRobotsStore.cs,8,1,Decision Record,ADR 0004,/// <summary>Stores the robots.txt rules of each host. A crawl delay in the rules also sets the delay of the host.</summary>
+src/SamoBot.Adapters/Postgres/PostgresRobotsStore.cs,59,1,Tautology,,/// <summary>The row of a stored robots.txt. Dapper fills the properties.</summary>
+src/SamoBot.Adapters/Postgres/PostgresServiceCollectionExtensions.cs,11,1,Tautology,,/// <summary>Registers the shared data source. Each repository opens its own connection from it.</summary>
+src/SamoBot.Adapters/Postgres/PostgresSiteReader.cs,8,1,Tautology,,/// <summary>Read-only queries about sites. A site is a host.</summary>
+src/SamoBot.Adapters/Postgres/PostgresSitemapReader.cs,8,4,Decision Record,ADR 0008,/// <summary> /// Read-only queries about the stored sitemaps of a host. A sitemap URL counts as crawled when a page of the host /// with the same normalized UR
+src/SamoBot.Adapters/Postgres/PostgresSitemapReader.cs,66,1,Tautology,,/// <summary>The row of a stored sitemap file. Dapper fills the properties.</summary>
+src/SamoBot.Adapters/Postgres/PostgresSitemapReader.cs,79,1,Tautology,,/// <summary>The counts row of a host. Dapper fills the properties.</summary>
+src/SamoBot.Adapters/Postgres/PostgresSitemapStore.cs,10,4,Decision Record,ADR 0008,"/// <summary> /// The sitemap queue and storage. One row in SitemapRequests per host is the queue. A claim sets a lease with /// FOR UPDATE SKIP LOCKED, like th"
+src/SamoBot.Adapters/Postgres/PostgresSitemapStore.cs,47,2,Decision Record,ADR 0008,"// One statement. The row lock of the UPDATE serializes callers, and RETURNING sees the new value, so the booked slot is the new // NextAllowedAt minus the dela"
+src/SamoBot.Adapters/Postgres/PostgresSitemapStore.cs,70,1,Decision Record,ADR 0008,"// A request made after the claim stays queued (CompletedAt NULL), so the refresh it asked for is not lost."
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,8,4,Decision Record,ADR 0004,"/// <summary> /// The URL frontier in PostgreSQL. A claim takes at most one due URL for each host and locks the host row, /// so that two workers never claim th"
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,56,7,Decision Record,ADR 0004,"// Releasing the in-flight hold: the wait after a request is booked from the time of the completion, and it REPLACES the // hold that the claim booked (GREATEST"
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,69,1,Decision Record,ADR 0004,"// The host row is updated first, like the claim locks the host before its URLs, so that the two never wait for each other."
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,77,1,Decision Record,ADR 0004,"// An outcome with no pacing change (blocked address, robots disallow) still releases the hold, with the base delay."
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,91,2,Decision Record,ADR 0011,"// A requeued link looks like a link that was never fetched (no last fetch), so the queue counters, the completion // check and the dashboard all see it as wait"
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,138,1,Decision Record,ADR 0011,"// LastCrawlAt goes back to null: the URL waits for its first fetch again, so the job does not complete before the fetch."
+src/SamoBot.Adapters/Postgres/PostgresUrlFrontier.cs,175,5,Decision Record,ADR 0004,"/// <summary> /// Every outcome releases the in-flight hold of the host, in the same transaction as the result. The new wait is /// completion time + the delay "
+src/SamoBot.Adapters/Postgres/ResponseHeadersJson.cs,8,1,Tautology,,/// <summary>The kept response headers as a JSON object of name to values. No headers is NULL; unreadable JSON is no headers.</summary>
+src/SamoBot.Adapters/Postgres/ResponseHeadersJson.cs,33,1,Excuse,#41,"/// <summary>The stored page policy. A page parsed before policies were stored, or an unreadable value, has the default policy.</summary>"
+src/SamoBot.Adapters/Postgres/SiteOverviewCache.cs,5,1,Decision Record,ADR 0010,"/// <summary>Keeps the sites overview for a short time. It scans every URL, so one load at a time serves all callers.</summary>"
+src/SamoBot.Adapters/Postgres/SiteSql.cs,5,1,Decision Record,ADR 0010,"/// <summary>The SQL of the site read model. The ORDER BY clauses are fixed text chosen from the enum, never from input.</summary>"
+src/SamoBot.Adapters/Postgres/TableNames.cs,3,1,Decision Record,ADR 0010,/// <summary>The table names for SQL strings. SQL in this project never hard-codes a table name.</summary>
+src/SamoBot.Adapters/Search/IndexedHit.cs,5,1,Tautology,,"/// <summary>A search result as Meilisearch returns it: the stored fields and the highlighted, cropped copy.</summary>"
+src/SamoBot.Adapters/Search/IndexedHit.cs,14,1,Excuse,#41,/// <summary>The snippet limit of the page; -1 (also for documents indexed before the limit existed) means none.</summary>
+src/SamoBot.Adapters/Search/MeilisearchIndex.cs,9,1,Tautology,,"/// <summary>The Meilisearch index of parsed pages. It writes with <see cref=""ISearchIndex""/> and reads with <see cref=""ISearchQuery""/>.</summary>"
+src/SamoBot.Adapters/Search/MeilisearchIndex.cs,62,1,Decision Record,ADR 0007,"/// <summary>A recrawl parses the same URL again. Only the newest parsed document of each URL is sent, because the document id is the URL id.</summary>"
+src/SamoBot.Adapters/Search/MeilisearchPageSearch.cs,9,1,Tautology,,"/// <summary>The dashboard search over the Meilisearch index: highlighted snippets, a host filter and the match count per host.</summary>"
+src/SamoBot.Adapters/Search/MeilisearchPageSearch.cs,28,1,Decision Record,ADR 0007,"/// <summary>The host list ignores the host filter, so the dashboard can still offer the other hosts.</summary>"
+src/SamoBot.Adapters/Search/MeilisearchPageSearch.cs,53,1,Decision Record,ADR 0007,/// <summary>Pages past their unavailable_after date never match; the host filter is added when one is asked for.</summary>
+src/SamoBot.Adapters/Search/MeilisearchPageSearch.cs,57,1,Decision Record,ADR 0007,"/// <summary>The filter value is a quoted string, so a backslash or a quote in a host cannot end it early.</summary>"
+src/SamoBot.Adapters/Search/MeilisearchSettings.cs,6,4,Decision Record,ADR 0007,"/// <summary> /// Applies the index settings once per process, before the first read or write. Applying the same settings again is a no-op /// for Meilisearch, "
+src/SamoBot.Adapters/Search/MeilisearchSettings.cs,15,1,Decision Record,ADR 0007,/// <summary>Hides pages past their unavailable_after date: they stay in the index until the next crawl removes them.</summary>
+src/SamoBot.Adapters/Storage/MinioContentStore.cs,9,1,Tautology,,/// <summary>Stores page content in MinIO. The first save creates the bucket when it does not exist.</summary>
+src/SamoBot.Adapters/Storage/MinioContentStore.cs,72,1,Excuse,#43,// Only HTML pages reach the store. The object name always ends with .html.
+src/SamoBot.Adapters/Storage/ObjectNameGenerator.cs,7,1,Tautology,,"/// <summary>Builds the object name of a stored page: domain, path and a hash of the URL.</summary>"
+src/SamoBot.Api/Authentication/AllowlistStartupCheck.cs,5,1,Tautology,,/// <summary>Warns once at startup when nobody can sign in.</summary>
+src/SamoBot.Api/Authentication/ApiKeyAuthenticationHandler.cs,56,1,Decision Record,ADR 0009,"/// <summary>Compares SHA-256 digests in fixed time, so neither content nor length leaks through timing.</summary>"
+src/SamoBot.Api/Authentication/ApiKeyOptionsValidator.cs,5,4,Decision Record,ADR 0009,/// <summary> /// In Production a configured API key must be long and not a well-known placeholder. An empty key is /// valid: it disables the API key. /// </su
+src/SamoBot.Api/Authentication/AuthOptions.cs,3,1,Decision Record,ADR 0009,/// <summary>Who may sign in. Both lists empty means nobody may (fail closed).</summary>
+src/SamoBot.Api/Authentication/AuthOptions.cs,12,1,Tautology,,"/// <summary>Comma-separated alternative to <see cref=""AllowedEmails""/>, for a single environment variable.</summary>"
+src/SamoBot.Api/Authentication/AuthOptions.cs,15,1,Tautology,,"/// <summary>Comma-separated alternative to <see cref=""AllowedDomains""/>.</summary>"
+src/SamoBot.Api/Authentication/AuthOptions.cs,18,4,Decision Record,ADR 0009,/// <summary> /// Allows the session cookie over plain http outside Development (compose on localhost). /// Leave false behind HTTPS: the cookie is then <c>Secu
+src/SamoBot.Api/Authentication/AuthSchemes.cs,5,1,Decision Record,ADR 0009,"/// <summary>Policy scheme: the API key when <c>X-Api-Key</c> is present, otherwise the cookie.</summary>"
+src/SamoBot.Api/Authentication/AuthServiceCollectionExtensions.cs,36,1,Decision Record,ADR 0009,"/// <summary>Who is calling. Rate limiting goes right after this, so it knows the caller but still sees 401s.</summary>"
+src/SamoBot.Api/Authentication/AuthServiceCollectionExtensions.cs,40,1,Tautology,,"/// <summary>The origin and CSRF checks, then the <c>[Authorize]</c> decision.</summary>"
+src/SamoBot.Api/Authentication/AuthServiceCollectionExtensions.cs,54,1,Tautology,,"/// <summary>Development, or an explicit <c>Auth:AllowInsecureCookie</c>, allows the cookie over plain http.</summary>"
+src/SamoBot.Api/Authentication/CsrfHeaderMiddleware.cs,3,5,Decision Record,ADR 0009,"/// <summary> /// Cookie sessions need CSRF protection on state-changing calls. A cross-site form cannot set a custom /// header, and a cross-site fetch with on"
+src/SamoBot.Api/Authentication/EmailAllowlist.cs,5,4,Decision Record,ADR 0009,"/// <summary> /// Decides whether a Google account may use the dashboard. Empty lists deny everybody. The lists follow /// configuration reloads, so removing an"
+src/SamoBot.Api/Authentication/GoogleIdentity.cs,3,1,Tautology,,/// <summary>The verified facts we keep from a Google ID token.</summary>
+src/SamoBot.Api/Authentication/IGoogleTokenValidator.cs,8,1,Tautology,,"/// <summary>Returns the identity when the token is valid for our client id, otherwise null.</summary>"
+src/SamoBot.Api/Authentication/OriginCheckMiddleware.cs,6,6,Decision Record,ADR 0009,"/// <summary> /// WebSockets are not subject to CORS, and a page on a sibling subdomain sends the session cookie /// (SameSite=Lax is per site, not per origin)."
+src/SamoBot.Api/Authentication/SessionPrincipal.cs,7,1,Tautology,,"/// <summary>Maps between a Google identity, the cookie session claims and the <c>Me</c> response.</summary>"
+src/SamoBot.Api/Authentication/SessionPrincipal.cs,12,1,Decision Record,ADR 0009,"/// <summary>The Google hosted domain, kept so the allowlist can be checked again on every request.</summary>"
+src/SamoBot.Api/Authentication/SessionPrincipal.cs,15,1,Decision Record,ADR 0009,"/// <summary>Unix seconds of the sign-in. Sliding renewal keeps it, so it marks the absolute start.</summary>"
+src/SamoBot.Api/Authentication/SessionPrincipal.cs,18,1,Decision Record,ADR 0009,"/// <summary>A session ends this long after sign-in, however often it is used.</summary>"
+src/SamoBot.Api/Authentication/SessionValidation.cs,8,4,Decision Record,ADR 0009,"/// <summary> /// Runs on every cookie-authenticated request: the account must still be on the allowlist and the /// session must be younger than <see cref=""Ses"
+src/SamoBot.Api/Contracts/AnalyticsContracts.cs,5,1,Tautology,,/// <summary>The parsed query of an analytics request.</summary>
+src/SamoBot.Api/Contracts/AnalyticsContracts.cs,8,1,Tautology,,/// <summary>Turns the query string of the analytics endpoints into a query. A null result means 400.</summary>
+src/SamoBot.Api/Contracts/CrawlJobDto.cs,6,1,Decision Record,ADR 0012,/// <summary>The JSON shape of a job. It matches the TypeScript type <c>CrawlJobDto</c>.</summary>
+src/SamoBot.Api/Contracts/CrawlJobDto.cs,20,1,Tautology,,/// <summary>A job without a summary (just created) has no links yet.</summary>
+src/SamoBot.Api/Contracts/CrawlJobDto.cs,34,1,Tautology,,/// <summary>The host of the first seed URL.</summary>
+src/SamoBot.Api/Contracts/HostKey.cs,3,1,Decision Record,ADR 0012,"/// <summary>Validates and normalizes the {host} route value. Host keys are <see cref=""Uri.Authority""/> values, so they round-trip.</summary>"
+src/SamoBot.Api/Contracts/JobActionResults.cs,7,1,Decision Record,ADR 0012,"/// <summary>The answer to a job action that was refused: 404 for an unknown job, else 409 with the reason.</summary>"
+src/SamoBot.Api/Contracts/JobLinkQueries.cs,5,1,Tautology,,/// <summary>Turns the query string of the job links endpoint into a read-model query.</summary>
+src/SamoBot.Api/Contracts/LinkListQueries.cs,5,1,Tautology,,/// <summary>Turns the query string of the page links endpoint into a read-model query.</summary>
+src/SamoBot.Api/Contracts/PagesContracts.cs,3,1,Tautology,,/// <summary>A stored body read up to a byte cap. Truncated is true when the body is longer than the cap.</summary>
+src/SamoBot.Api/Contracts/PagesContracts.cs,10,1,Decision Record,ADR 0012,"/// <summary>The size of the whole stored body in bytes, so that a reader can check that it has all of it.</summary>"
+src/SamoBot.Api/Contracts/SearchContracts.cs,5,1,Decision Record,ADR 0007,/// <summary>The JSON of GET /api/v1/search. Snippet holds encoded text and mark tags only.</summary>
+src/SamoBot.Api/Contracts/SitemapContracts.cs,11,1,Decision Record,ADR 0012,/// <summary>The shape of SitemapDto in src/frontend/src/types/api.ts.</summary>
+src/SamoBot.Api/Contracts/SitesContracts.cs,5,1,Decision Record,ADR 0012,"/// <summary>Caps on the list endpoints, so a request cannot make the database scan far past the useful range.</summary>"
+src/SamoBot.Api/Contracts/SitesContracts.cs,12,1,Tautology,,/// <summary>A parsed query or the text of the 400 response.</summary>
+src/SamoBot.Api/Contracts/SitesContracts.cs,16,1,Tautology,,/// <summary>Turns the query string of the sites and host pages endpoints into read-model queries.</summary>
+src/SamoBot.Api/Controllers/CrawlJobLinksController.cs,10,1,Tautology,,"/// <summary>The links of a job: where each one stands (fetch, store, parse, index) and why.</summary>"
+src/SamoBot.Api/Controllers/CrawlJobProgressController.cs,8,1,Tautology,,"/// <summary>The progress snapshot of a job. SignalR events update it, and this endpoint gives the start values.</summary>"
+src/SamoBot.Api/Controllers/CrawlJobTelemetryController.cs,9,1,Decision Record,ADR 0012,"/// <summary>The live view of a job: frontier pages and the event log. Events without <c>after</c> are the newest ones, oldest first.</summary>"
+src/SamoBot.Api/Controllers/CrawlJobsController.cs,72,1,Decision Record,ADR 0011,/// <summary>Queues one link again. A finished job runs again until the link is done.</summary>
+src/SamoBot.Api/Controllers/CrawlJobsController.cs,83,4,Decision Record,ADR 0011,/// <summary> /// recrawl fetches every link of the job again; retry-failed only the links that failed. reprocess parses the stored /// pages of a completed job
+src/SamoBot.Api/Controllers/HostSitemapsController.cs,15,1,Decision Record,ADR 0012,"/// <summary>A host that has no stored sitemap gives an empty result, not 404.</summary>"
+src/SamoBot.Api/Controllers/PagesController.cs,28,1,Tautology,,"/// <summary>The links on a page (direction=out, the default) or the pages that link to it (direction=in).</summary>"
+src/SamoBot.Api/Controllers/PagesController.cs,50,1,Decision Record,ADR 0012,/// <summary>The stored body of a page as text. 403 when the site asked for no stored copy to be shown (noarchive).</summary>
+src/SamoBot.Api/Controllers/PagesController.cs,67,2,Decision Record,ADR 0006,"/// <summary>The stored body of a page as clean Markdown, made on demand. 403 when the site asked for no stored copy to be shown (noarchive). /// X-Content-Trun"
+src/SamoBot.Api/Controllers/PagesController.cs,87,4,Decision Record,ADR 0006,"/// <summary> /// A Markdown or plain-text body is already readable as Markdown, so the endpoint returns it unchanged. The HTML converter would escape /// its l"
+src/SamoBot.Api/Controllers/PagesController.cs,102,1,Tautology,,"/// <summary>Finds the stored copy and loads its capped body. Gives an error result (404, or 403 for noarchive) instead when there is nothing to show.</summary>"
+src/SamoBot.Api/Controllers/PagesController.cs,120,1,Decision Record,ADR 0009,/// <summary>The body is untrusted page content: forbid sniffing and any active use if a browser opens it directly.</summary>
+src/SamoBot.Api/Hosting/CrawlEventListener.cs,10,4,Decision Record,ADR 0013,/// <summary> /// Listens to the PostgreSQL channel of crawl events on one connection and sends each event /// to the SignalR group of its job. A lost connectio
+src/SamoBot.Api/Hosting/CrawlEventListener.cs,60,1,Decision Record,ADR 0013,// The host is stopping.
+src/SamoBot.Api/Hosting/CrawlEventListener.cs,72,1,Decision Record,ADR 0013,// The host is stopping.
+src/SamoBot.Api/Hosting/CrawlEventListener.cs,101,1,Decision Record,ADR 0013,// The host is stopping.
+src/SamoBot.Api/Hosting/DashboardCorsOptions.cs,3,5,Decision Record,ADR 0009,/// <summary> /// Browser origins that may call the API with credentials. Empty means no cross-origin caller. /// The development list lives in appsettings.Deve
+src/SamoBot.Api/Hosting/ForwardedHeadersExtensions.cs,6,7,Decision Record,ADR 0009,"/// <summary> /// Behind a reverse proxy the peer address is the proxy's, so every client would share one rate-limit /// bucket, and <c>Request.Scheme</c> is ht"
+src/SamoBot.Api/Hosting/ForwardedHeadersExtensions.cs,17,1,Tautology,,"/// <summary>Single proxy addresses, e.g. <c>10.0.0.5</c>.</summary>"
+src/SamoBot.Api/Hosting/ForwardedHeadersExtensions.cs,20,1,Tautology,,"/// <summary>Proxy networks in CIDR notation, e.g. <c>172.16.0.0/12</c>.</summary>"
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,11,8,Decision Record,ADR 0009,"/// <summary> /// The API's rate limiter, and the only one: the dashboard's nginx does not limit. It keys on the signed-in /// user, otherwise on the client add"
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,55,1,Decision Record,ADR 0009,// An X-Api-Key that did not authenticate is a wrong guess: give those far fewer attempts.
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,73,1,Decision Record,ADR 0009,"/// <summary>The client address; an IPv6 client is limited as a whole /64, since one host owns that many.</summary>"
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,117,4,Excuse,#45,/// <summary> /// Requests per minute for each kind of caller. Section <c>RateLimiting</c>; the per-user key /// <c>PermitsPerMinute</c> keeps its old name. ///
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,125,1,Tautology,,/// <summary>A signed-in user (cookie session or API key).</summary>
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,128,1,Tautology,,/// <summary>One client address without credentials.</summary>
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,131,1,Tautology,,"/// <summary>One client address on <c>POST /api/v1/auth/google</c>, on top of the anonymous limit.</summary>"
+src/SamoBot.Api/Hosting/RateLimitingExtensions.cs,134,1,Tautology,,/// <summary>One client address sending an <c>X-Api-Key</c> that does not match.</summary>
+src/SamoBot.Core/Common/BlockedAddressException.cs,3,1,Tautology,,"/// <summary>A host resolved only to addresses that the crawler may not connect to (see <see cref=""IpAddressPolicy""/>).</summary>"
+src/SamoBot.Core/Common/BlockedAddressException.cs,8,1,Tautology,,"/// <summary>True when this exception, or one of its inner exceptions, is a <see cref=""BlockedAddressException""/>.</summary>"
+src/SamoBot.Core/Common/IWorkHandler.cs,5,1,Tautology,,/// <summary>Processes one batch. Returns the number of processed items.</summary>
+src/SamoBot.Core/Common/IpAddressPolicy.cs,6,5,Decision Record,ADR 0002,"/// <summary> /// Decides whether the crawler may connect to an IP address. Pure: no I/O. /// Private, loopback, link-local (cloud metadata), CGNAT, multicast, "
+src/SamoBot.Core/Common/IpAddressPolicy.cs,32,1,Tautology,,/// <summary>The IPv4 addresses that an IPv6 address carries. A plain IPv6 address carries none.</summary>
+src/SamoBot.Core/Common/IpAddressPolicy.cs,71,1,Tautology,,/// <summary>A network as the leading bytes of its address and the number of bits that count.</summary>
+src/SamoBot.Core/Common/UrlNormalizer.cs,8,1,Excuse,#48,// Note: This URL normalization could be done with some sort of pipeline which can be easily extended and configured
+src/SamoBot.Core/Common/UrlNormalizer.cs,90,2,Decision Record,ADR 0011,// Keep trailing slashes as-is for web crawler accuracy // Some sites treat /page and /page/ as different resources
+src/SamoBot.Core/CoreServiceCollectionExtensions.cs,14,1,Tautology,,/// <summary>Registers the handlers and services of the core. The host adds the adapters that implement the ports.</summary>
+src/SamoBot.Core/Crawling/BackoffPolicy.cs,9,1,Tautology,,"/// <summary>Returns 1 minute * 2^failCount, with a maximum of 1 hour.</summary>"
+src/SamoBot.Core/Crawling/CrawlBatchHandler.cs,10,1,Decision Record,ADR 0004,"/// <summary>The URL lease. It is also the cap of the in-flight hold, so the hold never outlives the lease.</summary>"
+src/SamoBot.Core/Crawling/CrawlUrlHandler.cs,7,1,Tautology,,"/// <summary>Crawls one claimed URL: robots check, fetch, store, classify, complete, publish.</summary>"
+src/SamoBot.Core/Crawling/CrawlUrlHandler.cs,41,1,Tautology,,/// <summary>The delay is the one applied to the host after this request (the base delay when the host state did not change).</summary>
+src/SamoBot.Core/Crawling/FetchRecorder.cs,6,1,Tautology,,"/// <summary>What <see cref=""FetchRecorder""/> stored: the object name of the saved body, and the delay applied to the host.</summary>"
+src/SamoBot.Core/Crawling/FetchRecorder.cs,9,4,Decision Record,ADR 0004,"/// <summary> /// Stores the body of a fetch and records the result in the frontier: the fetch row, the new URL state and the pacing of /// the host, all in one"
+src/SamoBot.Core/Crawling/FetchRecorder.cs,29,1,Decision Record,ADR 0004,"/// <summary>A URL that robots.txt disallows. No request was made, so the host keeps its pacing state.</summary>"
+src/SamoBot.Core/Crawling/InFlightHold.cs,3,6,Decision Record,ADR 0004,/// <summary> /// How long a claim books its host while one request is in flight: the longest possible fetch (the larger of the /// request deadline and the bro
+src/SamoBot.Core/Crawling/OutcomeClassifier.cs,5,1,Tautology,,/// <summary>The only place that maps a fetch response to a crawl outcome.</summary>
+src/SamoBot.Core/Crawling/PolitenessPolicy.cs,5,14,Decision Record,ADR 0004,"/// <summary> /// The pacing of a host after each fetch. Pure: the numbers come in, the new state and the delay go out. /// <list type=""bullet""> /// <item>The b"
+src/SamoBot.Core/Crawling/RobotsGate.cs,8,4,Decision Record,ADR 0005,"/// <summary> /// Decides whether robots.txt allows a URL. The rules come from the cache, then the store, then the source. /// Every URL is checked: no job and "
+src/SamoBot.Core/Crawling/RobotsGate.cs,27,1,Decision Record,ADR 0005,/// <summary>Returns the rules of a host. The dashboard uses this too. A host with a blocked address disallows everything.</summary>
+src/SamoBot.Core/Crawling/RobotsGate.cs,40,1,Tautology,,"/// <summary>Like <see cref=""RulesFor""/>, but a host with a blocked address throws <see cref=""BlockedAddressException""/>.</summary>"
+src/SamoBot.Core/Directives/Abstractions.cs,5,4,Decision Record,ADR 0005,"/// <summary> /// A place a site can send robots directives: a meta tag, a header. Each source returns only the directives that apply to /// this crawler. Add a"
+src/SamoBot.Core/Directives/Abstractions.cs,14,4,Decision Record,ADR 0005,"/// <summary> /// One decision about a page. A rule receives the policy so far and returns it, possibly stricter. Add a rule to support a /// new directive or s"
+src/SamoBot.Core/Directives/Abstractions.cs,23,1,Tautology,,/// <summary>Decides whether one link of a page may be followed. A link is followed only when every rule allows it.</summary>
+src/SamoBot.Core/Directives/Abstractions.cs,29,4,Decision Record,ADR 0005,"/// <summary> /// URLs a page points to as a replacement for itself (a meta refresh, a canonical). They are queued like an HTTP redirect: /// at the depth of th"
+src/SamoBot.Core/Directives/Abstractions.cs,38,1,Decision Record,ADR 0005,"/// <summary>A place a page can name its canonical URL. The first source that finds one wins, in registration order.</summary>"
+src/SamoBot.Core/Directives/Abstractions.cs,44,1,Decision Record,ADR 0005,"/// <summary>A source that reads response headers names them here, so the fetchers keep those headers with the fetch.</summary>"
+src/SamoBot.Core/Directives/Canonical/HtmlCanonicalSource.cs,3,1,Tautology,,"/// <summary>&lt;link rel=""canonical"" href=""...""&gt;, resolved against the base URL of the page.</summary>"
+src/SamoBot.Core/Directives/Canonical/LinkHeaderCanonicalSource.cs,5,4,Decision Record,ADR 0005,"/// <summary> /// The HTTP Link header with rel=""canonical"" (RFC 8288), the way PDFs and other non-HTML files name a canonical URL. /// A relative target resolv"
+src/SamoBot.Core/Directives/CrawlerIdentity.cs,5,1,Tautology,,"/// <summary>The name sites use to address this crawler, in robots.txt, a robots meta tag or an X-Robots-Tag value.</summary>"
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,9,4,Decision Record,ADR 0005,"/// <summary> /// The composition of the crawl directives. This is the one place to change what the crawler obeys: add, remove or reorder a /// source or rule h"
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,22,1,Tautology,,// Where directives come from.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,25,1,Tautology,,// Where a page names its canonical URL; the first one found wins.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,28,1,Tautology,,// What the directives and signals mean for the page.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,36,1,Tautology,,// Which single links are not followed.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,38,1,Tautology,,// URLs a page sends the crawler to instead of itself.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,41,1,Tautology,,// The services that apply them.
+src/SamoBot.Core/Directives/DirectivesServiceCollectionExtensions.cs,47,1,Tautology,,/// <summary>Registers one directive object under each directive interface it implements.</summary>
+src/SamoBot.Core/Directives/LinkSelector.cs,6,5,Decision Record,ADR 0005,/// <summary> /// Chooses the URLs a parsed page adds to the frontier. Links are queued one level deeper when the policy allows following /// and every <see cre
+src/SamoBot.Core/Directives/LinkSelector.cs,25,1,Decision Record,ADR 0005,"// A URL that is both a redirect target and a link keeps the redirect entry, at the depth of the page."
+src/SamoBot.Core/Directives/Links/CanonicalTargetSource.cs,5,1,Decision Record,ADR 0005,"/// <summary>A page that names another page as canonical points to the main version, which is queued so it gets crawled.</summary>"
+src/SamoBot.Core/Directives/Links/MetaRefreshSource.cs,6,4,Decision Record,ADR 0005,"/// <summary> /// &lt;meta http-equiv=""refresh"" content=""5; url=/new""&gt; sends the browser to another URL, so it is treated as a redirect. /// A refresh withou"
+src/SamoBot.Core/Directives/Links/MetaRefreshSource.cs,15,1,Tautology,,"/// <summary>The URL of a refresh value such as ""0; URL='/next'"", or null when it has none.</summary>"
+src/SamoBot.Core/Directives/Links/RelLinkRule.cs,5,4,Decision Record,ADR 0005,"/// <summary> /// A link whose rel attribute contains one of the given values is not followed, such as rel=""nofollow"". The values are /// chosen where the rule "
+src/SamoBot.Core/Directives/PageContext.cs,5,5,Tautology,,"/// <summary> /// Everything the directive sources and rules may look at for one parsed page: the fetch (with its kept response headers), /// the parsed page, t"
+src/SamoBot.Core/Directives/PageContext.cs,14,1,Tautology,,/// <summary>The meta tags with this name attribute (case-insensitive).</summary>
+src/SamoBot.Core/Directives/PageContext.cs,18,1,Tautology,,/// <summary>The meta tags with this http-equiv attribute (case-insensitive).</summary>
+src/SamoBot.Core/Directives/PageContext.cs,22,1,Tautology,,"/// <summary>An absolute http or https URL for an href found in the page, resolved against the base URL. Null when it is not one.</summary>"
+src/SamoBot.Core/Directives/PageContextFactory.cs,5,1,Tautology,,"/// <summary>Builds the <see cref=""PageContext""/> of a parsed page: its base URL first, then its canonical URL.</summary>"
+src/SamoBot.Core/Directives/PageContextFactory.cs,17,1,Decision Record,ADR 0005,/// <summary>A &lt;base href&gt; changes what relative links resolve against. It is itself relative to the page URL.</summary>
+src/SamoBot.Core/Directives/PagePolicy.cs,3,4,Decision Record,ADR 0005,"/// <summary> /// What the crawler may do with one page, decided from what the site said (see <see cref=""PagePolicyEvaluator""/>). /// The defaults allow everyth"
+src/SamoBot.Core/Directives/PagePolicy.cs,11,1,Decision Record,ADR 0005,"/// <summary>False: none of the links of the page are queued (nofollow, none).</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,14,1,Decision Record,ADR 0005,"/// <summary>False: the page is kept out of the search index (noindex, none, a canonical that names another page).</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,17,1,Decision Record,ADR 0005,/// <summary>The page leaves the search index at this time (unavailable_after). Null: no end.</summary>
+src/SamoBot.Core/Directives/PagePolicy.cs,20,1,Decision Record,ADR 0005,"/// <summary>The longest search snippet in characters. Null: no limit; 0: no snippet (nosnippet, max-snippet).</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,23,1,Decision Record,ADR 0005,/// <summary>False: the stored copy of the page is not shown (noarchive).</summary>
+src/SamoBot.Core/Directives/PagePolicy.cs,26,1,Tautology,,"/// <summary>The directives that applied to this crawler, with their source, for display.</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,29,1,Tautology,,"/// <summary>True when the page may be in the search index at <paramref name=""now""/>.</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,32,1,Tautology,,"/// <summary>The stricter of the current snippet limit and <paramref name=""limit""/>.</summary>"
+src/SamoBot.Core/Directives/PagePolicy.cs,36,1,Tautology,,"/// <summary>The earlier of the current end of indexing and <paramref name=""until""/>.</summary>"
+src/SamoBot.Core/Directives/PagePolicyEvaluator.cs,3,4,Decision Record,ADR 0005,"/// <summary> /// Gathers the directives every source found for this crawler and lets every rule tighten the policy, in registration order. /// It knows no dire"
+src/SamoBot.Core/Directives/ResponseHeaderSelection.cs,5,1,Tautology,,"/// <summary>The response headers the fetchers keep: the union of what every registered <see cref=""IResponseHeaderConsumer""/> asks for.</summary>"
+src/SamoBot.Core/Directives/RobotsDirective.cs,3,4,Tautology,,"/// <summary> /// One robots directive a site sent, such as ""noindex"" or ""max-snippet: 20"". <see cref=""Name""/> is lower case; /// <see cref=""Value""/> is the tex"
+src/SamoBot.Core/Directives/RobotsDirectiveParser.cs,5,5,Decision Record,ADR 0005,"/// <summary> /// Reads the comma-separated directive lists of the robots meta tag and the X-Robots-Tag header. Matching is by whole /// directive, never by sub"
+src/SamoBot.Core/Directives/RobotsDirectiveParser.cs,12,1,Decision Record,ADR 0005,"/// <summary>Directives that carry a value, so ""name: value"" is never read as a crawler name.</summary>"
+src/SamoBot.Core/Directives/RobotsDirectiveParser.cs,18,1,Tautology,,"/// <summary>A directive list without crawler names, such as the content of a meta tag.</summary>"
+src/SamoBot.Core/Directives/RobotsDirectiveParser.cs,22,4,Decision Record,ADR 0005,"/// <summary> /// One X-Robots-Tag value. It can start with a crawler name (""googlebot: nofollow""); the name applies to the directives /// after it, up to the n"
+src/SamoBot.Core/Directives/Rules/DirectiveDate.cs,5,4,Decision Record,ADR 0005,"/// <summary> /// Reads the dates sites put in unavailable_after: ISO 8601, RFC 822/1123 and RFC 850, with a numeric offset or a common /// zone name (GMT, UTC,"
+src/SamoBot.Core/Directives/Rules/DirectiveDate.cs,49,1,Tautology,,/// <summary>A trailing zone name gives its offset; anything else gives no zone.</summary>
+src/SamoBot.Core/Directives/Rules/DirectiveRule.cs,3,1,Tautology,,/// <summary>A rule that reacts to directives with given names. Subclasses say what one matching directive does to the policy.</summary>
+src/SamoBot.Core/Directives/Rules/MaxSnippetRule.cs,5,1,Decision Record,ADR 0005,/// <summary>max-snippet: N limits the excerpt to N characters; 0 means no excerpt; -1 or an invalid value means no limit.</summary>
+src/SamoBot.Core/Directives/Rules/NoArchiveRule.cs,3,1,Decision Record,ADR 0005,/// <summary>noarchive: the stored copy of the page is kept for parsing but never shown.</summary>
+src/SamoBot.Core/Directives/Rules/NoFollowRule.cs,3,1,Decision Record,ADR 0005,"/// <summary>nofollow and none: no link of the page is queued. Redirect targets (meta refresh, canonical) still are.</summary>"
+src/SamoBot.Core/Directives/Rules/NoIndexRule.cs,3,1,Decision Record,ADR 0005,"/// <summary>noindex and none: the page is kept out of the search index, and removed from it if it was indexed before.</summary>"
+src/SamoBot.Core/Directives/Rules/NoSnippetRule.cs,3,1,Tautology,,/// <summary>nosnippet: search results show the page without a text excerpt.</summary>
+src/SamoBot.Core/Directives/Rules/NonCanonicalPageRule.cs,5,4,Decision Record,ADR 0005,"/// <summary> /// A page whose canonical URL is another page is a copy: it is not indexed, so search shows the main version only. The /// canonical URL itself i"
+src/SamoBot.Core/Directives/Rules/UnavailableAfterRule.cs,3,1,Decision Record,ADR 0005,/// <summary>unavailable_after: DATE: the page leaves the search index at that time. A date that cannot be read is ignored.</summary>
+src/SamoBot.Core/Directives/Sources/MetaRobotsTagSource.cs,3,3,Decision Record,ADR 0005,"/// <summary> /// &lt;meta name=""robots""&gt; (every crawler) and &lt;meta name=""samobot""&gt; (this crawler), matched without regard to case. /// </summary>"
+src/SamoBot.Core/Directives/Sources/XRobotsTagSource.cs,3,1,Decision Record,ADR 0005,/// <summary>The X-Robots-Tag response header. Each value may be aimed at one crawler; values for other crawlers are ignored.</summary>
+src/SamoBot.Core/Domain/AnalyticsModels.cs,39,1,Tautology,,/// <summary>A media type and how many fetches returned it. Stored is true when the crawler keeps that type.</summary>
+src/SamoBot.Core/Domain/AnalyticsWindow.cs,17,1,Tautology,,/// <summary>A time window over UrlFetches.FetchedAt. A null From means no lower bound.</summary>
+src/SamoBot.Core/Domain/AnalyticsWindow.cs,29,1,Tautology,,/// <summary>Parses the range and bucket names of the analytics endpoints. A null result means the name is unknown.</summary>
+src/SamoBot.Core/Domain/AnalyticsWindow.cs,32,1,Decision Record,ADR 0012,/// <summary>The most buckets a timeseries returns. An older start is cut so the chart stays small.</summary>
+src/SamoBot.Core/Domain/AnalyticsWindow.cs,44,1,Decision Record,ADR 0012,/// <summary>A missing bucket is hour for the 24 hour range and day otherwise.</summary>
+src/SamoBot.Core/Domain/AnalyticsWindow.cs,53,1,Tautology,,/// <summary>The oldest bucket start a timeseries may begin at.</summary>
+src/SamoBot.Core/Domain/ClaimedUrl.cs,3,1,Tautology,,/// <summary>A frontier URL that a worker holds under a lease.</summary>
+src/SamoBot.Core/Domain/ClaimedUrl.cs,15,1,Tautology,,/// <summary>The delay of the host after this claim. The claim query fills it from the host row.</summary>
+src/SamoBot.Core/Domain/ClaimedUrl.cs,18,1,Decision Record,ADR 0004,"/// <summary>When the in-flight hold of the host ends. Set by the claim. Null: no hold is known, so completing keeps the later wait.</summary>"
+src/SamoBot.Core/Domain/ClaimedUrl.cs,21,1,Tautology,,"/// <summary>The moving average of the response time of the host, null before the first healthy fetch.</summary>"
+src/SamoBot.Core/Domain/ClaimedUrl.cs,24,1,Tautology,,"/// <summary>The timeouts, network errors, 5xx and 429 in a row at the host.</summary>"
+src/SamoBot.Core/Domain/ContentStates.cs,3,1,Tautology,,/// <summary>What is known about the latest fetch of a URL and its parsed document.</summary>
+src/SamoBot.Core/Domain/ContentStates.cs,14,6,Decision Record,ADR 0011,"/// <summary> /// Derives the content state of a page. A URL without a fetch is Failed when it has a fail reason, else NotStored. /// A status below 200 or from"
+src/SamoBot.Core/Domain/ContentStatus.cs,3,1,Decision Record,ADR 0012,/// <summary>What happened to the body of a fetch. The dashboard reads these names.</summary>
+src/SamoBot.Core/Domain/ContentStatus.cs,11,5,Decision Record,ADR 0011,/// <summary> /// Skipped also covers a blocked address (the fetch never ran). Failed: no response (status 0). Stored: the body is in the content store. /// Ski
+src/SamoBot.Core/Domain/CrawlEventEnvelope.cs,6,4,Decision Record,ADR 0012,"/// <summary> /// Builds the flat JSON of a crawl event: <c>{ crawlJobId, eventType, at, ...fields }</c>, plus <c>id</c> when the event is stored. /// The Signa"
+src/SamoBot.Core/Domain/CrawlEventTypes.cs,3,1,Decision Record,ADR 0012,/// <summary>The event types that the crawler publishes. The dashboard reads these names.</summary>
+src/SamoBot.Core/Domain/CrawlJob.cs,6,1,Tautology,,/// <summary>A crawl job. The job owns the rules for its status transitions.</summary>
+src/SamoBot.Core/Domain/CrawlJob.cs,23,1,Decision Record,ADR 0011,/// <summary>Creates a pending job. Invalid seed URLs are dropped. The hosts of the valid seeds become the allowed hosts.</summary>
+src/SamoBot.Core/Domain/CrawlJob.cs,46,1,Tautology,,/// <summary>Returns the valid seed URLs as depth-0 frontier entries.</summary>
+src/SamoBot.Core/Domain/CrawlJob.cs,66,1,Decision Record,ADR 0011,"/// <summary>Opens a completed job again for a reprocess, so that the stages can process its URLs with the current code.</summary>"
+src/SamoBot.Core/Domain/CrawlJob.cs,92,4,Decision Record,ADR 0011,/// <summary> /// Opens the job for a recrawl. A finished job runs again; a running or paused job keeps its status. One link of a /// cancelled job cannot be re
+src/SamoBot.Core/Domain/CrawlOutcome.cs,5,1,Tautology,,/// <summary>The result of one crawl. Each outcome knows the new state of its URL.</summary>
+src/SamoBot.Core/Domain/CrawlOutcome.cs,32,1,Decision Record,ADR 0002,/// <summary>The host resolves only to addresses that the crawler may not connect to. The URL is skipped for good.</summary>
+src/SamoBot.Core/Domain/CrawlProgress.cs,3,1,Decision Record,ADR 0012,"/// <summary>The progress of a job, as the dashboard reads it. The property names match the TypeScript type <c>CrawlProgress</c>.</summary>"
+src/SamoBot.Core/Domain/CrawlProgress.cs,27,1,Decision Record,ADR 0011,"/// <summary>The rate counts fetches over the time since the start. The time has a floor of one minute, so that the first seconds give no spike.</summary>"
+src/SamoBot.Core/Domain/CrawlProgress.cs,47,1,Decision Record,ADR 0004,"// The adaptive delay wins the label when it is larger than the base delay, because it is the delay in effect."
+src/SamoBot.Core/Domain/CrawlProgress.cs,58,1,Decision Record,ADR 0004,"// Only a running job makes a next request, and only when the host is not yet due."
+src/SamoBot.Core/Domain/FetchRecord.cs,3,1,Tautology,,/// <summary>One row in the fetch history of a URL.</summary>
+src/SamoBot.Core/Domain/FetchResponse.cs,5,1,Decision Record,ADR 0003,"/// <summary>The result of one fetch. A status code of 0 means a network error. See <see cref=""Error""/>.</summary>"
+src/SamoBot.Core/Domain/FetchResponse.cs,17,1,Tautology,,"/// <summary>The response headers the directive sources asked for (see <see cref=""Directives.ResponseHeaderSelection""/>).</summary>"
+src/SamoBot.Core/Domain/FetchResponse.cs,20,1,Tautology,,"/// <summary>The wait that a Retry-After header asked for (delta seconds, or the date minus now). Null without the header.</summary>"
+src/SamoBot.Core/Domain/FetchResponse.cs,23,1,Tautology,,/// <summary>True when the fetch did not run because the host resolves only to disallowed addresses.</summary>
+src/SamoBot.Core/Domain/FetchResponse.cs,38,1,Decision Record,ADR 0006,/// <summary>True when the media type is HTML. A missing or wrong media type falls back to a look at the first bytes.</summary>
+src/SamoBot.Core/Domain/FetchResponse.cs,41,1,Tautology,,"/// <summary>True when the crawler keeps the body: HTML (see <see cref=""IsHtml""/>) or another <see cref=""StoredMediaTypes""/> type.</summary>"
+src/SamoBot.Core/Domain/FetchToParse.cs,3,1,Tautology,,"/// <summary>A stored fetch that waits for the parser, with the job scope that limits its links.</summary>"
+src/SamoBot.Core/Domain/FetchToParse.cs,13,1,Tautology,,/// <summary>The Content-Type of the fetch. It selects how the stored body is read (HTML or Markdown).</summary>
+src/SamoBot.Core/Domain/FetchToParse.cs,18,1,Tautology,,"/// <summary>The response headers kept with the fetch (see <see cref=""Directives.ResponseHeaderSelection""/>).</summary>"
+src/SamoBot.Core/Domain/HostPacingUpdate.cs,3,4,Decision Record,ADR 0004,"/// <summary> /// The new pacing state of a host after a fetch, stored with the fetch result in one transaction. /// <see cref=""Delay""/> is the wait until the n"
+src/SamoBot.Core/Domain/JobEvent.cs,3,1,Decision Record,ADR 0012,/// <summary>One event of a crawl job. The property names match the existing API.</summary>
+src/SamoBot.Core/Domain/JobLink.cs,6,1,Decision Record,ADR 0012,/// <summary>Where a link of a crawl job stands on its way to the search index. The dashboard reads these names.</summary>
+src/SamoBot.Core/Domain/JobLink.cs,24,1,Tautology,,/// <summary>The step was not reached.</summary>
+src/SamoBot.Core/Domain/JobLink.cs,33,1,Tautology,,"/// <summary>The four steps every link goes through, in order.</summary>"
+src/SamoBot.Core/Domain/JobLink.cs,36,1,Tautology,,"/// <summary>What the database knows about one link of a job. <see cref=""State""/> is derived by the query.</summary>"
+src/SamoBot.Core/Domain/JobLink.cs,55,1,Tautology,,"/// <summary>One link of a job as the dashboard shows it: its state, the reason in words and the state of each step.</summary>"
+src/SamoBot.Core/Domain/JobLink.cs,84,1,Tautology,,"/// <summary>A reason that links of a job failed, with the number of links.</summary>"
+src/SamoBot.Core/Domain/JobLink.cs,87,1,Tautology,,"/// <summary>The number of links of a job in each state, and why the failed ones failed.</summary>"
+src/SamoBot.Core/Domain/JobLink.cs,109,1,Tautology,,"/// <summary>Which links a recrawl puts back in the queue: one link, the failed links, or every link of the job.</summary>"
+src/SamoBot.Core/Domain/JobPage.cs,3,1,Decision Record,ADR 0012,"/// <summary>One frontier URL of a job, as the dashboard shows it. The property names match the existing API.</summary>"
+src/SamoBot.Core/Domain/JobProgressData.cs,3,1,Tautology,,"/// <summary>The raw numbers of one job that the progress query reads. <see cref=""CrawlProgress.From""/> turns them into the API shape.</summary>"
+src/SamoBot.Core/Domain/JobProgressData.cs,20,1,Decision Record,ADR 0004,"/// <summary>The delay of the host of the current URL. Without a URL in flight, the host of the first seed.</summary>"
+src/SamoBot.Core/Domain/JobProgressData.cs,23,1,Tautology,,/// <summary>True when the robots.txt of that host sets the delay.</summary>
+src/SamoBot.Core/Domain/JobProgressData.cs,26,1,Tautology,,/// <summary>True when the delay applied after the last fetch is larger than the base delay of the host.</summary>
+src/SamoBot.Core/Domain/MetaTag.cs,3,1,Tautology,,"/// <summary>A &lt;meta&gt; tag of a page: its name (or http-equiv, when <see cref=""HttpEquiv""/> is true) and its content, as written.</summary>"
+src/SamoBot.Core/Domain/NewCrawlJob.cs,3,1,Tautology,,/// <summary>The input that creates a crawl job.</summary>
+src/SamoBot.Core/Domain/NewUrl.cs,3,4,Tautology,,/// <summary> /// A URL that is not in the frontier yet. The job flags are copied from the job on insert. /// The host is the URI authority: the host name plus 
+src/SamoBot.Core/Domain/PageDetail.cs,13,1,Tautology,,"/// <summary>The earliest stored link that points at this page, or null (seeds, or no link stored yet).</summary>"
+src/SamoBot.Core/Domain/PageLink.cs,3,4,Decision Record,ADR 0011,"/// <summary> /// One link found on a page, ready to store. ToUrl is absolute and normalized exactly like the frontier's NormalizedUrl, /// ToHost is the URI au"
+src/SamoBot.Core/Domain/PageLink.cs,9,1,Tautology,,/// <summary>The earliest page that links to a page.</summary>
+src/SamoBot.Core/Domain/PageLink.cs,20,4,Tautology,,"/// <summary> /// A row of the link list of a page. Direction out: Url and Text are the target and the anchor, PageId and StatusCode /// describe the target whe"
+src/SamoBot.Core/Domain/PageToIndex.cs,5,1,Tautology,,"/// <summary>A parsed page that waits for the search index, with the policy that decides whether it is indexed.</summary>"
+src/SamoBot.Core/Domain/PageToIndex.cs,10,1,Decision Record,ADR 0012,"/// <summary>The id of the discovered URL, which is the page id of the dashboard.</summary>"
+src/SamoBot.Core/Domain/PageToIndex.cs,22,1,Excuse,#41,/// <summary>What the site allows for the page. Pages parsed before policies were stored have the default policy.</summary>
+src/SamoBot.Core/Domain/PagedResult.cs,3,1,Tautology,,/// <summary>One page of a list and the total number of rows behind it.</summary>
+src/SamoBot.Core/Domain/ParseResult.cs,5,1,Tautology,,"/// <summary>Everything one parse produces: the page, its policy, the URLs it adds to the frontier, and its stored links.</summary>"
+src/SamoBot.Core/Domain/ParsedPage.cs,10,1,Tautology,,/// <summary>The canonical href as written by the parser; the parse handler replaces it with the resolved canonical URL.</summary>
+src/SamoBot.Core/Domain/ParsedPage.cs,16,1,Tautology,,"/// <summary>The href of &lt;base&gt;, as written. Empty without one.</summary>"
+src/SamoBot.Core/Domain/ParsedPage.cs,18,1,Tautology,,/// <summary>Every &lt;meta&gt; tag with a name or http-equiv. The directive sources interpret them.</summary>
+src/SamoBot.Core/Domain/RequeuedWork.cs,3,1,Tautology,,"/// <summary>What a recrawl gave back to the stages: URLs to fetch again, and stored fetches to parse again.</summary>"
+src/SamoBot.Core/Domain/ResponseHeaders.cs,3,4,Decision Record,ADR 0005,"/// <summary> /// The response headers of a fetch that the crawler keeps: only the ones a registered directive source asks for /// (see <see cref=""Directives.Re"
+src/SamoBot.Core/Domain/ResponseHeaders.cs,28,1,Tautology,,"/// <summary>The values of one header, in the order they were sent. Empty when the header is missing.</summary>"
+src/SamoBot.Core/Domain/ResponseHeaders.cs,33,1,Tautology,,"/// <summary>Builds the kept headers from a lookup that returns the values of one header, or null when it is missing.</summary>"
+src/SamoBot.Core/Domain/RobotsRules.cs,5,1,Tautology,,/// <summary>The robots.txt rules of one host. The constructor parses the content one time.</summary>
+src/SamoBot.Core/Domain/SearchHit.cs,3,1,Decision Record,ADR 0007,/// <summary>The search document of a parsed page. The property names match the Meilisearch index.</summary>
+src/SamoBot.Core/Domain/SearchHit.cs,19,1,Tautology,,"/// <summary>Unix seconds after which the page is hidden from search (unavailable_after); <see cref=""NoEnd""/> without one.</summary>"
+src/SamoBot.Core/Domain/SearchHit.cs,21,1,Tautology,,"/// <summary>The longest snippet in characters; -1 for no limit, 0 for no snippet.</summary>"
+src/SamoBot.Core/Domain/SearchHit.cs,24,1,Decision Record,ADR 0007,"/// <summary>The end of 9999: search filters on ""indexUntil &gt; now"", so a page without an end needs a value far ahead.</summary>"
+src/SamoBot.Core/Domain/SearchPage.cs,3,1,Decision Record,ADR 0007,"/// <summary>One result of a dashboard search. Snippet is encoded text with only mark tags, see <c>SnippetFormatter</c>.</summary>"
+src/SamoBot.Core/Domain/SearchPage.cs,8,1,Tautology,,"/// <summary>A page of results, the number of matches, the time the engine took and the matches per host.</summary>"
+src/SamoBot.Core/Domain/SearchRequest.cs,3,1,Tautology,,"/// <summary>A validated dashboard search. Create it with <see cref=""TryCreate""/>; the limits keep a query cheap.</summary>"
+src/SamoBot.Core/Domain/SiteSummary.cs,14,1,Decision Record,ADR 0012,/// <summary>A site is a host. The row aggregates every job that touched the host.</summary>
+src/SamoBot.Core/Domain/SitemapModels.cs,12,1,Decision Record,ADR 0008,/// <summary>One URL of a sitemap. The normalized form is the key to the crawled pages.</summary>
+src/SamoBot.Core/Domain/SitemapModels.cs,17,1,Tautology,,/// <summary>A stored sitemap file and its URLs. An index has no URLs of its own; its children are separate files.</summary>
+src/SamoBot.Core/Domain/SitemapModels.cs,20,1,Tautology,,"/// <summary>The bytes of a downloaded sitemap, still compressed if the server sent them compressed.</summary>"
+src/SamoBot.Core/Domain/SitemapModels.cs,26,4,Decision Record,ADR 0008,"/// <summary> /// A host claimed from the sitemap queue. <paramref name=""LeaseUntil""/> is the ownership token: it is the lease timestamp /// stored with the que"
+src/SamoBot.Core/Domain/SitemapModels.cs,32,4,Decision Record,ADR 0008,"/// <summary> /// The outcome of a sitemap walk. <paramref name=""Gone""/> is true when the walk downloaded at least one URL and /// every download answered 404 o"
+src/SamoBot.Core/Domain/SitemapView.cs,13,1,Tautology,,/// <summary>A sitemap URL as the database knows it. A page id and status code mean that the URL was fetched.</summary>
+src/SamoBot.Core/Domain/StoredCopy.cs,5,2,Decision Record,ADR 0006,"/// <summary>The newest stored body of a page, the address it was fetched from (the final URL after redirects, else the page URL), the policy parsed from it, //"
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,3,4,Decision Record,ADR 0006,"/// <summary> /// The one place that says which media types the crawler stores and parses: HTML, Markdown and plain text. /// Other types are fetched and skippe"
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,11,1,Tautology,,"/// <summary>Every stored media type, in lower case and without parameters.</summary>"
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,15,1,Tautology,,/// <summary>True for a media type (no parameters) that the crawler stores and parses.</summary>
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,18,1,Tautology,,/// <summary>True for text/html or application/xhtml+xml.</summary>
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,24,1,Tautology,,/// <summary>True for text/markdown (RFC 7763) or the older text/x-markdown.</summary>
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,30,1,Tautology,,/// <summary>True for text/plain.</summary>
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,34,1,Tautology,,"/// <summary>The media type of a Content-Type value without its parameters, or null when it is empty.</summary>"
+src/SamoBot.Core/Domain/StoredMediaTypes.cs,41,1,Tautology,,"/// <summary>True when the start of a body is HTML, whatever its media type says.</summary>"
+src/SamoBot.Core/Domain/UrlUpdate.cs,3,1,Tautology,,"/// <summary>The new state of a frontier URL after a crawl. <see cref=""Pacing""/> is the new pacing of its host (null: unchanged).</summary>"
+src/SamoBot.Core/Indexing/IndexBatchHandler.cs,7,5,Decision Record,ADR 0007,/// <summary> /// Sends parsed pages to the search index. Only the newest page of each URL counts. A page whose policy allows indexing is /// added or updated; 
+src/SamoBot.Core/Indexing/IndexBatchHandler.cs,32,1,Decision Record,ADR 0007,/// <summary>A recrawl parses the same URL again; the newest parsed page of a URL decides.</summary>
+src/SamoBot.Core/Jobs/CrawlJobService.cs,7,1,Tautology,,"/// <summary>The use cases of a crawl job. The <see cref=""CrawlJob""/> decides which transitions are valid.</summary>"
+src/SamoBot.Core/Jobs/CrawlJobService.cs,20,1,Tautology,,/// <summary>Creates the job and starts it. The result holds the job as it is after the start.</summary>
+src/SamoBot.Core/Jobs/CrawlJobService.cs,72,1,Decision Record,ADR 0011,// The seeds go in before the job turns Running. A failed insert leaves a Pending job that can start again.
+src/SamoBot.Core/Jobs/CrawlJobService.cs,79,4,Decision Record,ADR 0011,"/// <summary> /// Processes a completed job again with the current code: fetches again what was skipped for a type that is stored now, /// and parses (and so in"
+src/SamoBot.Core/Jobs/CrawlJobService.cs,98,1,Decision Record,ADR 0011,"// The work goes back before the job turns Running, so that the completion check never sees a running job without it."
+src/SamoBot.Core/Jobs/CrawlJobService.cs,111,4,Tautology,,"/// <summary> /// Queues links of the job again (one link, the failed links or all of them) and makes a finished job run again. /// Fails when no link was queue"
+src/SamoBot.Core/Jobs/HostRules.cs,6,1,Decision Record,ADR 0002,"/// <summary>Rejects host names and IP addresses that point at the machine, the local network or a cloud metadata service.</summary>"
+src/SamoBot.Core/Jobs/HostRules.cs,11,1,Tautology,,"/// <summary>Returns a message when the host is not allowed, otherwise null.</summary>"
+src/SamoBot.Core/Jobs/HostRules.cs,30,1,Decision Record,ADR 0002,// A name without a dot is a single-label name that only a local resolver knows.
+src/SamoBot.Core/Jobs/JobCompletionHandler.cs,12,1,Decision Record,ADR 0013,"/// <summary>Completes the finished jobs. It returns 0, so that the polling loop waits between runs.</summary>"
+src/SamoBot.Core/Jobs/JobNotFoundError.cs,5,1,Tautology,,/// <summary>The job does not exist. The API maps this error to 404.</summary>
+src/SamoBot.Core/Jobs/LinkReasons.cs,7,1,Tautology,,/// <summary>Turns the stored fail reason of a URL into words for the dashboard.</summary>
+src/SamoBot.Core/Jobs/LinkReasons.cs,14,1,Tautology,,"/// <summary>A short label, for example ""HTTP 404"" or ""Timed out"".</summary>"
+src/SamoBot.Core/Jobs/LinkReasons.cs,36,1,Tautology,,/// <summary>A sentence for a link that will not be fetched again on its own.</summary>
+src/SamoBot.Core/Jobs/LinkStatusDescriber.cs,6,5,Decision Record,ADR 0011,"/// <summary> /// Explains one link of a job: which of the steps fetch, store, parse and index are done, and in words why the link is /// where it is. The state"
+src/SamoBot.Core/Jobs/LinkStatusDescriber.cs,53,1,Decision Record,ADR 0011,"/// <summary>A URL that robots.txt or the address policy stopped was never requested: its fetch step is skipped, not done.</summary>"
+src/SamoBot.Core/Jobs/SeedUrlValidator.cs,3,5,Decision Record,ADR 0002,/// <summary> /// Checks the seed URLs of a new job before anything is stored. Only absolute http and https URLs pass. /// A seed may not carry credentials and 
+src/SamoBot.Core/Jobs/SeedUrlValidator.cs,13,1,Tautology,,/// <summary>Returns one message for each problem. An empty list means that every seed is valid.</summary>
+src/SamoBot.Core/Parsing/JobScope.cs,5,1,Tautology,,/// <summary>Applies the limits of a crawl job to the links of a page.</summary>
+src/SamoBot.Core/Parsing/JobScope.cs,8,1,Tautology,,"/// <summary>Links of the page, one level deeper than the page.</summary>"
+src/SamoBot.Core/Parsing/JobScope.cs,12,1,Tautology,,"/// <summary>URLs at the given depth, such as redirect targets that stay at the depth of the page.</summary>"
+src/SamoBot.Core/Parsing/LinkResolver.cs,6,1,Tautology,,"/// <summary>Turns the links of a page into absolute, normalized, unique http and https URLs.</summary>"
+src/SamoBot.Core/Parsing/LinkResolver.cs,16,1,Tautology,,"/// <summary>The normalized form of an absolute URL, or null when it is not http or https.</summary>"
+src/SamoBot.Core/Parsing/LinkResolver.cs,19,1,Tautology,,"/// <summary>The absolute, normalized http or https URL of a link, or null when it is not one.</summary>"
+src/SamoBot.Core/Parsing/LinkResolver.cs,22,2,Decision Record,ADR 0011,"// The base-URI overload is the safe form of new Uri(pageUrl, href). // Uri.TryCreate(href, UriKind.Absolute) would turn ""/path"" into a file:// URI on Linux."
+src/SamoBot.Core/Parsing/PageLinkPreparer.cs,7,4,Decision Record,ADR 0011,"/// <summary> /// Turns the links of a page into the rows of the link table: every http and https link, internal or external, /// whether the job follows it or "
+src/SamoBot.Core/Parsing/PageLinkPreparer.cs,13,1,Decision Record,ADR 0010,/// <summary>At most this many distinct targets are stored for one page; the rest are dropped.</summary>
+src/SamoBot.Core/Parsing/PageLinkPreparer.cs,16,1,Decision Record,ADR 0010,/// <summary>A target longer than this is skipped (the same limit as the URL columns).</summary>
+src/SamoBot.Core/Parsing/PageLinkPreparer.cs,21,1,Tautology,,"/// <summary>The links of the page, resolved against its base URL. <paramref name=""isNoFollow""/> marks the links the crawler does not follow.</summary>"
+src/SamoBot.Core/Parsing/ParsePageHandler.cs,7,4,Decision Record,ADR 0005,"/// <summary> /// Parses one stored fetch and hands the result to the parse queue. What the site allows (robots meta tags, X-Robots-Tag, /// rel values, canonic"
+src/SamoBot.Core/Ports/IAnalyticsReader.cs,5,1,Tautology,,/// <summary>Read model of crawl analytics over UrlFetches. A null host means all hosts.</summary>
+src/SamoBot.Core/Ports/IContentStore.cs,5,1,Tautology,,/// <summary>Saves the content and returns the object name.</summary>
+src/SamoBot.Core/Ports/ICrawlJobRepository.cs,11,1,Tautology,,/// <summary>Inserts the job and returns the new id.</summary>
+src/SamoBot.Core/Ports/ICrawlJobRepository.cs,16,1,Tautology,,/// <summary>Completes each running job that has no work left. Returns the ids of the completed jobs.</summary>
+src/SamoBot.Core/Ports/IFetcher.cs,5,1,Decision Record,ADR 0003,/// <summary>Downloads one URL. An implementation never returns null and never throws for an HTTP error status.</summary>
+src/SamoBot.Core/Ports/IHostAddressCache.cs,5,1,Tautology,,"/// <summary>The addresses that a host name resolved to, and when. The cache keeps this so that a connect need not resolve DNS each time.</summary>"
+src/SamoBot.Core/Ports/IHostAddressCache.cs,8,1,Decision Record,ADR 0002,/// <summary>Remembers the resolved addresses of host names. The caller re-validates every address before it uses it.</summary>
+src/SamoBot.Core/Ports/IHostAddressCache.cs,15,1,Tautology,,/// <summary>Forgets the addresses of a host.</summary>
+src/SamoBot.Core/Ports/IJobLinkReader.cs,5,1,Tautology,,/// <summary>Read model of the links of crawl jobs: where each link stands on its way to the search index.</summary>
+src/SamoBot.Core/Ports/IJobLinkReader.cs,10,1,Tautology,,/// <summary>The link counts of each of the jobs. A job without links has no entry.</summary>
+src/SamoBot.Core/Ports/IJobPageReader.cs,13,1,Tautology,,"/// <summary>The newest <paramref name=""limit""/> events of the job, in ascending id order.</summary>"
+src/SamoBot.Core/Ports/IJobProgressReader.cs,7,1,Tautology,,/// <summary>Reads the counters of a job in one query. Returns null when the job does not exist.</summary>
+src/SamoBot.Core/Ports/IMarkdownConverter.cs,3,2,Decision Record,ADR 0006,"/// <summary>Turns stored page HTML into clean Markdown: headings, text, lists, tables, links and images; no scripts, styles or navigation. /// Relative referen"
+src/SamoBot.Core/Ports/IPageParser.cs,5,1,Tautology,,"/// <summary>Reads a stored body. <paramref name=""contentType""/> is the Content-Type of the fetch (see <see cref=""StoredMediaTypes""/>).</summary>"
+src/SamoBot.Core/Ports/IPageReader.cs,5,1,Tautology,,/// <summary>Read model of crawled pages for the dashboard.</summary>
+src/SamoBot.Core/Ports/IPageReader.cs,12,1,Tautology,,/// <summary>The links of a page (direction out) or the pages that link to it (direction in). Null when the page is unknown.</summary>
+src/SamoBot.Core/Ports/IPageReader.cs,15,1,Tautology,,"/// <summary>The newest stored body of a page with the policy parsed from it, or null when no body is stored.</summary>"
+src/SamoBot.Core/Ports/IParseBacklog.cs,9,4,Decision Record,ADR 0010,"/// <summary> /// Stores the parsed page with its policy, adds the new URLs to the frontier, replaces the stored links of the page /// and marks the fetch as pa"
+src/SamoBot.Core/Ports/ISearchIndex.cs,9,1,Tautology,,/// <summary>Removes the documents of these URLs (by discovered URL id). Ids that are not in the index are ignored.</summary>
+src/SamoBot.Core/Ports/ISearchPages.cs,5,1,Tautology,,/// <summary>The dashboard search: paged results with a snippet and the match count per host.</summary>
+src/SamoBot.Core/Ports/ISiteReader.cs,5,1,Tautology,,/// <summary>Read model of sites (hosts) for the dashboard.</summary>
+src/SamoBot.Core/Ports/ISitemapReader.cs,5,1,Tautology,,/// <summary>Read model of the stored sitemaps of a host. A host without sitemaps gives an empty snapshot.</summary>
+src/SamoBot.Core/Ports/ISitemapSource.cs,5,1,Decision Record,ADR 0008,"/// <summary>Downloads one sitemap file. An implementation never throws for an HTTP or network error, and caps the size of the body.</summary>"
+src/SamoBot.Core/Ports/ISitemapStore.cs,5,1,Tautology,,/// <summary>The sitemap work queue (one row for each host) and the stored sitemap files.</summary>
+src/SamoBot.Core/Ports/ISitemapStore.cs,8,1,Tautology,,"/// <summary>Queues every host that has a completed job and no sitemap refresh for <paramref name=""refreshAfter""/>.</summary>"
+src/SamoBot.Core/Ports/ISitemapStore.cs,11,1,Decision Record,ADR 0008,"/// <summary>Queues one host now, for an on-demand refresh. A request made while a refresh runs queues another refresh.</summary>"
+src/SamoBot.Core/Ports/ISitemapStore.cs,14,1,Tautology,,/// <summary>Takes the oldest queued host under a lease. Returns null when no host is due.</summary>
+src/SamoBot.Core/Ports/ISitemapStore.cs,17,1,Tautology,,/// <summary>Books the next fetch slot of a host and returns how long the caller waits for it. This uses the delay of the host.</summary>
+src/SamoBot.Core/Ports/ISitemapStore.cs,20,5,Decision Record,ADR 0008,/// <summary> /// Finishes the queue row of a claim. The stored files of the host are replaced when the walk found files or the sitemaps are gone; /// a walk wi
+src/SamoBot.Core/Ports/IUrlFrontier.cs,7,5,Decision Record,ADR 0004,"/// <summary> /// Claims at most one due URL for each host. The URLs stay claimed until the lease ends. Each claimed host is held for /// <paramref name=""hold""/"
+src/SamoBot.Core/Ports/IUrlFrontier.cs,14,1,Tautology,,"/// <summary>Records the fetch, the new URL state, and an optional new URL in one transaction.</summary>"
+src/SamoBot.Core/Ports/IUrlFrontier.cs,17,4,Decision Record,ADR 0011,"/// <summary> /// Puts links of a job back in the queue, due now and with a clean failure count, so that they are fetched again. /// A link that is in flight is"
+src/SamoBot.Core/Ports/IUrlFrontier.cs,25,5,Decision Record,ADR 0011,"/// <summary> /// Gives the work of a job back to the stages, in one transaction. A URL whose last fetch was a success with a body of a /// type in <paramref na"
+src/SamoBot.Core/Search/SnippetFormatter.cs,5,4,Decision Record,ADR 0007,"/// <summary> /// Turns engine-highlighted text into a safe snippet. The engine wraps matches in two private-use characters, /// which this class swaps for mark"
+src/SamoBot.Core/Search/SnippetFormatter.cs,17,1,Tautology,,"/// <summary>Picks the first text that contains a match, else the first non-empty text, and formats it.</summary>"
+src/SamoBot.Core/Search/SnippetFormatter.cs,20,4,Decision Record,ADR 0007,"/// <summary> /// Like <see cref=""Pick(string?[])""/>, with at most <paramref name=""maxLength""/> visible characters (the site's /// max-snippet; 0 for nosnippet "
+src/SamoBot.Core/Search/SnippetFormatter.cs,31,1,Tautology,,"/// <summary>Cuts highlighted text after <paramref name=""maxLength""/> visible characters; the highlight markers do not count.</summary>"
+src/SamoBot.Core/Search/SnippetFormatter.cs,78,1,Tautology,,/// <summary>Appends one character and returns whether a mark tag is open afterwards.</summary>
+src/SamoBot.Core/Sitemaps/CappedReadStream.cs,3,1,Tautology,,"/// <summary>A read-only stream wrapper that throws <see cref=""InvalidDataException""/> once more than the limit was read.</summary>"
+src/SamoBot.Core/Sitemaps/SitemapBatchHandler.cs,6,5,Decision Record,ADR 0008,"/// <summary> /// The sitemap loop. It queues the hosts of completed jobs, claims one host under a lease, and refreshes its sitemaps. /// A host that failed kee"
+src/SamoBot.Core/Sitemaps/SitemapBatchHandler.cs,17,4,Decision Record,ADR 0008,"/// <summary> /// A walk fetches at most 50 files, and each fetch waits at most 60 s for the host delay and takes at most 60 s to download: /// 50 x (60 s + 60 "
+src/SamoBot.Core/Sitemaps/SitemapDiscovery.cs,5,1,Decision Record,ADR 0008,"/// <summary>Finds the sitemap URLs of a host: the Sitemap lines of robots.txt, or /sitemap.xml when there are none.</summary>"
+src/SamoBot.Core/Sitemaps/SitemapEnqueueSchedule.cs,3,1,Decision Record,ADR 0008,"/// <summary>Lets the sitemap loop queue finished hosts at most once for each <see cref=""Interval""/> (the loop itself runs every second).</summary>"
+src/SamoBot.Core/Sitemaps/SitemapEnqueueSchedule.cs,10,1,Tautology,,"/// <summary>True for the first call and again once <see cref=""Interval""/> has passed since the last true.</summary>"
+src/SamoBot.Core/Sitemaps/SitemapHosts.cs,5,1,Tautology,,/// <summary>True for an http or https URL whose authority (host and non-default port) is the crawled host.</summary>
+src/SamoBot.Core/Sitemaps/SitemapLimits.cs,3,1,Tautology,,/// <summary>The hard limits against huge or hostile sitemaps.</summary>
+src/SamoBot.Core/Sitemaps/SitemapLimits.cs,12,5,Decision Record,ADR 0010,/// <summary> /// The UTF-8 byte limit of both Loc and NormalizedLoc (the parser checks both). It bounds the keys of UQ_SitemapUrls_Host_Loc and /// IX_SitemapU
+src/SamoBot.Core/Sitemaps/SitemapOverviewService.cs,7,1,Decision Record,ADR 0008,/// <summary>Builds the sitemap view of a host. A URL that is not crawled is Blocked when robots.txt disallows it for our user agent.</summary>
+src/SamoBot.Core/Sitemaps/SitemapParser.cs,12,4,Decision Record,ADR 0008,"/// <summary> /// Parses a urlset or a sitemapindex, plain or gzip. Bad input gives null. DTDs are prohibited and no resolver is set (XXE safe). /// Only http a"
+src/SamoBot.Core/Sitemaps/SitemapParser.cs,30,1,Decision Record,ADR 0008,"/// <summary>A gzip is streamed into the XML reader, capped at 50 MB. A larger stream (a gzip bomb) gives null.</summary>"
+src/SamoBot.Core/Sitemaps/SitemapRefresher.cs,7,5,Decision Record,ADR 0008,"/// <summary> /// Walks the sitemaps of one host: the seeds first, then the children of the indexes (at most 2 levels, 50 downloads, /// so failed or unparsable"
+src/SamoBot.Core/Sitemaps/SitemapRefresher.cs,96,1,Tautology,,/// <summary>True when the walk downloaded at least one URL and every download answered 404 or 410.</summary>
+src/SamoBot.Core/Sitemaps/SitemapRefresher.cs,110,1,Tautology,,"/// <summary>Keeps the URLs that no earlier file had, up to the limit of the host.</summary>"
+src/SamoBot.Mcp/Program.cs,9,1,Decision Record,ADR 0013,// Configure all logs to go to stderr (stdout is used for the MCP protocol messages).
+src/SamoBot.Mcp/Program.cs,14,1,Tautology,,// Add the MCP services: the transport to use (stdio) and the tools to register.
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,11,1,Tautology,,// Add LastFetchId column
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,15,1,Tautology,,// Create foreign key to UrlFetches
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,23,1,Tautology,,// Create index for LastFetchId
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,28,2,Excuse,#42,"// Remove old columns (migrate data first if needed) // Note: In production, you might want to migrate existing data to UrlFetches table first"
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,39,1,Tautology,,// Restore old columns
+src/SamoBot.Migrations/Migrations/005_AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns.cs,46,1,Tautology,,// Remove new column and foreign key
+src/SamoBot.Migrations/Migrations/008_CreateIndexForUnparsedHtmlFetches.cs,11,5,Stale,,// Create a partial composite index optimized for GetUnparsedHtmlFetches query // The index covers: // - ContentType (for filtering text/html) // - FetchedAt (f
+src/SamoBot.Migrations/Migrations/009_CreateParsedDocumentsTable.cs,11,2,Excuse,#42,"// Drop index if it exists from a previous partial migration run // (This index shouldn't exist since .Unique() on column creates a constraint, not this named i"
+src/SamoBot.Migrations/Migrations/009_CreateParsedDocumentsTable.cs,15,1,Excuse,#42,// Check if table already exists (from partial migration run)
+src/SamoBot.Migrations/Migrations/009_CreateParsedDocumentsTable.cs,21,1,Excuse,#42,// Create index if it doesn't exist (idempotent)
+src/SamoBot.Migrations/Migrations/009_CreateParsedDocumentsTable.cs,41,7,Tautology,,// TEXT type for large content // JSON array of ParsedHeading // JSON array of ParsedImage // JSON object // JSON object // JSON object // JSON array of strings
+src/SamoBot.Migrations/Migrations/010_CreateRobotsTxtTable.cs,16,2,Tautology,,// TEXT type for full robots.txt content // Parsed rules as JSON
+src/SamoBot.Migrations/Migrations/010_CreateRobotsTxtTable.cs,22,1,Tautology,,// TEXT type for error details
+src/SamoBot.Migrations/Migrations/014_RedesignFrontier.cs,30,1,Tautology,,// A disabled URL has no next crawl time.
+src/SamoBot.Migrations/Migrations/014_RedesignFrontier.cs,97,1,Excuse,#42,// The rows of IndexJobs are not restored. The Down method cannot rebuild them.
+src/SamoBot.Migrations/Migrations/014_RedesignFrontier.cs,123,1,Excuse,#42,// This Down step fails when two jobs hold the same normalized URL.
+src/SamoBot.Migrations/Migrations/015_AddDashboardIndexes.cs,5,7,Excuse,#42,/// <summary> /// The two indexes are built CONCURRENTLY so a large crawl database keeps accepting writes. That needs no surrounding /// transaction and exactly
+src/SamoBot.Migrations/Migrations/015_AddDashboardIndexes.cs,20,1,Tautology,,// The page detail and content queries read the newest fetches of one URL in FetchedAt order.
+src/SamoBot.Migrations/Migrations/015_AddDashboardIndexes.cs,23,1,Tautology,,"// The host page list filters on Host and orders by LastCrawlAt DESC NULLS LAST, then Id."
+src/SamoBot.Migrations/Migrations/016_CreateSitemapTables.cs,36,1,Decision Record,ADR 0010,"// NormalizedLoc is the key to DiscoveredUrls.NormalizedUrl, as the crawler normalizes URLs."
+src/SamoBot.Migrations/Migrations/016_CreateSitemapTables.cs,50,1,Tautology,,// The page of URLs reads Host and orders by Loc. The crawl state joins on Host and NormalizedLoc.
+src/SamoBot.Migrations/Migrations/016_CreateSitemapTables.cs,55,1,Decision Record,ADR 0010,"// The index on DiscoveredUrls (Host, NormalizedUrl) is migration 022: DiscoveredUrls is a large table, so it is built concurrently."
+src/SamoBot.Migrations/Migrations/018_ReindexForDashboardSearch.cs,8,1,Decision Record,ADR 0010,// Superseded by 021. The full-table UPDATE that was here is replaced by a narrowed one that re-sends one document per URL.
+src/SamoBot.Migrations/Migrations/020_AddResolvedAddressesToHosts.cs,11,1,Tautology,,"// Comma-separated IP addresses, as the last DNS lookup returned the allowed ones."
+src/SamoBot.Migrations/Migrations/021_ReindexLatestDocuments.cs,5,6,Excuse,#44,"/// <summary> /// Search documents are keyed by the URL id and live in the Meilisearch index ""pages"". This marks the newest parsed document /// of every URL as "
+src/SamoBot.Migrations/Migrations/021_ReindexLatestDocuments.cs,25,1,Tautology,,// Re-indexing is idempotent and has nothing to undo.
+src/SamoBot.Migrations/Migrations/022_AddDiscoveredUrlsHostNormalizedUrlIndex.cs,6,7,Decision Record,ADR 0010,/// <summary> /// The crawl state and the not-in-sitemap count look up crawled pages by host and normalized URL. The index is built with /// CONCURRENTLY so tha
+src/SamoBot.Migrations/Migrations/024_AddPacingToHosts.cs,6,5,Decision Record,ADR 0010,"/// <summary> /// Adaptive politeness. The columns are added with a constant default or NULL, so PostgreSQL does not rewrite the table. /// AvgResponseMs: movin"
+src/SamoBot.Migrations/Migrations/025_CreateLinksTable.cs,6,6,Excuse,#41,"/// <summary> /// The links of a page: one row for each distinct target on each page. ToUrl is the normalized absolute target, the same /// text as DiscoveredUr"
+src/SamoBot.Migrations/Migrations/025_CreateLinksTable.cs,34,1,Tautology,,"// Leads with FromUrlId, so it also serves the outgoing list of a page and the delete before a re-parse."
+src/SamoBot.Migrations/Migrations/025_CreateLinksTable.cs,37,1,Tautology,,"// Incoming links of a page, earliest first (foundOn and the ""in"" list)."
+src/SamoBot.Migrations/Migrations/026_AddCrawlDirectives.cs,6,6,Decision Record,ADR 0010,"/// <summary> /// The crawl directives. UrlFetches.ResponseHeaders: the response headers the directive sources read (X-Robots-Tag, Link), /// as a JSON object o"
+src/SamoBot.Migrations/Migrations/027_DropRespectRobots.cs,6,4,Decision Record,ADR 0005,"/// <summary> /// robots.txt is always respected, so the switch that turned it off is gone. Jobs and URLs that were created with the /// switch off are checked "
+src/SamoBot.Tests/Api/ApiJsonContractTests.cs,9,1,Decision Record,ADR 0012,/// <summary>The dashboard reads these shapes. They must not change.</summary>
+src/SamoBot.Tests/Api/AuthHardeningTests.cs,60,1,Decision Record,ADR 0014,"// A bucket never holds fewer than 3 tokens, so the fourth call is the first one refused."
+src/SamoBot.Tests/Api/AuthSessionTests.cs,49,1,Decision Record,ADR 0014,"// The cookie slides (8 h), so keep using the session: the 24 h limit is absolute from sign-in."
+src/SamoBot.Tests/Api/AuthTestHost.cs,28,1,Tautology,,"/// <summary>A minimal in-memory API with only the auth wiring, the auth and me controllers and one echo endpoint.</summary>"
+src/SamoBot.Tests/Api/AuthTestHost.cs,51,1,Tautology,,/// <summary>The host configuration; change a value and call <c>Reload()</c> to simulate a config change.</summary>
+src/SamoBot.Tests/Api/AuthTestHost.cs,80,1,Decision Record,ADR 0014,// TestServer has no peer address: a test sets one with this header to play a client or a proxy.
+src/SamoBot.Tests/Api/RateLimitingTests.cs,12,1,Decision Record,ADR 0014,"// The burst of a bucket is max(3, permitsPerMinute / 5), so small limits give a burst of 3."
+src/SamoBot.Tests/Directives/PagePolicyRuleTests.cs,9,1,Tautology,,"/// <summary>Each rule on its own, and the composed evaluator end to end.</summary>"
+src/SamoBot.Tests/EndToEnd/CrawlJobTests.cs,20,4,Decision Record,ADR 0014,"/// <summary> /// A whole crawl with real PostgreSQL, RustFS and Meilisearch and a real HTTP stub site. /// The clock is fake, so the retry backoff of the faili"
+src/SamoBot.Tests/EndToEnd/CrawlJobTests.cs,60,1,Tautology,,"/// <summary>Runs each handler once. Returns the number of crawled, parsed and indexed items.</summary>"
+src/SamoBot.Tests/EndToEnd/CrawlJobTests.cs,84,1,Decision Record,ADR 0014,// Busy: move just past the host delay. Idle: jump to the next retry.
+src/SamoBot.Tests/EndToEnd/CrawlJobTests.cs,100,1,Decision Record,ADR 0014,"// The stub site is on a loopback address, which the seed validator rejects. The job goes straight into the repository."
+src/SamoBot.Tests/EndToEnd/InfrastructureFixture.cs,6,1,Tautology,,/// <summary>RustFS (S3 storage) and Meilisearch for the end-to-end test. PostgreSQL comes from the shared Postgres fixture.</summary>
+src/SamoBot.Tests/EndToEnd/StubSite.cs,8,4,Tautology,,"/// <summary> /// A small site on a random local port with 22 URLs: a robots.txt that blocks /private, one page that always returns 500, /// one redirect, a roo"
+src/SamoBot.Tests/EndToEnd/StubSite.cs,40,1,Tautology,,/// <summary>The paths that must be fetched with status 200 and must reach the search index.</summary>
+src/SamoBot.Tests/Fakes/FakeMarkdownConverter.cs,5,1,Tautology,,/// <summary>Returns a fixed Markdown text and records the arguments of its calls.</summary>
+src/SamoBot.Tests/Fakes/FakeSitemapSource.cs,7,1,Tautology,,/// <summary>Serves sitemap bodies by URL. An unknown URL gives 404.</summary>
+src/SamoBot.Tests/Fakes/FakeSitemapSource.cs,23,1,Tautology,,/// <summary>Answers a URL with an error status and no body.</summary>
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,7,1,Tautology,,"/// <summary>A raw TCP server on loopback. The test chooses what each connection does, so it can stall or drip.</summary>"
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,24,1,Tautology,,/// <summary>Accepts connections and never answers.</summary>
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,27,1,Tautology,,"/// <summary>Sends valid headers at once, then one body byte every <paramref name=""interval""/>.</summary>"
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,38,1,Tautology,,"/// <summary>Answers a request at once with the given status line and headers, and the body.</summary>"
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,74,1,Tautology,,// The test ended.
+src/SamoBot.Tests/Fakes/LoopbackServer.cs,88,1,Tautology,,"// The client closed the connection, or the test ended."
+src/SamoBot.Tests/Fakes/RecordingHubContext.cs,6,1,Tautology,,/// <summary>A hub context that records the messages that are sent to groups. Each argument is stored as JSON text.</summary>
+src/SamoBot.Tests/Fakes/StubHttpHandler.cs,3,1,Tautology,,/// <summary>A hand-written HTTP handler. The test sets the response or the exception.</summary>
+src/SamoBot.Tests/Fakes/TestDirectives.cs,7,1,Tautology,,"/// <summary>The crawl directives exactly as production composes them (<see cref=""DirectivesServiceCollectionExtensions.AddCrawlDirectives""/>).</summary>"
+src/SamoBot.Tests/Fakes/TestDirectives.cs,17,1,Tautology,,"/// <summary>The context of a page at <paramref name=""url""/>, with optional kept response headers.</summary>"
+src/SamoBot.Tests/Http/HttpTimeoutTests.cs,13,1,Tautology,,"/// <summary>The deadlines against a real socket on loopback: a server that never answers, and one that drips its body.</summary>"
+src/SamoBot.Tests/Markdown/ReverseMarkdownConverterPerformanceTests.cs,10,1,Decision Record,ADR 0014,"/// <summary>A guard that a page at the size cap converts fast enough to do it on demand. Timing based, so it is not in the fast suite.</summary>"
+src/SamoBot.Tests/Markdown/ReverseMarkdownConverterPerformanceTests.cs,16,1,Decision Record,ADR 0014,"// The plan said 2 s. On a 4-core CI-like machine that also runs the Docker tests, the fastest of three runs is about 1.2 s alone and 2.1 s under that load."
+src/SamoBot.Tests/Markdown/ReverseMarkdownConverterPerformanceTests.cs,30,1,Decision Record,ADR 0014,"/// <summary>The fastest of three runs counts: a slow machine or a garbage collection pause hits one run, a slow algorithm hits all of them.</summary>"
+src/SamoBot.Tests/Markdown/ReverseMarkdownConverterPerformanceTests.cs,37,1,Tautology,,// JIT and type loading are not what this test measures
+src/SamoBot.Tests/Parsing/ParseHandlerTests.cs,8,1,Tautology,,/// <summary>The parse handler with the crawl directives exactly as production composes them.</summary>
+src/SamoBot.Tests/Postgres/CrashRecoveryTests.cs,31,1,Tautology,,// The worker dies here. Nothing completes the batch.
+src/SamoBot.Tests/Postgres/PostgresFixture.cs,9,1,Tautology,,/// <summary>One PostgreSQL container for all integration tests. It runs the real migrations.</summary>
+src/SamoBot.Tests/Postgres/PostgresFixture.cs,41,1,Tautology,,/// <summary>Removes all rows. Call it at the start of each test.</summary>
+src/SamoBot.Tests/Postgres/PostgresHostAddressCacheTests.cs,9,1,Stale,,"/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter ""Category=Integration""</c>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresHostHoldTests.cs,10,4,Stale,,"/// <summary> /// One request in flight per host. UNVERIFIED: written without Docker. Run with <c>--filter ""Category=Integration""</c>. /// The base delay of the"
+src/SamoBot.Tests/Postgres/PostgresHostHoldTests.cs,134,1,Tautology,,// The worker dies here. Nothing completes the URL.
+src/SamoBot.Tests/Postgres/PostgresJobEventsTests.cs,6,1,Stale,,"/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter ""Category=Integration""</c>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresJobLinkTests.cs,9,1,Tautology,,"/// <summary>The link read model of a job and the requeue of the frontier. Run with <c>--filter ""Category=Integration""</c>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresJobLinkTests.cs,60,1,Tautology,,"/// <summary>One link in every state, in the order of <see cref=""LinkState""/>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresJobProgressReaderTests.cs,8,1,Stale,,"/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter ""Category=Integration""</c>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresJobProgressReaderTests.cs,69,1,Stale,,// UNVERIFIED: written without Docker.
+src/SamoBot.Tests/Postgres/PostgresPacingTests.cs,10,1,Stale,,"/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter ""Category=Integration""</c>.</summary>"
+src/SamoBot.Tests/Postgres/PostgresSitemapQueueTests.cs,10,1,Stale,,"/// <summary>UNVERIFIED in the authoring environment: written without Docker, so these tests have never run.</summary>"
+src/SamoBot.Tests/Postgres/PostgresSitemapTests.cs,9,1,Stale,,"/// <summary>UNVERIFIED in the authoring environment: written without Docker, so these tests have never run.</summary>"
+src/SamoBot.Tests/Postgres/PostgresSitemapTests.cs,40,1,Tautology,,"/// <summary>Queues the host, claims it and completes the claim with the given files.</summary>"
+src/SamoBot.Tests/Postgres/PostgresTestData.cs,7,1,Tautology,,/// <summary>Direct SQL inserts for the integration tests. The tests do not use the adapters to prepare data.</summary>
+src/SamoBot.Tests/Postgres/PostgresTestData.cs,23,1,Tautology,,/// <summary>Inserts a URL and its host row. The host is due at the fake start time.</summary>
+src/SamoBot.Tests/Postgres/PostgresTestData.cs,45,1,Tautology,,/// <summary>Inserts a fetch with stored HTML for a URL. The parser can claim it.</summary>
+src/SamoBot.Tests/Postgres/PostgresUrlFrontierTests.cs,102,1,Stale,,/// <summary>UNVERIFIED: written without Docker.</summary>
+src/SamoBot.Tests/Postgres/PostgresUrlFrontierTests.cs,197,1,Stale,,// UNVERIFIED: written without Docker.
+src/SamoBot.Tests/Sitemaps/SitemapParserTests.cs,89,1,Tautology,,"// Each ""é"" is 2 UTF-8 bytes raw but 6 bytes once percent-encoded, so the raw loc fits and the normalized form does not."
+src/SamoBot.Tests/Sitemaps/SitemapXml.cs,7,1,Tautology,,/// <summary>Builds sitemap documents for the tests.</summary>
+src/SamoBot.Tests/Worker/PollingWorkerTests.cs,13,1,Tautology,,/// <summary>The test sets what each call does. The call number starts at 1.</summary>
+src/SamoBot.Worker/PollingDelays.cs,5,1,Tautology,,/// <summary>The wait after a batch with no work.</summary>
+src/SamoBot.Worker/PollingDelays.cs,8,1,Tautology,,/// <summary>The wait after a batch that threw an exception.</summary>
+src/SamoBot.Worker/PollingWorker.cs,8,5,Tautology,,"/// <summary> /// Runs one <see cref=""IWorkHandler""/> in a loop. Each batch gets its own DI scope. /// The loop waits 1 second when a batch has no work and 5 se"
+src/SamoBot.Worker/PollingWorker.cs,58,1,Decision Record,ADR 0013,// The host is stopping. The loop ends at the next check.
+src/frontend/eslint.config.js,8,3,Tautology,,"// The same limits as the C# build (see README.md, ""Limits""). Every rule is an error. // A React component is one function that holds its markup, so .tsx files "
+src/frontend/eslint.config.js,24,1,Tautology,,// The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
+src/frontend/eslint.config.js,28,1,Tautology,,// The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
+src/frontend/src/components/layout/AppShell.tsx,54,1,Tautology,,/** Graphite sidebar on desktop; stacks above the content on phones. */
+src/frontend/src/components/layout/nav.ts,7,1,Tautology,,/** Path prefixes that keep this item highlighted. */
+src/frontend/src/components/layout/useLiveCrawls.ts,4,1,Decision Record,ADR 0015,"/** Number of Running crawl jobs, for the sidebar. Polled; shares the crawl screens' jobs query. */"
+src/frontend/src/components/shared/Led.tsx,3,1,Decision Record,ADR 0015,/** The status LED: a mark only. Always put a word next to it. */
+src/frontend/src/components/shared/PageHeader.tsx,5,1,Tautology,,"/** Label kicker over the page's h1, actions aligned to the right (wrapping on phones). */"
+src/frontend/src/components/shared/StatCard.tsx,6,1,Tautology,,/** Kicker label + large mono readout + optional one-line note. */
+src/frontend/src/components/shared/StatusBadge.tsx,5,1,Decision Record,ADR 0015,"/** HTTP status: ""200 OK"", ""404 Client error"". Word and mark, not just colour. */"
+src/frontend/src/components/shared/StatusBadge.tsx,17,1,Tautology,,"/** A badge with a word and, for live states, an LED. */"
+src/frontend/src/components/shared/status.ts,5,1,Decision Record,ADR 0015,"/** HTTP status code -> badge tone, a word and a text mark, so colour is never the only signal. */"
+src/frontend/src/components/ui/badge-variants.ts,15,1,Decision Record,ADR 0015,"// Zabukovec tones: always paired with a word (and a dot where it means ""live"")."
+src/frontend/src/components/ui/chart-context.ts,3,1,Tautology,,// Format: { THEME_NAME: CSS_SELECTOR }
+src/frontend/src/components/ui/chart-context.ts,43,1,Tautology,,// Helper to extract item config from a payload.
+src/frontend/src/components/ui/sidebar-menu.tsx,86,1,Tautology,,// Increases the hit area of the button on mobile.
+src/frontend/src/components/ui/sidebar-menu.tsx,129,1,Tautology,,// Random width between 50 to 90%.
+src/frontend/src/components/ui/sidebar-parts.tsx,137,1,Tautology,,// Increases the hit area of the button on mobile.
+src/frontend/src/features/analytics/AnalyticsCard.tsx,8,1,Tautology,,"/** Card with an engraved kicker and an h2 title, shared by every analytics panel. */"
+src/frontend/src/features/analytics/AnalyticsCard.tsx,23,1,Tautology,,"/** Renders loading / error, or the children once data is there. */"
+src/frontend/src/features/analytics/HostBarRow.tsx,14,1,Tautology,,/** Optional marker (p95) on the same axis. */
+src/frontend/src/features/analytics/HostBarRow.tsx,16,1,Tautology,,/** The one thing that matters gets the signal colour. */
+src/frontend/src/features/analytics/HostBarRow.tsx,24,1,Tautology,,"/** One row: host link, a single-axis bar (with an optional marker), then the value as text. */"
+src/frontend/src/features/analytics/PeakLabel.tsx,12,1,Tautology,,/** Direct label above the single peak column; every other column stays unlabelled. */
+src/frontend/src/features/analytics/host-bars.ts,5,1,Tautology,,"/** Rounds up to a tidy axis end (2 400, 10 000 ...). */"
+src/frontend/src/features/analytics/host-bars.ts,16,1,Tautology,,"/** Median bar + p95 marker, slowest median first; the slowest host is the signal bar. */"
+src/frontend/src/features/analytics/host-bars.ts,32,1,Tautology,,"/** Pages per host with their share of all pages, largest first. */"
+src/frontend/src/features/analytics/host-sort.ts,14,1,Tautology,,// Missing values (null) always sort as the smallest.
+src/frontend/src/features/analytics/host-sort.ts,23,1,Tautology,,/** Clicking the active column flips direction; a new column starts descending (host: ascending). */
+src/frontend/src/features/analytics/range.ts,29,1,Decision Record,ADR 0015,/** Range and host live in the URL (?range=&host=) so views can be shared. */
+src/frontend/src/features/analytics/status.ts,9,1,Tautology,,/** CSS colour from the Zabukovec variables. */
+src/frontend/src/features/auth/AuthProvider.tsx,12,1,Decision Record,ADR 0015,"// Any 401 from the API means the session is gone: drop the user, ProtectedRoute redirects."
+src/frontend/src/features/auth/AuthProvider.tsx,25,1,Decision Record,ADR 0015,// Keep the /me query (it is observed); drop everything else cached for the old user.
+src/frontend/src/features/auth/auth-api.ts,6,1,Tautology,,/** Returns null when nobody is signed in (401). */
+src/frontend/src/features/auth/auth-context.ts,5,1,Tautology,,"/** The signed-in user, or null. */"
+src/frontend/src/features/auth/auth-context.ts,8,1,Tautology,,"/** Re-reads /me, e.g. after the Google sign-in succeeded. */"
+src/frontend/src/features/auth/auth-context.ts,23,1,Tautology,,/** The signed-in user; only call below <ProtectedRoute>. */
+src/frontend/src/features/auth/google.ts,1,1,Decision Record,ADR 0015,// Minimal types for Google Identity Services (https://accounts.google.com/gsi/client).
+src/frontend/src/features/auth/google.ts,19,1,Tautology,,/** Loads the GIS script once and resolves with its `accounts.id` API. */
+src/frontend/src/features/auth/google.ts,43,1,Tautology,,/** Initializes GIS once per client id; the latest callback receives the credential. */
+src/frontend/src/features/auth/google.ts,53,1,Tautology,,/** Stops delivering credentials to this callback (the button unmounted). */
+src/frontend/src/features/crawl/ConnectionIndicator.tsx,11,1,Tautology,,/** Live / Reconnecting / Offline. The LED is lit only while live. */
+src/frontend/src/features/crawl/CrawlActions.tsx,46,1,Tautology,,"/** Pause or resume, and cancel behind a confirmation dialog. */"
+src/frontend/src/features/crawl/CrawlActions.tsx,73,4,Decision Record,ADR 0011,"/** * Processes a completed crawl again with the current crawler: pages skipped for a format it reads now are fetched again, * and stored pages are parsed and i"
+src/frontend/src/features/crawl/CrawlOptionsFields.tsx,58,1,Tautology,,"/** The crawl options, set apart from the address by a rule and an engraved label. */"
+src/frontend/src/features/crawl/CrawlsTable.tsx,23,1,Tautology,,// A finished job's headline already counts its failed links.
+src/frontend/src/features/crawl/CrawlsTable.tsx,97,1,Tautology,,"/** One compact row for each crawl: a progress ring, the host, the status and one sentence. The ring opens the steps and links. */"
+src/frontend/src/features/crawl/CurrentRequestCard.tsx,31,1,Tautology,,"/** What the crawler is asking for right now, on the graphite card. */"
+src/frontend/src/features/crawl/FinalSummary.tsx,19,1,Tautology,,/** Shown instead of the live indicator once the job has ended. */
+src/frontend/src/features/crawl/JobLinksPanel.tsx,81,1,Tautology,,"/** The links of a job with their state and steps, filtered and paged, each with a recrawl button. */"
+src/frontend/src/features/crawl/JobLinksPanel.tsx,89,1,Decision Record,ADR 0011,// A cancelled crawl is not run again for one link: offer a new crawl of that link instead.
+src/frontend/src/features/crawl/JobLinksTable.tsx,59,1,Tautology,,"/** One row for each link: its state, the page it leads to, the four steps, the reason in words, and a recrawl. */"
+src/frontend/src/features/crawl/JobStatusBadge.tsx,5,1,Tautology,,"/** Job status as a word, with the LED only while the crawl runs. */"
+src/frontend/src/features/crawl/JobSteps.tsx,46,1,Tautology,,"/** What the job has done so far: one sentence (unless the caller shows it already), the four steps with counts, and why links failed. */"
+src/frontend/src/features/crawl/LinkStepPips.tsx,4,1,Tautology,,"/** Fetch, Store, Parse and Index of one link, each with a mark and a word for screen readers. */"
+src/frontend/src/features/crawl/NewCrawlForLinkDialog.tsx,8,1,Decision Record,ADR 0011,"/** A new crawl of exactly one link: depth 0 and a limit of one page, so that nothing else is fetched. */"
+src/frontend/src/features/crawl/NewCrawlForLinkDialog.tsx,24,4,Decision Record,ADR 0011,/** * A link of a cancelled crawl cannot be recrawled inside it: running that crawl again would also fetch everything * that was still queued. This asks to star
+src/frontend/src/features/crawl/PolitenessCard.tsx,26,1,Tautology,,"/** How politely SamoBot is crawling: the delay, where it came from and how fast the site answers. */"
+src/frontend/src/features/crawl/RecrawlActions.tsx,9,1,Tautology,,/** Sends a recrawl action and refreshes everything that shows the job. */
+src/frontend/src/features/crawl/RecrawlActions.tsx,48,1,Tautology,,"/** Retry the failed links, or fetch every link of the job again (behind a confirmation). */"
+src/frontend/src/features/crawl/RequestCrawlDialog.tsx,10,1,Tautology,,"/** ""Request a crawl"": one address, optional limits. Starts the job and opens its live screen. */"
+src/frontend/src/features/crawl/RequestLog.tsx,32,1,Decision Record,ADR 0015,"/** The newest requests first, at most 200. Not a live region: it would read out every request. */"
+src/frontend/src/features/crawl/ResponseBar.tsx,14,1,Decision Record,ADR 0015,/** Stacked bar of response classes. The legend repeats every number in words. */
+src/frontend/src/features/crawl/StatCards.tsx,54,1,Decision Record,ADR 0015,"/** Pages, queue, failed, elapsed. The counters announce changes politely. */"
+src/frontend/src/features/crawl/StepRing.tsx,12,1,Tautology,,"/** The same colours as the step bars: green when done, the accent while it runs. */"
+src/frontend/src/features/crawl/StepRing.tsx,33,1,Tautology,,"/** The four steps of a crawl as one ring: a quarter each for fetch, store, parse and index, coloured by its status and filled as far as the step got. */"
+src/frontend/src/features/crawl/crawl-api.ts,9,1,Excuse,#47,/** A hub event: the server also sends the stored id (types/api.ts does not list it). The mock stream has none. */
+src/frontend/src/features/crawl/crawl-api.ts,36,1,Tautology,,/** One page of events. Without `after` the server returns the newest page (tail mode). */
+src/frontend/src/features/crawl/crawl-api.ts,41,4,Decision Record,ADR 0015,"/** * Events newer than `cursor`, ascending. Cursor 0 means none seen yet: the newest page (tail mode). * Otherwise pages on while a page is full, up to MAX_PAG"
+src/frontend/src/features/crawl/crawl-api.ts,70,1,Tautology,,"/** One page of the links of a job, each with its state, the reason and its steps. */"
+src/frontend/src/features/crawl/crawl-api.ts,75,1,Tautology,,/** Queues one link again. A finished job runs again until the link is done. */
+src/frontend/src/features/crawl/crawl-counters.ts,28,1,Decision Record,ADR 0015,/** Moves the counters on by one finished request. The next snapshot replaces them. */
+src/frontend/src/features/crawl/crawl-format.ts,7,1,Tautology,,"/** 400 -> ""0.4 s"". */"
+src/frontend/src/features/crawl/crawl-format.ts,12,1,Tautology,,"/** 1452000 -> ""24 min 12 s"". */"
+src/frontend/src/features/crawl/crawl-format.ts,68,1,Tautology,,"/** ""About 59 min left at this rate"", or null when the rate is unknown. */"
+src/frontend/src/features/crawl/crawl-groups.ts,5,1,Decision Record,ADR 0015,/** Running first: it changes as you watch. Then the jobs that wait for you or for the worker. */
+src/frontend/src/features/crawl/crawl-groups.ts,25,1,Tautology,,/** The crawls split into those still in progress (running first) and those that finished (newest first). */
+src/frontend/src/features/crawl/crawl-groups.ts,33,1,Tautology,,"/** The group named in the URL (?show=), else in progress when anything is, else finished. */"
+src/frontend/src/features/crawl/crawl-hub.ts,24,1,Decision Record,ADR 0015,"// The CSRF middleware wants this header on every cookie POST, the negotiate request included."
+src/frontend/src/features/crawl/crawl-hub.ts,31,1,Decision Record,ADR 0015,/** True for a 401 from the hub; negotiate failures wrap the status code in the message only. */
+src/frontend/src/features/crawl/crawl-hub.ts,73,1,Decision Record,ADR 0015,/** Never calls start() on a connected hub: a connected one only re-joins. */
+src/frontend/src/features/crawl/crawl-hub.ts,114,1,Tautology,,"/** Connects to the crawl hub, joins the job's group and keeps trying. Returns the cleanup. */"
+src/frontend/src/features/crawl/crawl-rows.ts,10,1,Excuse,#41,"/** The page screen of this URL, or null for events recorded before they carried the page id. */"
+src/frontend/src/features/crawl/crawl-rows.ts,39,1,Tautology,,/** The dashboard route of the page an event is about: /sites/{host}/pages/{id}. Null when the event has no page id. */
+src/frontend/src/features/crawl/crawl-rows.ts,45,1,Tautology,,"/** Newest first, no duplicates, at most LOG_LIMIT rows. */"
+src/frontend/src/features/crawl/crawl-rows.ts,54,1,Tautology,,"/** ""/reference/storage"" for a full URL; the input unchanged when it cannot be parsed. */"
+src/frontend/src/features/crawl/crawl-state.ts,12,1,Decision Record,ADR 0015,"/** Ids already applied (the newest 500), so a live event and a poll of the same event count once. */"
+src/frontend/src/features/crawl/crawl-state.ts,14,1,Tautology,,/** The largest id applied from any source; the cursor for the next poll. */
+src/frontend/src/features/crawl/crawl-state.ts,37,1,Tautology,,/** Records ids as applied (newest SEEN_LIMIT kept) and moves the cursor to the largest id. */
+src/frontend/src/features/crawl/crawl-state.ts,62,1,Decision Record,ADR 0015,/** A live event already applied (from history or a poll) is ignored; one without an id is always applied. */
+src/frontend/src/features/crawl/crawl-validation.ts,11,1,Tautology,,"/** null when the address is fine, else a sentence to show under the field. */"
+src/frontend/src/features/crawl/link-format.ts,54,1,Tautology,,"/** The four steps of a job as counts: how many links passed each step, out of how many that could. */"
+src/frontend/src/features/crawl/link-format.ts,68,1,Tautology,,"/** Links that still move on their own: queued, in flight, waiting for a retry, the parser or the index. */"
+src/frontend/src/features/crawl/link-format.ts,103,1,Tautology,,"/** One sentence that says where the job stands, for the first thing a person reads. */"
+src/frontend/src/features/crawl/link-format.ts,108,1,Tautology,,"/** ""HTTP 404 × 2, Timed out × 1"", the reasons of the failed and retrying links. */"
+src/frontend/src/features/crawl/step-ring.ts,6,1,Tautology,,"/** How much of a quarter to fill: all of it when the step is done, the share done while it runs, none before it starts. */"
+src/frontend/src/features/crawl/step-ring.ts,17,1,Tautology,,"/** ""Fetch: 1 150 of 4 800, in progress. Store: …"" for screen readers and the tooltip. */"
+src/frontend/src/features/crawl/useCrawlData.ts,11,1,Tautology,,/** Loads /progress and /events once and feeds them to the reducer. */
+src/frontend/src/features/crawl/useCrawlData.ts,28,1,Decision Record,ADR 0015,/** The job with its link counts. It is read again while links still move: parsing and indexing go on after the last fetch. */
+src/frontend/src/features/crawl/useCrawlData.ts,37,1,Tautology,,"/** Initial state, then live events (socket) or polling (offline). Stops once the job has ended. */"
+src/frontend/src/features/crawl/useCrawlData.ts,57,1,Tautology,,"// the last sync, then everything stops"
+src/frontend/src/features/crawl/useCrawlStream.ts,8,1,Decision Record,ADR 0015,"/** The in-memory stream, loaded on demand so it stays out of the normal bundle path. */"
+src/frontend/src/features/crawl/useCrawlStream.ts,32,4,Tautology,,"/** * Live CrawlEvents for one job. SignalR against the API, or the in-memory stream when mocks are on. * Returns the connection state; the page keeps itself in"
+src/frontend/src/features/crawl/useEventSync.ts,11,1,Decision Record,ADR 0015,/** Every state but 'live' polls quickly; while live the page only reconciles now and then. */
+src/frontend/src/features/crawl/useEventSync.ts,16,1,Tautology,,"/** One sync: /progress and the events after the cursor, applied as history first, then the snapshot. */"
+src/frontend/src/features/crawl/useEventSync.ts,23,4,Decision Record,ADR 0015,"/** * Keeps the page in step with the server: every 3 s while the socket is not live, every 30 s while it is, * and once on every transition into live (first co"
+src/frontend/src/features/crawl/useNow.ts,3,1,Tautology,,"/** Date.now(), refreshed every `intervalMs` while `active`. For tickers such as ""sent 0.4 s ago"". */"
+src/frontend/src/features/search/snippet.ts,11,1,Decision Record,ADR 0015,"/** Single pass over exactly five entities, so ""&amp;lt;"" becomes ""&lt;"" and not ""<"". */"
+src/frontend/src/features/search/snippet.ts,16,1,Decision Record,ADR 0015,/** Splits on the literal mark tags only; every other character is plain text. */
+src/frontend/src/features/search/useSearchState.ts,18,1,Decision Record,ADR 0015,/** The URL is the source of truth: ?q=&host=&page= */
+src/frontend/src/features/sites/ExplainForm.tsx,25,1,Tautology,,"/** ""Test a URL"" against the host's robots.txt. */"
+src/frontend/src/features/sites/HtmlSource.tsx,14,1,Excuse,#46,/** The crawler keeps at most this much of one page (HttpFetcher.MaxBodyBytes). */
+src/frontend/src/features/sites/HtmlSource.tsx,19,1,Tautology,,"/** Compares the stored copy with what the fetch downloaded, so the reader can trust that nothing is missing. */"
+src/frontend/src/features/sites/HtmlSource.tsx,85,1,Decision Record,ADR 0015,"/** The HTML that the crawler downloaded for this page, as text with line numbers and colours. Never run as HTML. */"
+src/frontend/src/features/sites/HtmlSourceLines.tsx,31,1,Tautology,,"/** The source, one numbered row for each line, with a mark at the end so the reader knows nothing follows. */"
+src/frontend/src/features/sites/KeyValues.tsx,5,1,Tautology,,"/** Label and mono value pairs, as the design's `kv` list. */"
+src/frontend/src/features/sites/MarkdownRender.tsx,27,4,Decision Record,ADR 0015,"/** * Renders Markdown as React elements. Raw HTML is dropped, links and images are restricted to safe URLs. * YAML front matter (a `---` block at the start, co"
+src/frontend/src/features/sites/MarkdownView.tsx,21,1,Tautology,,"/** The page as clean Markdown: rendered for reading, or the Markdown source, with a copy button. */"
+src/frontend/src/features/sites/PageContentCard.tsx,42,1,Tautology,,"/** The page body in one card: read it rendered (default), as Markdown, as the indexed plain text, or as the downloaded HTML. */"
+src/frontend/src/features/sites/PageLinksView.tsx,153,1,Tautology,,/** Links on this page and pages linking to it. The list remounts (paging resets) when the page or direction changes. */
+src/frontend/src/features/sites/PageOutlineCard.tsx,4,1,Tautology,,/** The headings of the page as an indented outline: the structure of the content at a glance. */
+src/frontend/src/features/sites/Pager.tsx,6,1,Tautology,,"/** ""1–8 of 4 812"" with Previous and Next. */"
+src/frontend/src/features/sites/Panel.tsx,7,1,Tautology,,/** A card with an optional mono kicker over a heading. */
+src/frontend/src/features/sites/RecrawlPageButton.tsx,19,1,Tautology,,/** Fetches this one page again. The result shows up in its crawl job. */
+src/frontend/src/features/sites/SectionTabs.tsx,6,1,Tautology,,"/** URL-based tabs: real links, aria-current on the open one. */"
+src/frontend/src/features/sites/SiteFrame.tsx,82,1,Tautology,,"/** Header, key figures and section tabs shared by the site's pages and sitemap screens. */"
+src/frontend/src/features/sites/SitemapPage.tsx,6,1,Tautology,,/** /sites/:host/sitemap shows the sitemap; ?tab=robots shows robots.txt. */
+src/frontend/src/features/sites/StoredBodyState.tsx,17,1,Tautology,,/** Shown above the body when the stored source was cut at the size limit. */
+src/frontend/src/features/sites/StoredBodyState.tsx,38,1,Tautology,,"/** The loading, hidden, error and truncated states that every view of the stored body shares. */"
+src/frontend/src/features/sites/content-views.ts,1,1,Tautology,,/** The four ways to read the same stored body of a page. The first is the default. */
+src/frontend/src/features/sites/content-views.ts,13,1,Tautology,,"/** The view named in the URL (?view=), or the default when it is missing or unknown. */"
+src/frontend/src/features/sites/external-url.ts,1,1,Decision Record,ADR 0015,"/** Returns the URL when it is safe to link to (http or https), otherwise null. */"
+src/frontend/src/features/sites/html-highlight.ts,4,1,Tautology,,"// A comment, a doctype or declaration, or a whole tag. Quoted attribute values may hold "">""."
+src/frontend/src/features/sites/html-highlight.ts,6,1,Tautology,,"// Inside a tag: the name, then attributes with an optional value, then the closing bracket."
+src/frontend/src/features/sites/html-highlight.ts,34,1,Tautology,,"/** The end of the body of a script or style element that starts at `from`: its closing tag, or the end of the text. */"
+src/frontend/src/features/sites/html-highlight.ts,46,1,Tautology,,/** Splits HTML source into coloured tokens. It never changes the text: the tokens joined are the input. */
+src/frontend/src/features/sites/html-highlight.ts,66,1,Tautology,,/** The tokens of each line. A token that spans lines is cut at the line breaks. */
+src/frontend/src/features/sites/html-highlight.ts,83,1,Decision Record,ADR 0015,"/** Above this many lines the source is shown without colours, to keep the page fast. */"
+src/frontend/src/features/sites/link-target.ts,16,1,Tautology,,"/** In-app route for a crawled page, an external link for http(s), otherwise plain text. */"
+src/frontend/src/features/sites/markdown-urls.ts,12,1,Decision Record,ADR 0015,"/** The URL when a link to it is safe to show (http, https, mailto), otherwise undefined. */"
+src/frontend/src/features/sites/markdown-urls.ts,17,1,Decision Record,ADR 0015,"/** The URL when an image from it is safe to load (http, https), otherwise undefined. */"
+src/frontend/src/features/sites/pages-api.ts,26,1,Tautology,,"/** storedBytes: the size of the whole stored body, or null when the server did not say. */"
+src/frontend/src/features/sites/pages-api.ts,35,1,Tautology,,"/** The stored body, loaded only when `enabled`. Shown as text, never as HTML. */"
+src/frontend/src/features/sites/pages-api.ts,45,1,Tautology,,"/** The stored body converted to Markdown by the API, loaded only when `enabled`. */"
+src/frontend/src/features/sites/pages-api.ts,61,1,Tautology,,/** One page of links on this page (out) or to this page (in). */
+src/frontend/src/features/sites/robots-facts.ts,10,1,Decision Record,ADR 0015,/** Facts read from the file text. The server stays the source of truth for the crawl delay. */
+src/frontend/src/features/sites/sites-api.ts,14,1,Tautology,,"/** A 403: the request is refused for good, such as a stored copy the site asked not to show. */"
+src/frontend/src/features/sites/sites-api.ts,19,1,Decision Record,ADR 0015,"/** Retry transient errors, but never a 404 or a 403. */"
+src/frontend/src/features/sites/table-styles.ts,1,1,Tautology,,"// Table cell classes shared by the sites screens (mono uppercase headers, mono right-aligned numbers)."
+src/frontend/src/lib/api.ts,5,1,Tautology,,"/** The raw response text, kept for debugging. */"
+src/frontend/src/lib/api.ts,20,1,Tautology,,/** AuthProvider registers what happens when any request comes back 401. */
+src/frontend/src/lib/api.ts,25,1,Tautology,,"/** Runs the registered 401 handler, for callers that talk to the API outside apiFetch (the SignalR hub). */"
+src/frontend/src/lib/api.ts,75,1,Tautology,,"/** Turns an error response body (problem details, a JSON string or plain text) into readable text. */"
+src/frontend/src/lib/api.ts,87,1,Tautology,,/** The message to show for any thrown value. */
+src/frontend/src/lib/api.ts,97,1,Tautology,,/** Sends the request with the session cookie; handles 401 and turns other failures into ApiError. */
+src/frontend/src/lib/api.ts,124,1,Tautology,,"/** Builds `?a=1&b=2`, skipping empty values. */"
+src/frontend/src/lib/crawl-jobs.ts,4,1,Tautology,,"/** The crawl jobs list query key, shared by the crawl screens and the sidebar so they use one cache entry. */"
+src/frontend/src/lib/format.ts,8,1,Tautology,,"/** 12482 -> ""12 482"" (thin space, as in the design). */"
+src/frontend/src/lib/format.ts,66,1,Tautology,,"/** ""Now"", ""5 minutes ago"", ""2 hours ago"", else a date. */"
+src/frontend/src/lib/format.ts,88,1,Tautology,,/** Elapsed time as HH:MM:SS. */
+src/frontend/src/lib/theme.ts,11,1,Decision Record,ADR 0015,/** Light/dark via the `dark` class on <html>; remembered per browser. index.html applies it before paint. */
+src/frontend/src/lib/theme.ts,21,1,Decision Record,ADR 0015,// storage can be blocked; the choice then lasts for this page only
+src/frontend/src/mocks/browser.ts,6,1,Tautology,,"/** Starts MSW; unhandled requests (fonts, scripts) pass through. */"
+src/frontend/src/mocks/crawlStream.ts,6,1,Tautology,,/** Registers a listener; returns the unsubscribe function. The first listener starts the timer. */
+src/frontend/src/mocks/crawlStream.ts,8,1,Tautology,,/** Registers the connection-state listener (what the SignalR client would report). */
+src/frontend/src/mocks/crawlStream.ts,10,1,Tautology,,"/** Simulates a dropped connection: no events for `ms`, 'reconnecting' meanwhile, then 'live' again. */"
+src/frontend/src/mocks/crawlStream.ts,12,1,Tautology,,/** Stops the timer and drops all listeners. */
+src/frontend/src/mocks/crawlStream.ts,65,6,Decision Record,ADR 0015,"/** * Stand-in for the SignalR `CrawlEvent` stream (hub /hubs/crawl-job, JoinJob(jobId)). * Every `intervalMs` it emits FetchStarted, then FetchCompleted a bit "
+src/frontend/src/mocks/data/crawl.ts,70,1,Decision Record,ADR 0015,// Rows from docs/design/Live.dc.html.
+src/frontend/src/mocks/data/crawl.ts,107,1,Tautology,,"/** Past requests, oldest id first; the newest one finished 1.5 s ago. */"
+src/frontend/src/mocks/data/crawl.ts,114,1,Tautology,,// Same rule as the server: no `after` is the newest `limit`; otherwise the first `limit` after it.
+src/frontend/src/mocks/data/links.ts,8,1,Tautology,,"/** Edge cases the Links view has to handle: external, nofollow, never crawled, and a non-http URL. */"
+src/frontend/src/mocks/data/links.ts,18,1,Tautology,,"/** Links on a page: the edge cases first, then internal links to the other crawled pages. */"
+src/frontend/src/mocks/data/links.ts,35,1,Tautology,,"/** Pages that link to this page, with the anchor each used. */"
+src/frontend/src/mocks/data/pages.ts,18,1,Decision Record,ADR 0015,"// Rows from docs/design/Site.dc.html, plus the pages the search screen links to."
+src/frontend/src/mocks/data/pages.ts,33,1,Tautology,,"/** Page id = host index * 100 + template number, so ids are stable across reloads. */"
+src/frontend/src/mocks/data/pages.ts,85,1,Tautology,,"/** Links on or to a page, or null when the page does not exist. Only parsed pages store outgoing links. */"
+src/frontend/src/mocks/data/sites.ts,4,1,Decision Record,ADR 0015,// Sample data from docs/design/Main.dc.html. docs.example.com is crawled live by job #42.
+src/frontend/src/mocks/handlers/analytics.ts,5,1,Decision Record,ADR 0015,// Numbers from docs/design/Analytics.dc.html.
+src/frontend/src/mocks/handlers/analytics.ts,43,1,Tautology,,"/** Hour buckets for 24h, otherwise day buckets; scaled down for a single host. */"
+src/frontend/src/mocks/handlers/auth.ts,12,1,Tautology,,"// Mock session lives in memory: sign in once per page load, a reload keeps the cookie-less session."
+src/frontend/src/mocks/handlers/crawl.ts,40,1,Tautology,,"/** The server's 400 for a bad seed (docs/api-contract.md: http/https only, no loopback or private addresses). */"
+src/frontend/src/mocks/handlers/index.ts,8,1,Stale,,// Each feature agent edits only its own file in this folder.
+src/frontend/src/mocks/handlers/search.ts,6,1,Decision Record,ADR 0015,"// Results from docs/design/Search.dc.html (""crawl delay"")."
+src/frontend/src/mocks/util.ts,6,1,Tautology,,/** ISO timestamp `ms` milliseconds before now. */
+src/frontend/src/types/api.ts,1,2,Stale,,// The frozen API contract (docs/api-contract.md). JSON is camelCase. Dates are ISO 8601 strings. // Backend and frontend agents both build to these shapes. Cha
+src/frontend/src/types/api.ts,6,1,Tautology,,// --- Auth ---
+src/frontend/src/types/api.ts,10,1,Tautology,,// --- Sites (a site is a host) ---
+src/frontend/src/types/api.ts,38,1,Tautology,,// --- Pages ---
+src/frontend/src/types/api.ts,69,1,Tautology,,/** The earliest page that linked to this one; null for seed URLs. */
+src/frontend/src/types/api.ts,97,1,Tautology,,// --- Sitemap and robots.txt ---
+src/frontend/src/types/api.ts,111,1,Tautology,,// --- Search ---
+src/frontend/src/types/api.ts,117,1,Decision Record,ADR 0015,"// contains <mark>…</mark> around matches; the only HTML allowed, render it by splitting on the tags, never innerHTML"
+src/frontend/src/types/api.ts,123,1,Tautology,,// --- Crawl jobs ---
+src/frontend/src/types/api.ts,145,4,Tautology,,/** * recrawl fetches every link of the job again; retry-failed only the links that failed. * reprocess parses the stored pages of a completed job again and fet
+src/frontend/src/types/api.ts,151,1,Tautology,,"// --- Links of a crawl job: GET /crawl-jobs/{id}/links, POST /crawl-jobs/{id}/links/{linkId}/recrawl ---"
+src/frontend/src/types/api.ts,162,1,Tautology,,// one sentence: why the link is in this state
+src/frontend/src/types/api.ts,172,1,Tautology,,/** The number of links of a job in each state. problems: why the failed and retrying links failed. */
+src/frontend/src/types/api.ts,207,1,Decision Record,ADR 0012,"// SignalR hub /hubs/crawl-job, method JoinJob(jobId), client event ""CrawlEvent""."
+src/frontend/src/types/api.ts,215,1,Excuse,#41,/** The page (discovered URL) id and host; missing on events recorded before they were added. */
+src/frontend/src/types/api.ts,229,1,Tautology,,// --- Analytics ---
+src/frontend/src/types/api.ts,237,1,Tautology,,// 0..1
+src/frontend/src/vite-env.d.ts,1,1,Directive,,"/// <reference types=""vite/client"" />"
+src/frontend/tailwind.config.js,3,2,Decision Record,ADR 0015,"// Every colour is a CSS variable holding space-separated RGB channels (see src/index.css), // so opacity modifiers such as bg-primary/80 keep working."
+src/frontend/tailwind.config.js,9,1,Directive,,/** @type {import('tailwindcss').Config} */
+src/frontend/vite.config.ts,10,1,Decision Record,ADR 0015,"/** The MSW worker is copied from public/ into dist/; production never registers it, so drop it unless mocks are on. */"
+src/frontend/vite.config.ts,23,6,Decision Record,ADR 0015,"/** * Local development without Google sign-in. When DEV_API_KEY is set, the dev server forwards /api and /hubs to * DEV_API_TARGET and adds the X-Api-Key heade"

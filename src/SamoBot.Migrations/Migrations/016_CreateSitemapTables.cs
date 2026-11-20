@@ -33,7 +33,6 @@ public class CreateSitemapTables : Migration
 
     private void CreateUrls()
     {
-        // NormalizedLoc is the key to DiscoveredUrls.NormalizedUrl, as the crawler normalizes URLs.
         Create.Table(UrlsTable)
             .WithColumn("Id").AsInt64().PrimaryKey().Identity()
             .WithColumn("Host").AsString(2048).NotNullable()
@@ -47,12 +46,10 @@ public class CreateSitemapTables : Migration
             .ToTable(FilesTable).PrimaryColumn("Id")
             .OnDelete(System.Data.Rule.Cascade);
 
-        // The page of URLs reads Host and orders by Loc. The crawl state joins on Host and NormalizedLoc.
         Create.UniqueConstraint("UQ_SitemapUrls_Host_Loc").OnTable(UrlsTable).Columns("Host", "Loc");
         Create.Index("IX_SitemapUrls_Host_NormalizedLoc").OnTable(UrlsTable).OnColumn("Host").Ascending().OnColumn("NormalizedLoc").Ascending();
         Create.Index("IX_SitemapUrls_SitemapFileId").OnTable(UrlsTable).OnColumn("SitemapFileId");
 
-        // The index on DiscoveredUrls (Host, NormalizedUrl) is migration 022: DiscoveredUrls is a large table, so it is built concurrently.
     }
 
     private void CreateRequests()

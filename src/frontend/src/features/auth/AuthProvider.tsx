@@ -9,7 +9,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const query = useQuery({ queryKey: meKey, queryFn: fetchMe, retry: false, staleTime: 5 * 60_000 })
 
   useEffect(() => {
-    // Any 401 from the API means the session is gone: drop the user, ProtectedRoute redirects.
     setUnauthorizedHandler(() => client.setQueryData(meKey, null))
     return () => setUnauthorizedHandler(null)
   }, [client])
@@ -22,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signOutRequest()
     } finally {
-      // Keep the /me query (it is observed); drop everything else cached for the old user.
       client.removeQueries({ predicate: (query) => query.queryKey[0] !== meKey[0] })
       client.setQueryData(meKey, null)
     }

@@ -2,7 +2,6 @@ import { apiBase } from './config'
 
 export class ApiError extends Error {
   readonly status: number
-  /** The raw response text, kept for debugging. */
   readonly body: string
 
   constructor(status: number, message: string, body = '') {
@@ -17,12 +16,10 @@ export type ApiInit = RequestInit & { ignoreUnauthorized?: boolean }
 
 let onUnauthorized: (() => void) | null = null
 
-/** AuthProvider registers what happens when any request comes back 401. */
 export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler
 }
 
-/** Runs the registered 401 handler, for callers that talk to the API outside apiFetch (the SignalR hub). */
 export function notifyUnauthorized(): void {
   onUnauthorized?.()
 }
@@ -72,7 +69,6 @@ function fromJson(value: unknown): string | null {
   return validationMessages(value.errors) ?? text ?? null
 }
 
-/** Turns an error response body (problem details, a JSON string or plain text) into readable text. */
 export function readableError(text: string, fallback: string): string {
   if (text.trim() === '') {
     return fallback
@@ -84,7 +80,6 @@ export function readableError(text: string, fallback: string): string {
   }
 }
 
-/** The message to show for any thrown value. */
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong.'
 }
@@ -94,7 +89,6 @@ async function toError(res: Response): Promise<ApiError> {
   return new ApiError(res.status, readableError(text, `${res.status} ${res.statusText}`), text)
 }
 
-/** Sends the request with the session cookie; handles 401 and turns other failures into ApiError. */
 export async function apiFetchResponse(path: string, init?: ApiInit): Promise<Response> {
   const { ignoreUnauthorized, ...rest } = init ?? {}
   const res = await fetch(`${apiBase}${path}`, {
@@ -121,7 +115,6 @@ export async function apiFetch<T>(path: string, init?: ApiInit): Promise<T> {
 
 type QueryValue = string | number | undefined | null
 
-/** Builds `?a=1&b=2`, skipping empty values. */
 export function queryString(params: Record<string, QueryValue>): string {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {

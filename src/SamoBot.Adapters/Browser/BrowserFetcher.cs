@@ -9,7 +9,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Browser;
 
-/// <summary>Renders a page in a Chrome browser that Playwright reaches over CDP. A render error or a timeout (navigation, or the total cap) gives status code 0.</summary>
 public sealed partial class BrowserFetcher(
     IOptions<ChromeRenderingOptions> options,
     SafeResolver resolver,
@@ -86,7 +85,6 @@ public sealed partial class BrowserFetcher(
         }
     }
 
-    /// <summary>Service workers would answer requests the guard never sees, and a crawler has no use for downloads.</summary>
     public static BrowserNewContextOptions ContextOptions() => new()
     {
         ServiceWorkers = ServiceWorkerPolicy.Block,

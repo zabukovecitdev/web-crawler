@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Read-only queries about sites. A site is a host.</summary>
 public sealed class PostgresSiteReader(NpgsqlDataSource dataSource, SiteOverviewCache overviewCache) : ISiteReader
 {
     public async Task<SitesPage> ListSites(SiteQuery query, CancellationToken ct)

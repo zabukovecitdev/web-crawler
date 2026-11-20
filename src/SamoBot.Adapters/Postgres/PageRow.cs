@@ -2,10 +2,8 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The stored link counts of a page.</summary>
 internal sealed record LinkCounts(int LinkCount, int InternalLinkCount);
 
-/// <summary>One page query row. The parsed columns are only set by the detail query.</summary>
 internal sealed class PageRow
 {
     public int Id { get; init; }

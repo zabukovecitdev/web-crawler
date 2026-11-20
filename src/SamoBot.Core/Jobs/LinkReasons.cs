@@ -4,14 +4,12 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Jobs;
 
-/// <summary>Turns the stored fail reason of a URL into words for the dashboard.</summary>
 public static class LinkReasons
 {
     public const string Robots = "robots";
     private const string HttpPrefix = "http-";
     private const string MaxFailures = "max-failures";
 
-    /// <summary>A short label, for example "HTTP 404" or "Timed out".</summary>
     public static string Label(string? reason)
     {
         if (string.IsNullOrEmpty(reason))
@@ -33,7 +31,6 @@ public static class LinkReasons
         };
     }
 
-    /// <summary>A sentence for a link that will not be fetched again on its own.</summary>
     public static string Failed(JobLinkFacts link)
     {
         if (link.FailReason == MaxFailures)

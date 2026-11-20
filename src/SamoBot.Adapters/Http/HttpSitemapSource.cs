@@ -5,11 +5,6 @@ using SamoBot.Core.Sitemaps;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>
-/// Downloads one sitemap. It does not follow redirects and does not decompress, so the parser sees the raw bytes and caps
-/// the decompressed size itself. A body over 10 MB, a network error and a timeout give status code 0.
-/// A <see cref="RequestDeadline"/> (<c>Crawler:SitemapTimeoutSeconds</c> in total, the body read included) limits each file.
-/// </summary>
 public sealed class HttpSitemapSource(
     HttpClient httpClient,
     IOptions<CrawlerNetworkOptions> network,

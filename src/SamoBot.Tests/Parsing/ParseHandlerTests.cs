@@ -5,7 +5,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Parsing;
 
-/// <summary>The parse handler with the crawl directives exactly as production composes them.</summary>
 public class ParseHandlerTests
 {
     private static readonly FetchToParse Fetch = TestDirectives.Fetch("https://a.example/x", depth: 0) with { MaxDepth = 5 };

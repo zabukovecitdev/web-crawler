@@ -57,7 +57,6 @@ public class AuthHardeningTests
         var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "2" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
-        // A bucket never holds fewer than 3 tokens, so the fourth call is the first one refused.
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 3; i++)
         {

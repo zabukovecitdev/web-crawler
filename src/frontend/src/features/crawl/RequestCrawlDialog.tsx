@@ -7,7 +7,6 @@ export type RequestCrawlDialogProps = {
   initialUrl?: string
 }
 
-/** "Request a crawl": one address, optional limits. Starts the job and opens its live screen. */
 export function RequestCrawlDialog({ open, onOpenChange, initialUrl }: RequestCrawlDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -5,10 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// The URL frontier in PostgreSQL. A claim takes at most one due URL for each host and locks the host row,
-/// so that two workers never claim the same host together. All times come from <see cref="TimeProvider"/>.
-/// </summary>
 public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IUrlFrontier
 {
     private const string ClaimSql = $"""
@@ -53,20 +49,12 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         RETURNING "Id"
         """;
 
-    // Releasing the in-flight hold: the wait after a request is booked from the time of the completion, and it REPLACES the
-    // hold that the claim booked (GREATEST with the hold would keep the host closed for the whole hold).
-    // A value that is still within the hold (at most @HeldUntil, plus 1 ms for rounding) is the claim's own hold, or an older
-    // wait: it is replaced. A later value is a wait that someone booked on purpose while the request ran (a sitemap fetch that
-    // queued behind it, or the hold of a second claim after this one expired): it stays, so the release never moves a host
-    // backwards past a wait it must keep. The new wait already holds a Retry-After and the adaptive delay (computed by the caller).
-    // Without a known hold (@HeldUntil null) the later value always stays.
     private const string ReleasedWait = """
         CASE WHEN "NextAllowedAt" <= @HeldUntil::timestamptz + make_interval(secs => 0.001)
              THEN @Now + make_interval(secs => @DelaySeconds)
              ELSE GREATEST("NextAllowedAt", @Now + make_interval(secs => @DelaySeconds)) END
         """;
 
-    // The host row is updated first, like the claim locks the host before its URLs, so that the two never wait for each other.
     private const string UpdateHostSql = $"""
         UPDATE "{TableNames.Hosts}"
         SET "NextAllowedAt" = {ReleasedWait},
@@ -74,7 +62,6 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE "Host" = @Host
         """;
 
-    // An outcome with no pacing change (blocked address, robots disallow) still releases the hold, with the base delay.
     private const string ReleaseHostSql = $"""
         UPDATE "{TableNames.Hosts}" SET "NextAllowedAt" = {ReleasedWait} WHERE "Host" = @Host
         """;
@@ -88,8 +75,6 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         WHERE "Id" = @UrlId
         """;
 
-    // A requeued link looks like a link that was never fetched (no last fetch), so the queue counters, the completion
-    // check and the dashboard all see it as waiting. Its fetch history stays in UrlFetches.
     private const string RequeueSql = $"""
         UPDATE "{TableNames.DiscoveredUrls}"
         SET "Status" = 'Idle', "NextCrawlAt" = @Now, "FailCount" = 0, "FailReason" = NULL, "LeaseUntil" = NULL,
@@ -135,7 +120,6 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         await transaction.CommitAsync(ct);
     }
 
-    // LastCrawlAt goes back to null: the URL waits for its first fetch again, so the job does not complete before the fetch.
     private const string RefetchSkippedSql = $"""
         UPDATE "{TableNames.DiscoveredUrls}" u
         SET "NextCrawlAt" = @Now, "LastCrawlAt" = NULL, "StatusUpdatedAt" = @Now
@@ -172,11 +156,6 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         return new RequeuedWork(refetch, reparse);
     }
 
-    /// <summary>
-    /// Every outcome releases the in-flight hold of the host, in the same transaction as the result. The new wait is
-    /// completion time + the delay of the pacing (base delay when the pacing is unchanged). It replaces the hold, and it
-    /// never lowers a later wait that was booked on purpose (see <see cref="ReleasedWait"/>).
-    /// </summary>
     private static Task<int> ReleaseHost(
         NpgsqlConnection connection, NpgsqlTransaction transaction, ClaimedUrl url, HostPacingUpdate? pacing, DateTimeOffset now, CancellationToken ct)
     {

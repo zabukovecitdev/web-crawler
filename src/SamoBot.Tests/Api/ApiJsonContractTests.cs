@@ -6,7 +6,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Api;
 
-/// <summary>The dashboard reads these shapes. They must not change.</summary>
 public class ApiJsonContractTests
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);

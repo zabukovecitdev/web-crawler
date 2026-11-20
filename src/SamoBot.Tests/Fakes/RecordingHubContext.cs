@@ -3,7 +3,6 @@ using SamoBot.Api.Hubs;
 
 namespace SamoBot.Tests.Fakes;
 
-/// <summary>A hub context that records the messages that are sent to groups. Each argument is stored as JSON text.</summary>
 public sealed class RecordingHubContext : IHubContext<CrawlJobHub>
 {
     private readonly List<(string Group, string Method, object?[] Args)> _sent = [];

@@ -3,11 +3,6 @@ using System.Net.Sockets;
 
 namespace SamoBot.Core.Common;
 
-/// <summary>
-/// Decides whether the crawler may connect to an IP address. Pure: no I/O.
-/// Private, loopback, link-local (cloud metadata), CGNAT, multicast, reserved and documentation ranges are denied.
-/// IPv6 forms that carry an IPv4 address (mapped, compatible, NAT64, 6to4, Teredo) are judged by that embedded address.
-/// </summary>
 public static class IpAddressPolicy
 {
     public static bool IsAllowed(IPAddress address) => address.AddressFamily switch
@@ -29,7 +24,6 @@ public static class IpAddressPolicy
         return EmbeddedV4(bytes).All(IsAllowedV4);
     }
 
-    /// <summary>The IPv4 addresses that an IPv6 address carries. A plain IPv6 address carries none.</summary>
     private static IEnumerable<byte[]> EmbeddedV4(byte[] bytes)
     {
         if (IPv4Compatible.Contains(bytes) || Mapped.Contains(bytes) || Siit.Contains(bytes) || Nat64.Contains(bytes))
@@ -68,7 +62,6 @@ public static class IpAddressPolicy
     private static readonly Cidr SixToFour = new([0x20, 0x02], 16);
     private static readonly Cidr Teredo = new([0x20, 0x01, 0, 0], 32);
 
-    /// <summary>A network as the leading bytes of its address and the number of bits that count.</summary>
     private readonly record struct Cidr(byte[] Prefix, int Bits)
     {
         public bool Contains(byte[] address)

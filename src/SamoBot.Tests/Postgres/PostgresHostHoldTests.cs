@@ -7,10 +7,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>
-/// One request in flight per host. UNVERIFIED: written without Docker. Run with <c>--filter "Category=Integration"</c>.
-/// The base delay of the hosts is 1 s, the hold 30 s, the URL lease 2 minutes.
-/// </summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresHostHoldTests(PostgresFixture postgres) : IAsyncLifetime
@@ -131,7 +127,6 @@ public class PostgresHostHoldTests(PostgresFixture postgres) : IAsyncLifetime
     {
         await TwoUrlsOnOneHost();
         await Claim();
-        // The worker dies here. Nothing completes the URL.
 
         _time.Advance(Hold - TimeSpan.FromSeconds(1));
         var insideHold = await Claim();

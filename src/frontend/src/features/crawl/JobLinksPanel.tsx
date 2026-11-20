@@ -78,7 +78,6 @@ function Toolbar({ job, filter, search, onFilter, onSearch }: ToolbarProps) {
   )
 }
 
-/** The links of a job with their state and steps, filtered and paged, each with a recrawl button. */
 export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
   const [filter, setFilter] = useState<JobLinkFilter>('all')
   const [search, setSearch] = useState('')
@@ -86,7 +85,6 @@ export function JobLinksPanel({ job }: { job: CrawlJobDto }) {
   const links = useLinks(job, filter, search, offset)
   const recrawl = useRecrawlLink(job.id)
   const [asNewCrawl, setAsNewCrawl] = useState<JobLinkDto | null>(null)
-  // A cancelled crawl is not run again for one link: offer a new crawl of that link instead.
   const onRecrawl = (link: JobLinkDto) => (job.status === 'Cancelled' ? setAsNewCrawl(link) : recrawl.mutate(link.id))
   const restart = <T,>(set: (value: T) => void) => (value: T) => {
     set(value)

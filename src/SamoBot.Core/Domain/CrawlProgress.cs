@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>The progress of a job, as the dashboard reads it. The property names match the TypeScript type <c>CrawlProgress</c>.</summary>
 public sealed record CrawlProgress(
     int JobId,
     string Status,
@@ -24,7 +23,6 @@ public sealed record CrawlProgress(
     public const string DefaultSource = "default";
     public const string AdaptiveSource = "adaptive";
 
-    /// <summary>The rate counts fetches over the time since the start. The time has a floor of one minute, so that the first seconds give no spike.</summary>
     public static CrawlProgress From(JobProgressData data, DateTimeOffset now) => new(
         data.JobId,
         data.Status,
@@ -44,7 +42,6 @@ public sealed record CrawlProgress(
         data.StartedAt,
         new CrawlStatusCounts(data.Ok, data.Redirect, data.ClientError, data.ServerError));
 
-    // The adaptive delay wins the label when it is larger than the base delay, because it is the delay in effect.
     private static string Source(JobProgressData data)
     {
         if (data.DelayIsAdaptive)
@@ -55,7 +52,6 @@ public sealed record CrawlProgress(
         return data.DelayFromRobots ? RobotsSource : DefaultSource;
     }
 
-    // Only a running job makes a next request, and only when the host is not yet due.
     private static DateTimeOffset? NextRequest(JobProgressData data, DateTimeOffset now) =>
         data.Status == nameof(CrawlJobStatus.Running) && data.NextAllowedAt > now ? data.NextAllowedAt : null;
 

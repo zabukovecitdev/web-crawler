@@ -6,7 +6,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>The link read model of a job and the requeue of the frontier. Run with <c>--filter "Category=Integration"</c>.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
@@ -57,7 +56,6 @@ public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
             """,
             new { fetchId, at = TestData.Now, indexedAt = indexed ? TestData.Now : (DateTimeOffset?)null, policy });
 
-    /// <summary>One link in every state, in the order of <see cref="LinkState"/>.</summary>
     private async Task<int> JobWithEveryState()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);

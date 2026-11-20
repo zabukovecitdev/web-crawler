@@ -13,7 +13,6 @@ function hostOf(url: string): string | null {
   }
 }
 
-/** In-app route for a crawled page, an external link for http(s), otherwise plain text. */
 export function linkTarget(url: string, pageId: number | null): LinkTarget {
   const href = externalHref(url)
   if (href === null) {

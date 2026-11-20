@@ -2,10 +2,6 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>
-/// Decides whether a Google account may use the dashboard. Empty lists deny everybody. The lists follow
-/// configuration reloads, so removing an entry also affects sessions that are already signed in.
-/// </summary>
 public sealed class EmailAllowlist : IDisposable
 {
     private readonly IDisposable? _changeRegistration;

@@ -79,7 +79,6 @@ function SiteHeading({ site }: { site: SiteDetail }) {
 
 type Props = { host: string; children: ReactNode }
 
-/** Header, key figures and section tabs shared by the site's pages and sitemap screens. */
 export function SiteFrame({ host, children }: Props) {
   const site = useSite(host)
   if (site.isPending) {

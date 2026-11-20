@@ -18,7 +18,6 @@ async function copyText(text: string): Promise<void> {
 
 type Props = { id: number; mode: 'rendered' | 'markdown' }
 
-/** The page as clean Markdown: rendered for reading, or the Markdown source, with a copy button. */
 export function MarkdownView({ id, mode }: Props) {
   const markdown = usePageMarkdown(id, true)
   return (

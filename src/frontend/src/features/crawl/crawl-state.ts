@@ -9,9 +9,7 @@ export type CrawlState = {
   progress: CrawlProgress | null
   log: LogRow[]
   current: CurrentRequest | null
-  /** Ids already applied (the newest 500), so a live event and a poll of the same event count once. */
   seen: number[]
-  /** The largest id applied from any source; the cursor for the next poll. */
   lastEventId: number
 }
 
@@ -34,7 +32,6 @@ function isCompleted(event: CrawlEvent): event is FetchCompletedEvent {
 
 const SEEN_LIMIT = 500
 
-/** Records ids as applied (newest SEEN_LIMIT kept) and moves the cursor to the largest id. */
 function remember(state: CrawlState, ids: number[]): Pick<CrawlState, 'seen' | 'lastEventId'> {
   return {
     seen: [...state.seen, ...ids].slice(-SEEN_LIMIT),
@@ -59,7 +56,6 @@ function applyLive(state: CrawlState, event: CrawlEvent): CrawlState {
   return { ...state, progress: state.progress ? applyJobEvent(state.progress, event.eventType) : null }
 }
 
-/** A live event already applied (from history or a poll) is ignored; one without an id is always applied. */
 function reduceLive(state: CrawlState, event: LiveEvent): CrawlState {
   const { id } = event
   if (id === undefined) {

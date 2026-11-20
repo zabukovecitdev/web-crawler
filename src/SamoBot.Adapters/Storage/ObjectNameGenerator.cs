@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace SamoBot.Adapters.Storage;
 
-/// <summary>Builds the object name of a stored page: domain, path and a hash of the URL.</summary>
 internal static partial class ObjectNameGenerator
 {
     private static readonly Dictionary<string, string> ExtensionsByMediaType = new(StringComparer.OrdinalIgnoreCase)

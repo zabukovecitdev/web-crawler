@@ -4,11 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Sitemaps;
 
-/// <summary>
-/// Walks the sitemaps of one host: the seeds first, then the children of the indexes (at most 2 levels, 50 downloads,
-/// so failed or unparsable children count too).
-/// Each fetch waits for the host delay and respects robots.txt. A walk that found a file, or found only 404 and 410 answers, replaces the stored data.
-/// </summary>
 public sealed class SitemapRefresher(
     RobotsGate robots,
     ISitemapSource source,
@@ -93,7 +88,6 @@ public sealed class SitemapRefresher(
         public HashSet<string> Visited { get; } = new(StringComparer.Ordinal);
         public List<SitemapFileContent> Files { get; } = [];
 
-        /// <summary>True when the walk downloaded at least one URL and every download answered 404 or 410.</summary>
         public bool Gone => _downloads > 0 && _missing == _downloads;
 
         public int Downloads => _downloads;
@@ -107,7 +101,6 @@ public sealed class SitemapRefresher(
             }
         }
 
-        /// <summary>Keeps the URLs that no earlier file had, up to the limit of the host.</summary>
         public List<SitemapEntry> TakeNewUrls(IEnumerable<SitemapEntry> entries)
         {
             var fresh = new List<SitemapEntry>();

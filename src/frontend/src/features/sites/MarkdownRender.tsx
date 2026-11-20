@@ -24,10 +24,6 @@ const components: Components = {
   },
 }
 
-/**
- * Renders Markdown as React elements. Raw HTML is dropped, links and images are restricted to safe URLs.
- * YAML front matter (a `---` block at the start, common in stored .md pages) is metadata, so it is not rendered.
- */
 export function MarkdownRender({ markdown }: { markdown: string }) {
   return (
     <div className="markdown-body max-w-[72ch]">

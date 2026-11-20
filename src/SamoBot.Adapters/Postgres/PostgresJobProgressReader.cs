@@ -5,12 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Reads the live counters of one job with one query. The counts come from the frontier and from the fetches of the job.
-/// A URL counts by its last fetch: crawled (2xx), failed (disabled with a reason other than redirect, robots or blocked-address; a blocked address counts as skipped, not failed),
-/// queued (idle and not yet fetched, or waiting for a retry), in flight (leased).
-/// While a URL is in flight, <c>NextAllowedAt</c> of its host is the in-flight hold, not a next request time, so it is reported as null.
-/// </summary>
 public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJobProgressReader
 {
     private const string ProgressSql = $"""

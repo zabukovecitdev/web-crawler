@@ -7,7 +7,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>UNVERIFIED in the authoring environment: written without Docker, so these tests have never run.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresSitemapQueueTests(PostgresFixture postgres) : IAsyncLifetime

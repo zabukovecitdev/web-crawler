@@ -16,7 +16,6 @@ function headline(status: CrawlProgress['status']): string {
 
 type Props = { progress: CrawlProgress; host: string; elapsed: string }
 
-/** Shown instead of the live indicator once the job has ended. */
 export function FinalSummary({ progress, host, elapsed }: Props) {
   return (
     <Card className="flex flex-wrap items-center justify-between gap-4 p-5 shadow-zb-1">

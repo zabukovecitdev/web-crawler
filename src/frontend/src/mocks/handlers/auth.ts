@@ -9,7 +9,6 @@ export const MOCK_USER: Me = {
   pictureUrl: null,
 }
 
-// Mock session lives in memory: sign in once per page load, a reload keeps the cookie-less session.
 let signedIn = true
 
 export const authHandlers = [

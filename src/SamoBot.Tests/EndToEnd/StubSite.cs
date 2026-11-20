@@ -5,10 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace SamoBot.Tests.EndToEnd;
 
-/// <summary>
-/// A small site on a random local port with 22 URLs: a robots.txt that blocks /private, one page that always returns 500,
-/// one redirect, a root-relative link, and two pages that link to each other.
-/// </summary>
 public sealed class StubSite : IAsyncDisposable
 {
     public const int NormalPageCount = 14;
@@ -37,7 +33,6 @@ public sealed class StubSite : IAsyncDisposable
         }
     }
 
-    /// <summary>The paths that must be fetched with status 200 and must reach the search index.</summary>
     public static IReadOnlyList<string> SuccessfulPaths { get; } =
         ["/", .. Enumerable.Range(1, NormalPageCount).Select(i => $"/page/{i}"), "/a", "/b", "/new", "/about"];
 

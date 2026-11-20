@@ -53,7 +53,6 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 
-    /// <summary>Compares SHA-256 digests in fixed time, so neither content nor length leaks through timing.</summary>
     private static bool KeysMatch(string? candidate, string expected)
     {
         var left = SHA256.HashData(Encoding.UTF8.GetBytes(candidate ?? string.Empty));

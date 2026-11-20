@@ -51,7 +51,6 @@ function Nav() {
   )
 }
 
-/** Graphite sidebar on desktop; stacks above the content on phones. */
 export function AppShell() {
   return (
     <SidebarProvider className="flex-wrap content-start items-stretch bg-background md:content-stretch">

@@ -3,11 +3,6 @@ using SamoBot.Migrations.Constants;
 
 namespace SamoBot.Migrations.Migrations;
 
-/// <summary>
-/// Adaptive politeness. The columns are added with a constant default or NULL, so PostgreSQL does not rewrite the table.
-/// AvgResponseMs: moving average of the response time of healthy fetches. ConsecutiveFailures: timeouts, network errors,
-/// 5xx and 429 in a row. LastDelayMs: the delay applied after the last fetch (the effective pacing, shown on the dashboard).
-/// </summary>
 [Migration(20240101000024, "Add the adaptive pacing state to Hosts")]
 public class AddPacingToHosts : Migration
 {

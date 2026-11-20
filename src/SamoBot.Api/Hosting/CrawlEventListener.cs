@@ -7,10 +7,6 @@ using SamoBot.Api.Hubs;
 
 namespace SamoBot.Api.Hosting;
 
-/// <summary>
-/// Listens to the PostgreSQL channel of crawl events on one connection and sends each event
-/// to the SignalR group of its job. A lost connection is opened again after a short wait.
-/// </summary>
 public sealed partial class CrawlEventListener(
     NpgsqlDataSource dataSource,
     IHubContext<CrawlJobHub> hub,
@@ -57,21 +53,12 @@ public sealed partial class CrawlEventListener(
         }
         catch (OperationCanceledException)
         {
-            // The host is stopping.
+            LogStopped();
         }
     }
 
-    private async Task WaitBeforeReconnect(CancellationToken ct)
-    {
-        try
-        {
-            await Task.Delay(ReconnectDelay, timeProvider, ct);
-        }
-        catch (OperationCanceledException)
-        {
-            // The host is stopping.
-        }
-    }
+    private async Task WaitBeforeReconnect(CancellationToken ct) =>
+        await Task.Delay(ReconnectDelay, timeProvider, ct).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
     private async Task Forward(CancellationToken ct)
     {
@@ -98,7 +85,7 @@ public sealed partial class CrawlEventListener(
         }
         catch (OperationCanceledException)
         {
-            // The host is stopping.
+            LogEventDropped();
         }
     }
 
@@ -110,4 +97,10 @@ public sealed partial class CrawlEventListener(
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "A crawl event message was not valid JSON.")]
     private partial void LogBadMessage(Exception exception);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Debug, Message = "Stopped listening to crawl events: the host is stopping.")]
+    private partial void LogStopped();
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Debug, Message = "A crawl event was not sent: the host is stopping.")]
+    private partial void LogEventDropped();
 }
