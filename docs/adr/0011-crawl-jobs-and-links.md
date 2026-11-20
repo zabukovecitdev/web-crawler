@@ -50,8 +50,8 @@ fetch or a retry, and no fetched page waits for the parser. The parser can still
   tracking parameters, sort the parameters case-insensitively). Add a rule there to change normalization.
 - The tracking parameters (`TrackingParameters`) are code, not configuration. `NormalizedUrl` is a stored dedup key, so changing
   the rules changes the key of URLs already stored. A change to the rules needs a data migration that re-normalizes the stored
-  keys. `UrlNormalizationCharacterizationTests` pins the output, including known quirks: a repeated parameter is joined
-  (`x=1&x=2` gives `x=1%2c2`), a parameter without `=` is dropped, and `?=v` gives `?v`.
+  keys. `UrlNormalizationCharacterizationTests` pins the output, including known defects that issue #50 tracks: a
+  repeated parameter is joined (`x=1&x=2` gives `x=1%2c2`), a parameter without `=` is dropped, and `?=v` gives `?v`.
 - Trailing slashes are kept, because some sites treat `/page` and `/page/` as different resources.
 - Links resolve with the `Uri(baseUri, href)` overload. `Uri.TryCreate(href, UriKind.Absolute)` would turn `/path` into a
   `file://` URI on Linux.

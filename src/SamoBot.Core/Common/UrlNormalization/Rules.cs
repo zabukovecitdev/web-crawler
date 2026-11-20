@@ -28,17 +28,29 @@ public sealed class DropDefaultPort : IUrlRule
 {
     public void Apply(UriBuilder url)
     {
-        if ((url.Scheme == Uri.UriSchemeHttp && url.Port == 80) || (url.Scheme == Uri.UriSchemeHttps && url.Port == 443))
+        if ((IsScheme(url, Uri.UriSchemeHttp) && url.Port == 80) || (IsScheme(url, Uri.UriSchemeHttps) && url.Port == 443))
         {
             url.Port = -1;
         }
     }
+
+    private static bool IsScheme(UriBuilder url, string scheme) => url.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase);
 }
 
-public sealed class RemoveTrackingParameters(IReadOnlySet<string> names, string prefix) : IQueryRule
+public sealed class RemoveTrackingParameters : IQueryRule
 {
+    private readonly HashSet<string> _names;
+    private readonly string _prefix;
+
+    public RemoveTrackingParameters(IEnumerable<string> names, string prefix)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
+        _names = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+        _prefix = prefix;
+    }
+
     public IEnumerable<string> Apply(IEnumerable<string> parameterNames) =>
-        parameterNames.Where(name => !names.Contains(name) && !name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        parameterNames.Where(name => !_names.Contains(name) && !name.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase));
 }
 
 public sealed class SortParameters : IQueryRule
