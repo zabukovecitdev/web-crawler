@@ -43,6 +43,7 @@ public sealed class FetchRecorder(
         StatusCode = response.StatusCode,
         ContentType = response.ContentType,
         ContentLength = response.Content?.Length,
+        BodyTruncated = response.BodyTruncated,
         ResponseTimeMs = response.ResponseTimeMs,
         ObjectName = objectName,
         FinalUrl = url.Url,

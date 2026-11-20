@@ -11,18 +11,17 @@ import { CONTENT_LABELS } from './labels'
 import { usePageContent, type PageContent } from './pages-api'
 import { isForbidden, isNotFound } from './sites-api'
 
-const FETCH_CAP_BYTES = 5 * 1024 * 1024
-
 type Check = { tone: 'success' | 'warning'; word: string; detail: string }
 
-function checkOf(content: PageContent, downloaded: number | null): Check {
+function checkOf(content: PageContent, page: PageDetail): Check {
+  const downloaded = page.contentLength
   const stored = content.storedBytes
   const size = stored === null ? '' : `${formatNumber(stored)} bytes stored. `
   if (content.truncated) {
     return { tone: 'warning', word: 'First part only', detail: `${size}The dashboard shows the first 2 MB. Download the file for all of it.` }
   }
-  if (downloaded !== null && downloaded >= FETCH_CAP_BYTES) {
-    return { tone: 'warning', word: 'Cut at 5 MB', detail: `${size}The crawler keeps at most 5 MB of a page, so the end of this page is missing.` }
+  if (page.bodyTruncated) {
+    return { tone: 'warning', word: 'Cut at the size cap', detail: `${size}The crawler stopped reading this page at its size cap, so the end of the page is missing.` }
   }
   if (stored !== null && downloaded !== null && stored !== downloaded) {
     return { tone: 'warning', word: 'Size differs', detail: `${size}The last fetch downloaded ${formatNumber(downloaded)} bytes.` }
@@ -46,7 +45,7 @@ function Viewer({ content, page }: ViewerProps) {
   const [tall, setTall] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const lines = useMemo(() => sourceLines(content.text), [content.text])
-  const check = checkOf(content, page.contentLength)
+  const check = checkOf(content, page)
   const toEnd = () => box.current?.scrollTo({ top: box.current.scrollHeight })
   return (
     <div className="flex flex-col gap-3">

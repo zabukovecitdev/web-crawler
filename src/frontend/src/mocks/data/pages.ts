@@ -123,6 +123,7 @@ export function pageDetail(id: number): PageDetail | null {
     nextCrawlAt: null,
     failReason: template.state === 'Failed' ? 'HTTP 503 after 3 attempts' : null,
     usedJsRendering: false,
+    bodyTruncated: false,
     fetches: [
       { fetchedAt: ago(template.n * MINUTE), statusCode: template.code, contentType: template.type, contentLength: template.length, responseTimeMs: template.ms, finalUrl: null },
       { fetchedAt: ago(26 * 60 * MINUTE), statusCode: template.code, contentType: template.type, contentLength: template.length, responseTimeMs: template.ms + 30, finalUrl: null },

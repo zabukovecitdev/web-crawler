@@ -55,6 +55,16 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
+    public async Task HandleRecordsThatTheBodyWasCutAtTheCap()
+    {
+        var handler = Handler(new FakeFetcher(response: TestData.Response(200) with { BodyTruncated = true }));
+
+        await handler.Handle(TestData.Url(), default);
+
+        _frontier.Completed.Single().Fetch!.BodyTruncated.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task HandleHtmlSuccessStoresContentCompletesAndPublishes()
     {
         var url = TestData.Url();

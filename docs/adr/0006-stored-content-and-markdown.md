@@ -12,6 +12,11 @@ Status: Accepted
 - `HttpFetcher.Accept` asks for HTML first, then Markdown, then plain text, with `*/*` last. A server that negotiates on Accept
   (`Vary: Accept`) then sends HTML when it has some.
 
+**Body cap (`HttpFetcher.MaxBodyBytes`, `FetchResponse.BodyTruncated`).** The HTTP fetcher keeps at most 5 MB of a body. It reads one
+byte past the cap, so a body of exactly 5 MB is not marked as cut. The fetch records `BodyTruncated`, and the API reports it with the
+page, so the dashboard never has to know the cap. Migration 028 marks older fetches of at least 5 MB as cut, the best guess for
+them.
+
 **Fetcher choice (`ChromeRenderingOptions.IsAvailable`).** The browser fetcher is in use only when it is enabled and has a
 CDP endpoint. Otherwise the HTTP fetcher is used.
 

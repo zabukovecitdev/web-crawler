@@ -5,7 +5,7 @@ internal static class PageSql
     private const string SummaryColumns = """
         u."Id", u."Url", u."Host", u."Depth", u."LastCrawlAt", u."NextCrawlAt", u."FailReason", u."CrawlJobId", u."UseJsRendering",
         d."Title", f."StatusCode"::int AS "StatusCode", f."ContentType", f."ContentLength", f."ResponseTimeMs", f."ObjectName",
-        (d."Id" IS NOT NULL) AS "HasParsedDocument", (d."IndexedAt" IS NOT NULL) AS "Indexed"
+        COALESCE(f."BodyTruncated", false) AS "BodyTruncated", (d."Id" IS NOT NULL) AS "HasParsedDocument", (d."IndexedAt" IS NOT NULL) AS "Indexed"
         """;
 
     private const string From = $"""
