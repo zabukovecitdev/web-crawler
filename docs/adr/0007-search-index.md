@@ -26,4 +26,6 @@ Status: Accepted
   else, then swaps those characters for `<mark>` tags, so a snippet is encoded text plus mark tags only. The site's
   `max-snippet` limits the visible characters, and the markers do not count. 0 (nosnippet) gives an empty snippet.
   `SearchHitDto.Snippet` keeps that contract over the API.
+- `snippetMaxLength` -1 means no limit. A hit without the field reads as -1 (`IndexedHit`) rather than failing, so a
+  single document left over in the index cannot break search.
 - The property names of `SearchHit` are the field names of the Meilisearch index.
