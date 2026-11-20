@@ -15,9 +15,11 @@ Status: Accepted
 - **Settings once per process (`MeilisearchSettings`).** The settings are applied before the first read or write. Applying the
   same settings again is a no-op for Meilisearch, so every service that touches the index may call `Ensure`. A failure is
   retried on the next call.
-- **Retired indexes.** `MeilisearchSettings.RetiredIndexes` lists indexes the crawler no longer uses (`parsed_documents`, replaced by
-  `pages` in migration 021). `Ensure` deletes them once per process. A missing index is fine. Any other failure is logged and
-  retried on the next start, so cleanup never blocks search.
+- **Retired indexes (`RetiredIndexCleanup`).** `RetiredIndexes` lists indexes the crawler no longer uses (`parsed_documents`,
+  replaced by `pages` in migration 021). A hosted service deletes them once at startup, in the background and outside
+  `MeilisearchSettings.Ensure`, so neither a slow delete nor a failed one holds up search or indexing. It never deletes the
+  configured index. It waits up to 10 minutes for the delete task. A missing index is fine. A failure or an unreachable server
+  is logged and tried again on the next start.
 - **Filters (`MeilisearchPageSearch`).** The host filter value is a quoted string, so a backslash or a quote in a host cannot
   end it early. The host list ignores the host filter, so the dashboard can still offer the other hosts.
 - **Snippets (`SnippetFormatter`).** The engine wraps matches in two private-use characters. The formatter encodes everything

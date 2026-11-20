@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Contracts;
 using SamoBot.Api.Hosting;
+using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Api;
 
@@ -280,24 +281,5 @@ public class RateLimitingTests
             ["RateLimiting:PermitsPerMinute"] = legacyKey
         }.Where(setting => setting.Value is not null);
         return new ConfigurationBuilder().AddInMemoryCollection(settings).Build().GetSection(RateLimitOptions.SectionName);
-    }
-
-    private sealed class CapturingLoggerProvider : ILoggerProvider, ILogger
-    {
-        public List<string> Messages { get; } = [];
-
-        public ILogger CreateLogger(string categoryName) => this;
-
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            Messages.Add(formatter(state, exception));
-
-        public void Dispose()
-        {
-            Messages.Clear();
-        }
     }
 }
