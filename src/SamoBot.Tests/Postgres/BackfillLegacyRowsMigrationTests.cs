@@ -1,7 +1,5 @@
 using System.Text.Json;
 using FluentAssertions;
-using FluentMigrator.Runner;
-using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using SamoBot.Migrations.Migrations;
 
@@ -14,46 +12,22 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
     private const long Before = 20240101000028;
     private const long After = 20240101000029;
 
-    private readonly string _database = $"migration_{Guid.NewGuid():N}";
-    private string _connectionString = string.Empty;
-    private NpgsqlDataSource _data = null!;
+    private ScratchDatabase _scratch = null!;
+
+    private NpgsqlDataSource Db => _scratch.Data;
 
     public async Task InitializeAsync()
     {
-        await using (var create = postgres.DataSource.CreateCommand($"CREATE DATABASE \"{_database}\""))
-        {
-            await create.ExecuteNonQueryAsync();
-        }
-
-        _connectionString = new NpgsqlConnectionStringBuilder(postgres.ConnectionString) { Database = _database }.ConnectionString;
-        _data = NpgsqlDataSource.Create(_connectionString);
+        _scratch = await ScratchDatabase.Create(postgres);
         Migrate(Before);
     }
 
-    public async Task DisposeAsync()
-    {
-        await _data.DisposeAsync();
-        await using (var pooled = new NpgsqlConnection(_connectionString))
-        {
-            NpgsqlConnection.ClearPool(pooled);
-        }
+    public async Task DisposeAsync() => await _scratch.DisposeAsync();
 
-        await using var drop = postgres.DataSource.CreateCommand($"DROP DATABASE \"{_database}\" WITH (FORCE)");
-        await drop.ExecuteNonQueryAsync();
-    }
-
-    private void Migrate(long version)
-    {
-        using var provider = new ServiceCollection()
-            .AddFluentMigratorCore()
-            .ConfigureRunner(runner => runner.AddPostgres().WithGlobalConnectionString(_connectionString)
-                .ScanIn(typeof(BackfillLegacyRows).Assembly).For.Migrations())
-            .BuildServiceProvider();
-        provider.GetRequiredService<IMigrationRunner>().MigrateUp(version);
-    }
+    private void Migrate(long version) => _scratch.MigrateUp(version);
 
     private async Task<int> Document(int fetchId, string? policy, string? robots) =>
-        await PostgresTestData.Scalar<int>(_data,
+        await PostgresTestData.Scalar<int>(Db,
             """
             INSERT INTO "ParsedDocuments" ("UrlFetchId", "Policy", "RobotsDirectives", "IndexedAt")
             VALUES (@fetchId, @policy, @robots, now()) RETURNING "Id"
@@ -61,23 +35,23 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
             new { fetchId, policy, robots });
 
     private async Task<int> NewUrl(int job, string url) =>
-        await PostgresTestData.InsertFetch(_data, await PostgresTestData.InsertUrl(_data, job, url), Guid.NewGuid().ToString("N"));
+        await PostgresTestData.InsertFetch(Db, await PostgresTestData.InsertUrl(Db, job, url), Guid.NewGuid().ToString("N"));
 
     private Task<bool> Indexed(int document) =>
-        PostgresTestData.Scalar<bool>(_data, """SELECT "IndexedAt" IS NOT NULL FROM "ParsedDocuments" WHERE "Id" = @document""", new { document });
+        PostgresTestData.Scalar<bool>(Db, """SELECT "IndexedAt" IS NOT NULL FROM "ParsedDocuments" WHERE "Id" = @document""", new { document });
 
     private async Task<int> Event(int jobId, string type, string payload) =>
-        await PostgresTestData.Scalar<int>(_data,
+        await PostgresTestData.Scalar<int>(Db,
             """INSERT INTO "CrawlJobEvents" ("CrawlJobId", "EventType", "Payload") VALUES (@jobId, @type, @payload) RETURNING "Id" """,
             new { jobId, type, payload });
 
     private async Task<JsonElement> Json(string sql, int id) =>
-        JsonDocument.Parse(await PostgresTestData.Scalar<string>(_data, sql, new { id })).RootElement;
+        JsonDocument.Parse(await PostgresTestData.Scalar<string>(Db, sql, new { id })).RootElement;
 
     [Fact]
     public async Task UpBuildsThePolicyFromTheOldRobotsFlags()
     {
-        var job = await PostgresTestData.InsertJob(_data);
+        var job = await PostgresTestData.InsertJob(Db);
         var restricted = await Document(await NewUrl(job, "https://a.example/r"),
             null, """{"content":" noindex, nofollow ","noIndex":true,"noFollow":true,"noArchive":false,"noSnippet":true,"none":false}""");
         var none = await Document(await NewUrl(job, "https://a.example/n"), null, """{"Content":"none","None":true}""");
@@ -98,7 +72,7 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
     [Fact]
     public async Task UpRepairsMissingAndUnreadablePoliciesAndKeepsGoodOnes()
     {
-        var job = await PostgresTestData.InsertJob(_data);
+        var job = await PostgresTestData.InsertJob(Db);
         var plain = await Document(await NewUrl(job, "https://a.example/p"), null, null);
         var brokenRobots = await Document(await NewUrl(job, "https://a.example/b"), null, "not json");
         var nullLiteral = await Document(await NewUrl(job, "https://a.example/l"), "null", null);
@@ -116,7 +90,7 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
         }
 
         (await Json(policy, current)).GetProperty("index").GetBoolean().Should().BeFalse();
-        var nullable = await PostgresTestData.Scalar<string>(_data,
+        var nullable = await PostgresTestData.Scalar<string>(Db,
             """SELECT is_nullable FROM information_schema.columns WHERE table_name = 'ParsedDocuments' AND column_name = 'Policy'""");
         nullable.Should().Be("NO");
     }
@@ -124,10 +98,10 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
     [Fact]
     public async Task UpReindexesOnlyTheNewestDocumentOfAUrl()
     {
-        var job = await PostgresTestData.InsertJob(_data);
-        var url = await PostgresTestData.InsertUrl(_data, job, "https://a.example/x");
-        var older = await Document(await PostgresTestData.InsertFetch(_data, url, "old"), null, """{"noIndex":true}""");
-        var newer = await Document(await PostgresTestData.InsertFetch(_data, url, "new"), null, """{"noIndex":true}""");
+        var job = await PostgresTestData.InsertJob(Db);
+        var url = await PostgresTestData.InsertUrl(Db, job, "https://a.example/x");
+        var older = await Document(await PostgresTestData.InsertFetch(Db, url, "old"), null, """{"noIndex":true}""");
+        var newer = await Document(await PostgresTestData.InsertFetch(Db, url, "new"), null, """{"noIndex":true}""");
 
         Migrate(After);
 
@@ -138,9 +112,9 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
     [Fact]
     public async Task UpAddsThePageToOldFetchEventsAndDropsTheOnesItCannotComplete()
     {
-        var job = await PostgresTestData.InsertJob(_data);
-        var url = await PostgresTestData.InsertUrl(_data, job, "https://a.example/x");
-        await PostgresTestData.Scalar<int>(_data,
+        var job = await PostgresTestData.InsertJob(Db);
+        var url = await PostgresTestData.InsertUrl(Db, job, "https://a.example/x");
+        await PostgresTestData.Scalar<int>(Db,
             """
             INSERT INTO "DiscoveredUrls" ("Host", "Url", "NormalizedUrl", "Status", "NextCrawlAt", "CrawlJobId", "Depth")
             VALUES ('a.example', 'https://a.example/x', 'https://a.example/x?v2', 'Idle', now(), @job, 0) RETURNING "Id"
@@ -159,7 +133,7 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
         (filled.GetProperty("pageId").GetInt32(), filled.GetProperty("host").GetString(), filled.GetProperty("statusCode").GetInt32())
             .Should().Be((url, "a.example", 200), "the first of two rows with the same raw URL wins");
         (await Json(payload, recent)).GetProperty("pageId").GetInt32().Should().Be(99);
-        var left = await PostgresTestData.Rows<int>(_data, """SELECT "Id" FROM "CrawlJobEvents" ORDER BY "Id" """);
+        var left = await PostgresTestData.Rows<int>(Db, """SELECT "Id" FROM "CrawlJobEvents" ORDER BY "Id" """);
         left.Should().Equal(old, started, recent).And.NotContain([orphan, preTelemetry]);
     }
 
@@ -168,15 +142,7 @@ public sealed class BackfillLegacyRowsMigrationTests(PostgresFixture postgres) :
     {
         Migrate(After);
 
-        var down = () =>
-        {
-            using var provider = new ServiceCollection()
-                .AddFluentMigratorCore()
-                .ConfigureRunner(runner => runner.AddPostgres().WithGlobalConnectionString(_connectionString)
-                    .ScanIn(typeof(BackfillLegacyRows).Assembly).For.Migrations())
-                .BuildServiceProvider();
-            provider.GetRequiredService<IMigrationRunner>().MigrateDown(Before);
-        };
+        var down = () => _scratch.MigrateDown(Before);
 
         down.Should().Throw<Exception>().Which.ToString().Should().Contain("backup");
     }

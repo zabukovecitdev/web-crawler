@@ -41,7 +41,10 @@ is at most 253 ASCII characters plus a port, so the largest key of `UQ_SitemapUr
 **Large tables.**
 - An index on a large table is built `CONCURRENTLY` (migrations 015 and 022), so crawling keeps writing. That needs
   `TransactionBehavior.None` and exactly one statement per `Execute.Sql`. A failed concurrent build leaves an INVALID index
-  that `IF NOT EXISTS` then skips. Fix it with `DROP INDEX CONCURRENTLY <name>` and run the migrations again.
+  that `IF NOT EXISTS` then skips. Migration 030 (`RepairConcurrentIndexes`) rebuilds each of these indexes that is missing,
+  INVALID, or has an old definition (development databases that ran the first, non-concurrent 015 had
+  `("Host", "LastCrawlAt" DESC)`). It leaves healthy ones alone. A concurrent build that fails after 030 still needs
+  `DROP INDEX CONCURRENTLY <name>` and a new repair migration that lists the index.
 - The `DiscoveredUrls (Host, NormalizedUrl)` index was moved from 016 to 022 for that reason. A database that ran the old
   016 already has it, and `IF NOT EXISTS` skips it.
 - New columns are added with a constant default or NULL, so PostgreSQL does not rewrite the table (migration 024).
@@ -63,6 +66,17 @@ is at most 253 ASCII characters plus a port, so the largest key of `UQ_SitemapUr
   - The links of pages parsed before migration 025 come only from parsing again, through the `reprocess` action of their
     job. The migration does not reopen finished jobs, because that would start crawling after a deploy.
 - Migration 026 stores `UrlFetches.ResponseHeaders` (the headers the directive sources read) and `ParsedDocuments.Policy`.
+
+**Released migrations.**
+- A released migration's `Up` never changes its effect on a database. A schema or data fix is a new, forward migration
+  (030 repairs the drift of 015). Tidying a released `Up` is allowed only when a fresh database ends up identical: 009 lost
+  its guards for "a previous partial migration run", which cannot happen, because FluentMigrator runs each migration in a
+  transaction.
+- A `Down` that cannot restore what `Up` removed throws `NotSupportedException` and says to restore a backup, instead of
+  pretending to roll back: 005 (dropped the fetch columns with their data), 014 (dropped `IndexJobs`, and the old unique
+  key on `NormalizedUrl` no longer holds) and 029 (deleted events). Rolling back past them means restoring a backup.
+- A migration is tested on a scratch database: migrate to the version before it, insert the old shape, migrate, assert
+  (`ScratchDatabase`).
 
 **Read models.**
 - The analytics SQL reads `UrlFetches` in a `FetchedAt` window (`IX_UrlFetches_FetchedAt`) and joins `DiscoveredUrls` by primary
