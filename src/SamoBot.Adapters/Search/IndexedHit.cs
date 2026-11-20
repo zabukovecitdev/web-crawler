@@ -10,7 +10,7 @@ internal sealed class IndexedHit
     public string Title { get; init; } = string.Empty;
     public string Language { get; init; } = string.Empty;
     public DateTimeOffset? FetchedAt { get; init; }
-    public required int SnippetMaxLength { get; init; }
+    public int SnippetMaxLength { get; init; } = -1;
 
     [JsonPropertyName("_formatted")]
     public FormattedFields? Formatted { get; init; }
