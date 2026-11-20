@@ -2,6 +2,7 @@ using System.Net.Mime;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
+using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Storage;
@@ -17,7 +18,7 @@ public sealed class MinioContentStore(IMinioClient client, IOptions<MinioOptions
     {
         await EnsureBucket(ct);
 
-        var objectName = EnsureHtmlExtension(ObjectNameGenerator.GenerateHierarchical(url, contentType));
+        var objectName = ObjectNameGenerator.GenerateHierarchical(url, StoredMediaTypes.FileExtension(contentType));
         using var data = new MemoryStream(content, writable: false);
         var put = new PutObjectArgs()
             .WithBucket(Bucket)
@@ -67,9 +68,4 @@ public sealed class MinioContentStore(IMinioClient client, IOptions<MinioOptions
             _bucketLock.Release();
         }
     }
-
-    private static string EnsureHtmlExtension(string objectName) =>
-        Path.GetExtension(objectName).Equals(".html", StringComparison.OrdinalIgnoreCase)
-            ? objectName
-            : Path.ChangeExtension(objectName, ".html");
 }

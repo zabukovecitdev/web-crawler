@@ -22,6 +22,17 @@ public static class StoredMediaTypes
     public static bool IsPlainText(string? mediaType) =>
         mediaType is not null && mediaType.Equals("text/plain", StringComparison.OrdinalIgnoreCase);
 
+    public static string FileExtension(string? contentType)
+    {
+        var mediaType = MediaType(contentType);
+        if (IsMarkdown(mediaType))
+        {
+            return "md";
+        }
+
+        return IsPlainText(mediaType) ? "txt" : "html";
+    }
+
     public static string? MediaType(string? contentType)
     {
         var mediaType = contentType?.Split(';')[0].Trim();
