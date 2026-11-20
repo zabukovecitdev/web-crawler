@@ -61,4 +61,17 @@ public class FetchResponseTests
     {
         new FetchResponse { StatusCode = status }.IsSuccess.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData("text/html; charset=utf-8", "<p>x</p>", "text/html; charset=utf-8")]
+    [InlineData("text/plain", "<!doctype html><html>", "text/html")]
+    [InlineData("text/markdown", "Use `<html lang=en>` at the top.", "text/markdown")]
+    [InlineData(null, "<!DOCTYPE html>", "text/html")]
+    [InlineData("application/octet-stream", "<html>", "text/html")]
+    [InlineData("text/markdown; charset=utf-8", "# Title", "text/markdown; charset=utf-8")]
+    [InlineData("text/plain", "just text", "text/plain")]
+    public void StoredContentTypeIsHtmlWheneverTheReadersTreatTheBodyAsHtml(string? contentType, string body, string expected)
+    {
+        Response(contentType, body).StoredContentType.Should().Be(expected);
+    }
 }

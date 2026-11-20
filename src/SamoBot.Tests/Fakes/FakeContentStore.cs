@@ -8,11 +8,14 @@ public sealed class FakeContentStore : IContentStore
 
     public List<string> SavedUrls { get; } = [];
 
+    public List<string?> SavedContentTypes { get; } = [];
+
     public void Put(string objectName, string html) => _objects[objectName] = System.Text.Encoding.UTF8.GetBytes(html);
 
     public Task<string> Save(string url, byte[] content, string? contentType, CancellationToken ct)
     {
         SavedUrls.Add(url);
+        SavedContentTypes.Add(contentType);
         var name = $"object-{SavedUrls.Count}";
         _objects[name] = content;
         return Task.FromResult(name);

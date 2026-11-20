@@ -19,9 +19,12 @@ stored copy they serve as `X-Content-Cut-At-Crawl`, which can be an older fetch 
 know the cap. Migration 028 marks older fetches of exactly 5 MB as cut, the best guess for them. Before that, only the HTTP fetcher
 had a cap.
 
-**Object names (`ObjectNameGenerator`, `StoredMediaTypes.FileExtension`).** An object is named `host/path/sha256(url).ext`. The
-extension follows the stored format: `.md` for Markdown, `.txt` for plain text, and `.html` for HTML, including HTML found by
-sniffing a body whose type is missing or wrong. The URL path never decides it. Objects stored before this rule keep their `.html`
+**Object names (`ObjectNameGenerator`, `StoredMediaTypes.FileExtension`).** An object is named `host/path/sha256(url).ext`, or
+`sha256(url).ext` at the bucket root when the URL does not parse. The store gets `FetchResponse.StoredContentType`: the
+Content-Type header, or `text/html` when the body sniffs as HTML under a type other than HTML or Markdown, which is the same
+decision the parser and the API make (a Markdown body stays Markdown even when it mentions `<html`). The extension (`.md`, `.txt`, `.html`) and the object's metadata both follow it, so a `text/plain` body that is really
+HTML is stored as `.html` with type `text/html`. `UrlFetches.ContentType` keeps the header the server sent. The URL path never
+decides the extension. Objects stored before this rule keep their `.html`
 names, because readers find a body through `UrlFetches.ObjectName` and never by building a name.
 
 **Fetcher choice (`ChromeRenderingOptions.IsAvailable`).** The browser fetcher is in use only when it is enabled and has a
