@@ -38,12 +38,24 @@ public sealed class RepairConcurrentIndexesMigrationTests(PostgresFixture postgr
         return ((uint)row.Oid, row.Valid, row.Definition);
     }
 
+    private async Task MakeInvalid(string name)
+    {
+        var job = await PostgresTestData.InsertJob(_scratch.Data);
+        var url = await PostgresTestData.InsertUrl(_scratch.Data, job, "https://a.example/dup");
+        await PostgresTestData.InsertFetch(_scratch.Data, url, "one");
+        await PostgresTestData.InsertFetch(_scratch.Data, url, "two");
+        await Run($"""DROP INDEX "{name}" """);
+        var failing = () => Run($"""CREATE UNIQUE INDEX CONCURRENTLY "{name}" ON "UrlFetches" ("DiscoveredUrlId")""");
+        await failing.Should().ThrowAsync<Npgsql.PostgresException>();
+        (await State(name)).Valid.Should().BeFalse();
+    }
+
     [Fact]
     public async Task UpRebuildsADriftedAnInvalidAndAMissingIndex()
     {
         await Run("""DROP INDEX "IX_DiscoveredUrls_Host_LastCrawlAt" """);
         await Run("""CREATE INDEX "IX_DiscoveredUrls_Host_LastCrawlAt" ON "DiscoveredUrls" ("Host", "LastCrawlAt" DESC)""");
-        await Run("""UPDATE pg_index SET indisvalid = false WHERE indexrelid = '"IX_UrlFetches_DiscoveredUrlId_FetchedAt"'::regclass""");
+        await MakeInvalid("IX_UrlFetches_DiscoveredUrlId_FetchedAt");
         await Run("""DROP INDEX "IX_DiscoveredUrls_Host_NormalizedUrl" """);
 
         _scratch.MigrateUp(After);
@@ -53,6 +65,19 @@ public sealed class RepairConcurrentIndexesMigrationTests(PostgresFixture postgr
             var (_, valid, definition) = await State(index.Name);
             RepairConcurrentIndexes.IsHealthy(valid, definition, index).Should().BeTrue(index.Name);
         }
+    }
+
+    [Fact]
+    public async Task UpReplacesADriftedIndexWithoutLeavingTheTemporaryOne()
+    {
+        await Run("""DROP INDEX "IX_DiscoveredUrls_Host_LastCrawlAt" """);
+        await Run("""CREATE INDEX "IX_DiscoveredUrls_Host_LastCrawlAt" ON "DiscoveredUrls" ("Host", "LastCrawlAt" DESC)""");
+
+        _scratch.MigrateUp(After);
+
+        var leftovers = await PostgresTestData.Rows<string>(_scratch.Data,
+            """SELECT indexname FROM pg_indexes WHERE indexname LIKE '%\_rebuild'""");
+        leftovers.Should().BeEmpty();
     }
 
     [Fact]

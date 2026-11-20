@@ -5,7 +5,8 @@ namespace SamoBot.Tests;
 
 public class RepairConcurrentIndexesTests
 {
-    private static readonly ExpectedIndex HostPages = RepairConcurrentIndexes.Indexes[1];
+    private static readonly ExpectedIndex HostPages =
+        RepairConcurrentIndexes.Indexes.Single(index => index.Name == "IX_DiscoveredUrls_Host_LastCrawlAt");
 
     [Theory]
     [InlineData(true, """CREATE INDEX "x" ON public."DiscoveredUrls" USING btree ("Host", "LastCrawlAt" DESC NULLS LAST, "Id")""", true)]

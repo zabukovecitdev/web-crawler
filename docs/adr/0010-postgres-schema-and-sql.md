@@ -43,7 +43,9 @@ is at most 253 ASCII characters plus a port, so the largest key of `UQ_SitemapUr
   `TransactionBehavior.None` and exactly one statement per `Execute.Sql`. A failed concurrent build leaves an INVALID index
   that `IF NOT EXISTS` then skips. Migration 030 (`RepairConcurrentIndexes`) rebuilds each of these indexes that is missing,
   INVALID, or has an old definition (development databases that ran the first, non-concurrent 015 had
-  `("Host", "LastCrawlAt" DESC)`). It leaves healthy ones alone. A concurrent build that fails after 030 still needs
+  `("Host", "LastCrawlAt" DESC)`). It leaves healthy ones alone. A valid but outdated index keeps serving queries until its
+  replacement is built under a temporary name and renamed. An INVALID one is dropped first. The lookup is limited to the
+  `public` schema and the expected table, and the builds have no command timeout. A concurrent build that fails after 030 still needs
   `DROP INDEX CONCURRENTLY <name>` and a new repair migration that lists the index.
 - The `DiscoveredUrls (Host, NormalizedUrl)` index was moved from 016 to 022 for that reason. A database that ran the old
   016 already has it, and `IF NOT EXISTS` skips it.
@@ -70,8 +72,9 @@ is at most 253 ASCII characters plus a port, so the largest key of `UQ_SitemapUr
 **Released migrations.**
 - A released migration's `Up` never changes its effect on a database. A schema or data fix is a new, forward migration
   (030 repairs the drift of 015). Tidying a released `Up` is allowed only when a fresh database ends up identical: 009 lost
-  its guards for "a previous partial migration run", which cannot happen, because FluentMigrator runs each migration in a
-  transaction.
+  its guards for "a previous partial migration run", which cannot happen, because FluentMigrator runs each migration with the
+  default `TransactionBehavior` in a transaction. Migrations with `TransactionBehavior.None` (015, 022, 030) can stop part way,
+  so they keep their `IF NOT EXISTS` guards or check the catalog.
 - A `Down` that cannot restore what `Up` removed throws `NotSupportedException` and says to restore a backup, instead of
   pretending to roll back: 005 (dropped the fetch columns with their data), 014 (dropped `IndexJobs`, and the old unique
   key on `NormalizedUrl` no longer holds) and 029 (deleted events). Rolling back past them means restoring a backup.
