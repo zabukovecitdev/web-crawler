@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useReducer, useRef, type Dispatch } from 'react'
-import { crawlKeys, fetchEvents, fetchJob, fetchProgress, type LiveEvent } from './crawl-api'
+import type { CrawlEvent } from '@/types/api'
+import { crawlKeys, fetchEvents, fetchJob, fetchProgress } from './crawl-api'
 import { pendingLinks } from './link-format'
 import { crawlReducer, initialCrawlState, isFinished, type CrawlAction } from './crawl-state'
 import { useCrawlStream } from './useCrawlStream'
@@ -43,7 +44,7 @@ export function useCrawlData(jobId: number) {
   }, [state.lastEventId])
   const finished = isFinished(state.progress?.status)
   const active = progress.isSuccess && !finished
-  const onEvent = useCallback((event: LiveEvent) => dispatch({ type: 'live', event }), [])
+  const onEvent = useCallback((event: CrawlEvent) => dispatch({ type: 'live', event }), [])
   const connection = useCrawlStream(jobId, onEvent, active)
   useEventSync(jobId, active, connection, state.lastEventId, dispatch)
 

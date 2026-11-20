@@ -78,14 +78,15 @@ const ROWS: Row[] = [
   { path: '/api/crawl-jobs', statusCode: 200, ms: 201, length: 74000, content: 'Stored', type: 'text/html' },
 ]
 
-export function startedEvent(jobId: number, i: number): CrawlEvent {
+export function startedEvent(jobId: number, i: number, id: number): CrawlEvent {
   const row = ROWS[i % ROWS.length]
-  return { crawlJobId: jobId, eventType: 'FetchStarted', at: new Date().toISOString(), url: `https://docs.example.com${row.path}`, depth: 2 }
+  return { id, crawlJobId: jobId, eventType: 'FetchStarted', at: new Date().toISOString(), url: `https://docs.example.com${row.path}`, depth: 2 }
 }
 
-export function completedEvent(jobId: number, i: number): CrawlEvent {
+export function completedEvent(jobId: number, i: number, id: number): CrawlEvent {
   const row = ROWS[i % ROWS.length]
   return {
+    id,
     crawlJobId: jobId,
     eventType: 'FetchCompleted',
     at: new Date().toISOString(),
@@ -103,11 +104,12 @@ export function completedEvent(jobId: number, i: number): CrawlEvent {
   }
 }
 
-export function recentEvents(jobId: number, after?: number, limit = 100): (CrawlEvent & { id: number })[] {
+export const HISTORY_SIZE = ROWS.length
+
+export function recentEvents(jobId: number, after?: number, limit = 100): CrawlEvent[] {
   const events = Array.from({ length: ROWS.length }, (_, i) => ({
-    ...completedEvent(jobId, i),
+    ...completedEvent(jobId, i, i + 1),
     at: ago((ROWS.length - i) * 1500),
-    id: i + 1,
   }))
   return after === undefined ? events.slice(-limit) : events.filter((event) => event.id > after).slice(0, limit)
 }
