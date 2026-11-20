@@ -7,7 +7,6 @@ public sealed record PageDetail : PageSummary
     public DateTimeOffset? NextCrawlAt { get; init; }
     public string? FailReason { get; init; }
     public bool UsedJsRendering { get; init; }
-    public bool BodyTruncated { get; init; }
     public IReadOnlyList<PageFetch> Fetches { get; init; } = [];
     public PageParsed? Parsed { get; init; }
 

@@ -12,7 +12,7 @@ public class AddBodyTruncatedToUrlFetches : Migration
     public override void Up()
     {
         Alter.Table(Table).AddColumn("BodyTruncated").AsBoolean().NotNullable().WithDefaultValue(false);
-        Execute.Sql($"""UPDATE "{Table}" SET "BodyTruncated" = true WHERE "ContentLength" >= {FormerBodyCapBytes}""");
+        Execute.Sql($"""UPDATE "{Table}" SET "BodyTruncated" = true WHERE "ContentLength" = {FormerBodyCapBytes}""");
     }
 
     public override void Down() => Delete.Column("BodyTruncated").FromTable(Table);

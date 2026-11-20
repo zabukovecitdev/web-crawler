@@ -58,7 +58,6 @@ export type PageDetail = PageSummary & {
   nextCrawlAt: string | null
   failReason: string | null
   usedJsRendering: boolean
-  bodyTruncated: boolean
   fetches: FetchRecordDto[]
   parsed: ParsedPageDto | null
   foundOn: { pageId: number; url: string } | null

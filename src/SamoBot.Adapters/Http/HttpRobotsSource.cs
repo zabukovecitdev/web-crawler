@@ -73,6 +73,6 @@ public sealed class HttpRobotsSource(
     private static async Task<string> ReadBody(HttpResponseMessage response, CancellationToken ct)
     {
         await using var body = await response.Content.ReadAsStreamAsync(ct);
-        return Encoding.UTF8.GetString(await BodyReader.ReadLimited(body, MaxBodyBytes, ct));
+        return Encoding.UTF8.GetString((await BodyReader.ReadLimited(body, MaxBodyBytes, ct)).Bytes);
     }
 }

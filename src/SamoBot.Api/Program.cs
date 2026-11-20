@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using SamoBot.Api.Authentication;
+using SamoBot.Api.Contracts;
 using SamoBot.Api.Hosting;
 using SamoBot.Api.Hubs;
 using SamoBot.Adapters;
@@ -53,7 +54,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
-            .WithExposedHeaders("X-Content-Truncated", "X-Content-Stored-Bytes");
+            .WithExposedHeaders(StoredContent.TruncatedHeader, StoredContent.StoredBytesHeader, StoredContent.CutAtCrawlHeader);
     });
 });
 

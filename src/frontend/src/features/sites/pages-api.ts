@@ -23,12 +23,17 @@ export function usePage(id: number, enabled = true) {
   })
 }
 
-export type PageContent = { text: string; truncated: boolean; storedBytes: number | null }
+export type PageContent = { text: string; truncated: boolean; cutAtCrawl: boolean; storedBytes: number | null }
 
 async function fetchStoredText(path: string, accept: string): Promise<PageContent> {
   const res = await apiFetchResponse(path, { headers: { Accept: accept } })
   const stored = Number(res.headers.get('X-Content-Stored-Bytes') ?? NaN)
-  return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true', storedBytes: Number.isFinite(stored) ? stored : null }
+  return {
+    text: await res.text(),
+    truncated: res.headers.get('X-Content-Truncated') === 'true',
+    cutAtCrawl: res.headers.get('X-Content-Cut-At-Crawl') === 'true',
+    storedBytes: Number.isFinite(stored) ? stored : null,
+  }
 }
 
 export function usePageContent(id: number, enabled: boolean) {

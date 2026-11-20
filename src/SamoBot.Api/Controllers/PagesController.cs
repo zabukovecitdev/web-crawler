@@ -58,7 +58,7 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
             return error!;
         }
 
-        SetContentHeaders($"page-{id}.txt", body.Content);
+        SetContentHeaders($"page-{id}.txt", body);
         return File(body.Content.Bytes, "text/plain; charset=utf-8");
     }
 
@@ -76,7 +76,7 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
 
         var text = Encoding.UTF8.GetString(body.Content.Bytes);
         var result = IsHtml(body.Copy.ContentType, text) ? markdown.Convert(text, body.Copy.Url) : text;
-        SetContentHeaders($"page-{id}.md", body.Content);
+        SetContentHeaders($"page-{id}.md", body);
         return File(Encoding.UTF8.GetBytes(result), "text/markdown; charset=utf-8");
     }
 
@@ -108,10 +108,11 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return (new StoredBody(copy, await StoredContent.Read(stream, StoredContent.MaxBytes, ct)), null);
     }
 
-    private void SetContentHeaders(string fileName, StoredContent content)
+    private void SetContentHeaders(string fileName, StoredBody body)
     {
-        Response.Headers[StoredContent.TruncatedHeader] = content.Truncated ? "true" : "false";
-        Response.Headers[StoredContent.StoredBytesHeader] = content.TotalBytes.ToString(CultureInfo.InvariantCulture);
+        Response.Headers[StoredContent.TruncatedHeader] = body.Content.Truncated ? "true" : "false";
+        Response.Headers[StoredContent.StoredBytesHeader] = body.Content.TotalBytes.ToString(CultureInfo.InvariantCulture);
+        Response.Headers[StoredContent.CutAtCrawlHeader] = body.Copy.CutAtCrawl ? "true" : "false";
         Response.Headers[HeaderNames.XContentTypeOptions] = "nosniff";
         Response.Headers[HeaderNames.ContentSecurityPolicy] = "default-src 'none'; sandbox";
         Response.Headers[HeaderNames.ContentDisposition] = new ContentDispositionHeaderValue("inline") { FileName = fileName }.ToString();
