@@ -8,24 +8,7 @@ public class CreateParsedDocumentsTable : Migration
 {
     public override void Up()
     {
-        Execute.Sql($@"DROP INDEX IF EXISTS ""public"".""IX_ParsedDocuments_UrlFetchId"";");
-
-        if (!Schema.Table(TableNames.Database.ParsedDocuments).Exists())
-        {
-            CreateParsedDocuments();
-        }
-
-        if (!Schema.Table(TableNames.Database.ParsedDocuments).Index("IX_ParsedDocuments_ParsedAt").Exists())
-        {
-            Create.Index("IX_ParsedDocuments_ParsedAt")
-                .OnTable(TableNames.Database.ParsedDocuments)
-                .OnColumn("ParsedAt");
-        }
-    }
-
-    private void CreateParsedDocuments()
-    {
-            Create.Table(TableNames.Database.ParsedDocuments)
+        Create.Table(TableNames.Database.ParsedDocuments)
             .WithColumn("Id").AsInt32().PrimaryKey().Identity()
             .WithColumn("UrlFetchId").AsInt32().NotNullable().Unique()
             .WithColumn("Title").AsString(500).Nullable()
@@ -41,14 +24,18 @@ public class CreateParsedDocumentsTable : Migration
             .WithColumn("OpenGraphData").AsString().Nullable()
             .WithColumn("TwitterCardData").AsString().Nullable()
             .WithColumn("JsonLdData").AsString().Nullable()
-                .WithColumn("ParsedAt").AsDateTimeOffset().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
+            .WithColumn("ParsedAt").AsDateTimeOffset().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
-            Create.ForeignKey("FK_ParsedDocuments_UrlFetches")
-                .FromTable(TableNames.Database.ParsedDocuments)
-                .ForeignColumn("UrlFetchId")
-                .ToTable(TableNames.Database.UrlFetches)
-                .PrimaryColumn("Id")
-                .OnDelete(System.Data.Rule.Cascade);
+        Create.ForeignKey("FK_ParsedDocuments_UrlFetches")
+            .FromTable(TableNames.Database.ParsedDocuments)
+            .ForeignColumn("UrlFetchId")
+            .ToTable(TableNames.Database.UrlFetches)
+            .PrimaryColumn("Id")
+            .OnDelete(System.Data.Rule.Cascade);
+
+        Create.Index("IX_ParsedDocuments_ParsedAt")
+            .OnTable(TableNames.Database.ParsedDocuments)
+            .OnColumn("ParsedAt");
     }
 
     public override void Down()
