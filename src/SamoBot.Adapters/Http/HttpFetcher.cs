@@ -66,13 +66,15 @@ public sealed class HttpFetcher(
         deadline.HeadersReceived();
 
         await using var body = await response.Content.ReadAsStreamAsync(deadline.Token);
-        var content = await BodyReader.ReadLimited(body, MaxBodyBytes, deadline.Token);
+        var read = await BodyReader.ReadLimited(body, MaxBodyBytes + 1, deadline.Token);
+        var truncated = read.Length > MaxBodyBytes;
 
         return new FetchResponse
         {
             StatusCode = (int)response.StatusCode,
             ContentType = response.Content.Headers.ContentType?.ToString(),
-            Content = content,
+            Content = truncated ? read[..MaxBodyBytes] : read,
+            BodyTruncated = truncated,
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
             RedirectLocation = response.Headers.Location?.OriginalString,
             RetryAfter = RetryAfter(response),

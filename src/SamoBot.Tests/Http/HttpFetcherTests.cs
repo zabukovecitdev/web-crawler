@@ -95,6 +95,18 @@ public class HttpFetcherTests
         var response = await Fetcher(_ => Html(HttpStatusCode.OK, big)).Fetch(TestData.Url(), default);
 
         response.Content.Should().HaveCount(HttpFetcher.MaxBodyBytes);
+        response.BodyTruncated.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task FetchOfABodyExactlyAtTheLimitIsNotTruncated()
+    {
+        var exact = new string('x', HttpFetcher.MaxBodyBytes);
+
+        var response = await Fetcher(_ => Html(HttpStatusCode.OK, exact)).Fetch(TestData.Url(), default);
+
+        response.Content.Should().HaveCount(HttpFetcher.MaxBodyBytes);
+        response.BodyTruncated.Should().BeFalse();
     }
 
     [Fact]

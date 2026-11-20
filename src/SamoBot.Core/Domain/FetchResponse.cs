@@ -9,6 +9,7 @@ public sealed record FetchResponse
     public required int StatusCode { get; init; }
     public string? ContentType { get; init; }
     public byte[]? Content { get; init; }
+    public bool BodyTruncated { get; init; }
     public long ResponseTimeMs { get; init; }
     public string? RedirectLocation { get; init; }
     public string? Error { get; init; }
