@@ -26,7 +26,6 @@ internal sealed class PageRow
     public string? Description { get; init; }
     public string? Language { get; init; }
     public string? Canonical { get; init; }
-    public string? RobotsDirectives { get; init; }
     public string? Policy { get; init; }
     public string? BodyText { get; init; }
     public string? Headings { get; init; }

@@ -196,8 +196,8 @@ export type CrawlEvent =
       crawlJobId: number
       eventType: 'FetchCompleted'
       at: string
-      pageId?: number
-      host?: string
+      pageId: number
+      host: string
       url: string
       depth: number
       statusCode: number

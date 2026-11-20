@@ -2,6 +2,7 @@ using System.Text.Json;
 using FluentAssertions;
 using SamoBot.Adapters.Search;
 using SamoBot.Api.Contracts;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Search;
 
@@ -79,7 +80,7 @@ public class SearchTests
         };
 
         var document = MeilisearchIndex.ToDocument(limited);
-        var plain = MeilisearchIndex.ToDocument(new PageToIndex { PageId = 1, UrlFetchId = 2, DiscoveredUrlId = 3 });
+        var plain = MeilisearchIndex.ToDocument(new PageToIndex { PageId = 1, UrlFetchId = 2, DiscoveredUrlId = 3, Policy = PagePolicy.Default });
 
         document.IndexUntil.Should().Be(1_800_000_000);
         document.SnippetMaxLength.Should().Be(0);

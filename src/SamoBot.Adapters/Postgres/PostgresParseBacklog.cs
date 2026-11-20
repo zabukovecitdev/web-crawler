@@ -45,7 +45,7 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
             "Title" = EXCLUDED."Title", "Description" = EXCLUDED."Description", "Keywords" = EXCLUDED."Keywords",
             "Author" = EXCLUDED."Author", "Language" = EXCLUDED."Language", "Canonical" = EXCLUDED."Canonical",
             "BodyText" = EXCLUDED."BodyText", "Headings" = EXCLUDED."Headings", "Images" = EXCLUDED."Images",
-            "Policy" = EXCLUDED."Policy", "RobotsDirectives" = NULL, "OpenGraphData" = EXCLUDED."OpenGraphData",
+            "Policy" = EXCLUDED."Policy", "OpenGraphData" = EXCLUDED."OpenGraphData",
             "TwitterCardData" = EXCLUDED."TwitterCardData", "JsonLdData" = EXCLUDED."JsonLdData",
             "ParsedAt" = EXCLUDED."ParsedAt", "IndexedAt" = NULL
         """;

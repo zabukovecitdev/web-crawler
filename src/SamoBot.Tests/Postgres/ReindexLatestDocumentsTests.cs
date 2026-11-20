@@ -18,7 +18,7 @@ public class ReindexLatestDocumentsTests(PostgresFixture postgres) : IAsyncLifet
         return await PostgresTestData.Scalar<int>(
             postgres.DataSource,
             """
-            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "IndexedAt") VALUES (@fetchId, 't', now()) RETURNING "Id"
+            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "IndexedAt", "Policy") VALUES (@fetchId, 't', now(), '{}') RETURNING "Id"
             """,
             new { fetchId });
     }

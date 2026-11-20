@@ -17,5 +17,5 @@ public sealed record PageToIndex
     public string Language { get; init; } = string.Empty;
     public string Canonical { get; init; } = string.Empty;
     public string BodyText { get; init; } = string.Empty;
-    public PagePolicy Policy { get; init; } = PagePolicy.Default;
+    public required PagePolicy Policy { get; init; }
 }

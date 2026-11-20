@@ -47,7 +47,7 @@ public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
         return fetchId;
     }
 
-    private Task<int> Parsed(int fetchId, bool indexed, string? policy = null) =>
+    private Task<int> Parsed(int fetchId, bool indexed, string policy = "{}") =>
         PostgresTestData.Scalar<int>(
             postgres.DataSource,
             """

@@ -36,7 +36,7 @@ internal static class PageSql
 
     public const string Find = $"""
         SELECT {SummaryColumns},
-               d."Description", d."Language", d."Canonical", d."RobotsDirectives", d."Policy", d."BodyText", d."Headings", d."Images",
+               d."Description", d."Language", d."Canonical", d."Policy", d."BodyText", d."Headings", d."Images",
                d."OpenGraphData", d."JsonLdData"
         {From}
         WHERE u."Id" = @Id

@@ -1,5 +1,6 @@
 using Dapper;
 using Npgsql;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 
@@ -62,7 +63,9 @@ public sealed class PostgresPageReader(NpgsqlDataSource dataSource) : IPageReade
         var row = await connection.QuerySingleOrDefaultAsync<(string ObjectName, string Url, string? Policy, string? ContentType, bool CutAtCrawl)?>(
             new CommandDefinition(PageSql.StoredCopy, new { Id = id }, cancellationToken: ct));
         return row is { } found
-            ? new StoredCopy(found.ObjectName, new Uri(found.Url, UriKind.Absolute), PagePolicyJson.Read(found.Policy), found.ContentType, found.CutAtCrawl)
+            ? new StoredCopy(found.ObjectName, new Uri(found.Url, UriKind.Absolute), PolicyOf(found.Policy), found.ContentType, found.CutAtCrawl)
             : null;
     }
+
+    private static PagePolicy PolicyOf(string? json) => json is null ? PagePolicy.Default : PagePolicyJson.Read(json);
 }
