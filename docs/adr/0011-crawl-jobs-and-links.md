@@ -45,6 +45,13 @@ fetch or a retry, and no fetched page waits for the parser. The parser can still
 - A stored page waits for the parser until it has a parsed document, then for the index until the document is indexed.
 
 **URLs (`UrlNormalizer`, `LinkResolver`, `PageLinkPreparer`).**
+- `UrlNormalizer` is the one normalization for every stored URL key (frontier, links, sitemaps, seeds, redirects). It is composed
+  of small rules: `IUrlRule` (lower-case scheme and host, drop the fragment, drop the default port) and `IQueryRule` (remove
+  tracking parameters, sort the parameters case-insensitively). Add a rule there to change normalization.
+- The tracking parameters (`TrackingParameters`) are code, not configuration. `NormalizedUrl` is a stored dedup key, so changing
+  the rules changes the key of URLs already stored. A change to the rules needs a data migration that re-normalizes the stored
+  keys. `UrlNormalizationCharacterizationTests` pins the output, including known quirks: a repeated parameter is joined
+  (`x=1&x=2` gives `x=1%2c2`), a parameter without `=` is dropped, and `?=v` gives `?v`.
 - Trailing slashes are kept, because some sites treat `/page` and `/page/` as different resources.
 - Links resolve with the `Uri(baseUri, href)` overload. `Uri.TryCreate(href, UriKind.Absolute)` would turn `/path` into a
   `file://` URI on Linux.
