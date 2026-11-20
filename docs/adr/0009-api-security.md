@@ -45,6 +45,9 @@ peer is ignored and cannot be spoofed.
 - It keys on the signed-in user, otherwise on the client address. An IPv6 client is limited as a whole /64, because one host owns that many addresses.
 - A wrong `X-Api-Key` is a guess, so it gets far fewer attempts (`ApiKeyFailuresPerMinute`). Sign-in has its own limit on top
   of the anonymous one.
+- The settings are `UserPermitsPerMinute`, `AnonymousPermitsPerMinute`, `SignInPermitsPerMinute` and `ApiKeyFailuresPerMinute`
+  (section `RateLimiting`). The old name of the first, `PermitsPerMinute`, is still read when `UserPermitsPerMinute` is not set,
+  and the API logs a warning at startup. Remove that fallback once no deployment uses the old name.
 - All limiters are token buckets: a short burst is allowed, then requests are admitted at a steady rate.
 - The hub is limited like any path. That counts only the HTTP requests that open a connection (negotiate, upgrade), not the
   messages inside it.

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Http.Json;
 using SamoBot.Api.Authentication;
@@ -102,7 +103,7 @@ public class RateLimitingTests
     [Fact]
     public async Task SignedInUsersAreLimitedPerUserAtTheConfiguredRate()
     {
-        await using var host = await StartAsync(new() { ["RateLimiting:PermitsPerMinute"] = "5" });
+        await using var host = await StartAsync(new() { ["RateLimiting:UserPermitsPerMinute"] = "5" });
 
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i <= Burst; i++)
@@ -202,7 +203,7 @@ public class RateLimitingTests
     }
 
     [Theory]
-    [InlineData("PermitsPerMinute")]
+    [InlineData("UserPermitsPerMinute")]
     [InlineData("AnonymousPermitsPerMinute")]
     [InlineData("SignInPermitsPerMinute")]
     [InlineData("ApiKeyFailuresPerMinute")]
@@ -211,5 +212,24 @@ public class RateLimitingTests
         var start = () => StartAsync(new() { [$"RateLimiting:{key}"] = "0" });
 
         (await start.Should().ThrowAsync<InvalidOperationException>()).WithMessage($"*{key}*");
+    }
+
+    [Theory]
+    [InlineData(null, "7", 7, true)]
+    [InlineData("9", "7", 9, false)]
+    [InlineData(null, null, 300, false)]
+    public void TheDeprecatedUserKeyStillCountsUntilTheNewOneIsSet(string? userKey, string? legacyKey, int expected, bool legacy)
+    {
+        var settings = new Dictionary<string, string?>
+        {
+            ["RateLimiting:UserPermitsPerMinute"] = userKey,
+            ["RateLimiting:PermitsPerMinute"] = legacyKey
+        }.Where(setting => setting.Value is not null);
+        var section = new ConfigurationBuilder().AddInMemoryCollection(settings).Build().GetSection(RateLimitOptions.SectionName);
+
+        var options = RateLimitOptions.From(section);
+
+        options.UserPermitsPerMinute.Should().Be(expected);
+        options.UsesLegacyUserKey.Should().Be(legacy);
     }
 }
