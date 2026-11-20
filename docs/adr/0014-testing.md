@@ -6,6 +6,9 @@ Status: Accepted
 
 - Tests that need Docker (PostgreSQL, RustFS, Meilisearch) or real timing are `Category=Integration`. CI runs them in a step of
   their own.
+- Without Docker, the PostgreSQL integration tests can run against a local, empty database: set `SAMOBOT_TEST_POSTGRES` to
+  its connection string. The fixture then runs the real migrations there instead of starting a container. Tests that also need
+  RustFS or Meilisearch still need Docker.
 - The end-to-end test (`EndToEnd/CrawlJobTests`) crawls a stub site with real PostgreSQL, RustFS and Meilisearch, but with a fake
   clock, so the retry backoff of the failing page costs no real time. When work was done, the clock moves just past the host
   delay. When idle, it jumps to the next retry.
