@@ -7,7 +7,6 @@ namespace SamoBot.Adapters.Http;
 
 public static class SafeHttpClientExtensions
 {
-    /// <summary>Registers the pieces of the connect-time address check (options, DNS, <see cref="SafeConnect"/>).</summary>
     public static IServiceCollection AddSafeNetwork(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<CrawlerNetworkOptions>(configuration.GetSection(CrawlerNetworkOptions.SectionName));
@@ -17,19 +16,13 @@ public static class SafeHttpClientExtensions
         return services.AddSingleton<SafeConnect>();
     }
 
-    /// <summary>
-    /// The one way to add an HTTP client that fetches from the open web (fetcher, robots, sitemaps).
-    /// Every connection of the client, redirect hops included, goes through <see cref="SafeConnect"/>.
-    /// The client has no <see cref="HttpClient.Timeout"/>: every request must run under a <see cref="RequestDeadline"/>.
-    /// Call <see cref="AddSafeNetwork"/> once before.
-    /// </summary>
     public static IHttpClientBuilder AddSafeHttpClient<TClient>(
         this IServiceCollection services, bool followRedirects, bool decompress = true)
         where TClient : class =>
         services
             .AddHttpClient<TClient>(client =>
             {
-                client.Timeout = Timeout.InfiniteTimeSpan; // a RequestDeadline enforces the deadlines, the body read included
+                client.Timeout = Timeout.InfiniteTimeSpan;
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(HttpFetcher.UserAgent);
             })
             .ConfigurePrimaryHttpMessageHandler(provider => Handler(provider, followRedirects, decompress));

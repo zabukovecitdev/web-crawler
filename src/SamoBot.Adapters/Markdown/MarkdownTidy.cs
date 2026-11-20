@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace SamoBot.Adapters.Markdown;
 
-/// <summary>Normalises Markdown text: line endings, trailing spaces, blank lines and empty links and bullets.</summary>
 internal static partial class MarkdownTidy
 {
     private static readonly string[] EmptyLines = ["[]()", "![]()", "-"];

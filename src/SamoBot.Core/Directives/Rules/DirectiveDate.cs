@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace SamoBot.Core.Directives.Rules;
 
-/// <summary>
-/// Reads the dates sites put in unavailable_after: ISO 8601, RFC 822/1123 and RFC 850, with a numeric offset or a common
-/// zone name (GMT, UTC, PST, EST, ...). A date without a zone is read as UTC.
-/// </summary>
 public static class DirectiveDate
 {
     private static readonly Dictionary<string, TimeSpan> Zones = new(StringComparer.OrdinalIgnoreCase)
@@ -46,7 +42,6 @@ public static class DirectiveDate
     private static bool TryExact(string text, out DateTimeOffset value) =>
         DateTimeOffset.TryParseExact(text.Trim(), Formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AllowWhiteSpaces, out value);
 
-    /// <summary>A trailing zone name gives its offset; anything else gives no zone.</summary>
     private static (string Remainder, TimeSpan? Zone) SplitZone(string text)
     {
         var space = text.LastIndexOf(' ');

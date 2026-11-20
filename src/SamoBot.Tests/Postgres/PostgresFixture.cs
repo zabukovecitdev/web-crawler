@@ -6,7 +6,6 @@ using Testcontainers.PostgreSql;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>One PostgreSQL container for all integration tests. It runs the real migrations.</summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().WithImage("postgres:16").Build();
@@ -38,7 +37,6 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _container.DisposeAsync();
     }
 
-    /// <summary>Removes all rows. Call it at the start of each test.</summary>
     public async Task Reset()
     {
         await using var command = DataSource.CreateCommand(

@@ -3,21 +3,12 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 namespace SamoBot.Api.Hosting;
 
-/// <summary>
-/// Behind a reverse proxy the peer address is the proxy's, so every client would share one rate-limit
-/// bucket, and <c>Request.Scheme</c> is http even for an https browser (which the origin check compares).
-/// Listing the proxy here makes the API read the client address and scheme from <c>X-Forwarded-For</c> and
-/// <c>X-Forwarded-Proto</c>.
-/// Nothing is trusted by default: a header from any other peer is ignored, so it cannot be spoofed.
-/// </summary>
 public sealed class ForwardedHeadersSettings
 {
     public const string SectionName = "ForwardedHeaders";
 
-    /// <summary>Single proxy addresses, e.g. <c>10.0.0.5</c>.</summary>
     public string[] KnownProxies { get; set; } = [];
 
-    /// <summary>Proxy networks in CIDR notation, e.g. <c>172.16.0.0/12</c>.</summary>
     public string[] KnownNetworks { get; set; } = [];
 
     public bool IsConfigured => KnownProxies.Length > 0 || KnownNetworks.Length > 0;

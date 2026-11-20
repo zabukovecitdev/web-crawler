@@ -5,7 +5,6 @@ function isUsableNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-/** 12482 -> "12 482" (thin space, as in the design). */
 export function formatNumber(value: number | null | undefined): string {
   if (!isUsableNumber(value)) {
     return DASH
@@ -63,7 +62,6 @@ function ago(count: number, unit: string): string {
   return `${count} ${unit}${count === 1 ? '' : 's'} ago`
 }
 
-/** "Now", "5 minutes ago", "2 hours ago", else a date. */
 export function formatRelative(iso: string | null | undefined, now: number = Date.now()): string {
   if (!iso) {
     return 'Never'
@@ -85,7 +83,6 @@ export function formatRelative(iso: string | null | undefined, now: number = Dat
   return formatDate(iso)
 }
 
-/** Elapsed time as HH:MM:SS. */
 export function formatDuration(ms: number): string {
   const total = Math.floor(ms / 1000)
   const pad = (n: number) => String(n).padStart(2, '0')

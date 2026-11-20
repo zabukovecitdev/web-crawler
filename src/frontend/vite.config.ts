@@ -7,7 +7,6 @@ import { defineConfig } from 'vitest/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-/** The MSW worker is copied from public/ into dist/; production never registers it, so drop it unless mocks are on. */
 function dropMockWorker(mocksOn: boolean): Plugin {
   return {
     name: 'drop-mock-worker',
@@ -20,12 +19,6 @@ function dropMockWorker(mocksOn: boolean): Plugin {
   }
 }
 
-/**
- * Local development without Google sign-in. When DEV_API_KEY is set, the dev server forwards /api and /hubs to
- * DEV_API_TARGET and adds the X-Api-Key header, so the API treats every call as the API key user.
- * The key stays in the dev server: it has no VITE_ prefix, so it never reaches the browser or the build.
- * Leave VITE_API_BASE empty so that the app calls the dev server.
- */
 function devApiProxy(env: Record<string, string>): Record<string, ProxyOptions> | undefined {
   if (!env.DEV_API_KEY) {
     return undefined

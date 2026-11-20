@@ -11,7 +11,6 @@ const SEGMENTS: Segment[] = [
   { key: 'serverError', word: '5xx Server error', color: 'bg-signal-500' },
 ]
 
-/** Stacked bar of response classes. The legend repeats every number in words. */
 export function ResponseBar({ counts }: { counts: CrawlProgress['statusCounts'] }) {
   const summary = SEGMENTS.map((s) => `${formatNumber(counts[s.key])} ${s.word}`).join(', ')
   return (

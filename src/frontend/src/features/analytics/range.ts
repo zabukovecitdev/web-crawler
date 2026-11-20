@@ -26,7 +26,6 @@ export type Filters = {
   setHost: (host: string | undefined) => void
 }
 
-/** Range and host live in the URL (?range=&host=) so views can be shared. */
 export function useFilters(): Filters {
   const [params, setParams] = useSearchParams()
   const update = useCallback(

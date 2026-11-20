@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The SQL of the site read model. The ORDER BY clauses are fixed text chosen from the enum, never from input.</summary>
 internal static class SiteSql
 {
     private const string Ctes = $"""

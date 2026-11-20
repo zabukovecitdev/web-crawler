@@ -4,12 +4,10 @@ import type { Tone } from '@/components/shared/status'
 
 const DASH = '—'
 
-/** 400 -> "0.4 s". */
 export function formatSeconds(ms: number | null): string {
   return ms === null ? DASH : `${(Math.max(0, ms) / 1000).toFixed(1)} s`
 }
 
-/** 1452000 -> "24 min 12 s". */
 export function formatElapsed(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
   const minutes = Math.floor(total / 60)
@@ -65,7 +63,6 @@ export function percentOf(part: number, max: number | null): number | null {
   return max ? Math.min(100, Math.round((part / max) * 100)) : null
 }
 
-/** "About 59 min left at this rate", or null when the rate is unknown. */
 export function remainingNote(progress: CrawlProgress): string | null {
   const rate = progress.pagesPerMinute
   if (!rate || progress.status !== 'Running') {

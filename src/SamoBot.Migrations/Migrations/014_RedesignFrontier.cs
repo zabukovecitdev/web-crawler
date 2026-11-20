@@ -27,7 +27,6 @@ public class RedesignFrontier : Migration
             .AddColumn("LeaseUntil").AsDateTimeOffset().Nullable()
             .AddColumn("FailReason").AsString().Nullable();
 
-        // A disabled URL has no next crawl time.
         Execute.Sql($@"ALTER TABLE ""{UrlsTable}"" ALTER COLUMN ""NextCrawlAt"" DROP NOT NULL;");
 
         Delete.UniqueConstraint("IX_DiscoveredUrls_NormalizedUrl_Unique").FromTable(UrlsTable);
@@ -94,7 +93,6 @@ public class RedesignFrontier : Migration
         RestoreDiscoveredUrls();
     }
 
-    // The rows of IndexJobs are not restored. The Down method cannot rebuild them.
     private void RecreateIndexJobs()
     {
         Create.Table(TableNames.Database.IndexJobs)
@@ -120,7 +118,6 @@ public class RedesignFrontier : Migration
         Create.Index("IX_IndexJobs_DocumentId").OnTable(TableNames.Database.IndexJobs).OnColumn("DocumentId");
     }
 
-    // This Down step fails when two jobs hold the same normalized URL.
     private void RestoreDiscoveredUrls()
     {
         Delete.Index("IX_DiscoveredUrls_Host_Status_NextCrawlAt").OnTable(UrlsTable);

@@ -6,7 +6,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Directives;
 
-/// <summary>Each rule on its own, and the composed evaluator end to end.</summary>
 public class PagePolicyRuleTests
 {
     private static readonly PageContext Context = TestDirectives.Context(new ParsedPage());

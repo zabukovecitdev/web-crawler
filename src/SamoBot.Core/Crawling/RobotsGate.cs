@@ -5,10 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>
-/// Decides whether robots.txt allows a URL. The rules come from the cache, then the store, then the source.
-/// Every URL is checked: no job and no setting can turn robots.txt off.
-/// </summary>
 public sealed class RobotsGate(
     IMemoryCache cache,
     IRobotsStore store,
@@ -24,7 +20,6 @@ public sealed class RobotsGate(
         return rules.IsAllowed(new Uri(url.Url).PathAndQuery, UserAgent);
     }
 
-    /// <summary>Returns the rules of a host. The dashboard uses this too. A host with a blocked address disallows everything.</summary>
     public async Task<RobotsRules> RulesFor(string host, CancellationToken ct)
     {
         try
@@ -37,7 +32,6 @@ public sealed class RobotsGate(
         }
     }
 
-    /// <summary>Like <see cref="RulesFor"/>, but a host with a blocked address throws <see cref="BlockedAddressException"/>.</summary>
     private async Task<RobotsRules> RulesOrThrow(string host, CancellationToken ct)
     {
         var key = $"robots:{host}";

@@ -2,7 +2,6 @@ namespace SamoBot.Adapters.Http;
 
 internal static class BodyReader
 {
-    /// <summary>Reads at most <paramref name="limit"/> bytes. It stops reading after the limit.</summary>
     public static async Task<byte[]> ReadLimited(Stream stream, int limit, CancellationToken ct)
     {
         using var buffer = new MemoryStream();

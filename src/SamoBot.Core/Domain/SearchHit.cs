@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>The search document of a parsed page. The property names match the Meilisearch index.</summary>
 public sealed record SearchHit
 {
     public string Id { get; init; } = string.Empty;
@@ -16,11 +15,8 @@ public sealed record SearchHit
     public string Language { get; init; } = string.Empty;
     public string Canonical { get; init; } = string.Empty;
     public string BodyText { get; init; } = string.Empty;
-    /// <summary>Unix seconds after which the page is hidden from search (unavailable_after); <see cref="NoEnd"/> without one.</summary>
     public long IndexUntil { get; init; } = NoEnd;
-    /// <summary>The longest snippet in characters; -1 for no limit, 0 for no snippet.</summary>
     public int SnippetMaxLength { get; init; } = -1;
 
-    /// <summary>The end of 9999: search filters on "indexUntil &gt; now", so a page without an end needs a value far ahead.</summary>
     public const long NoEnd = 253402300799;
 }

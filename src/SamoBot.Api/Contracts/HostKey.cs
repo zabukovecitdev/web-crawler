@@ -1,6 +1,5 @@
 namespace SamoBot.Api.Contracts;
 
-/// <summary>Validates and normalizes the {host} route value. Host keys are <see cref="Uri.Authority"/> values, so they round-trip.</summary>
 public static class HostKey
 {
     private const int MaxLength = 260;

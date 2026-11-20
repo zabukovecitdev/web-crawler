@@ -8,12 +8,10 @@ const ENTITIES: Record<string, string> = {
   '&#39;': "'",
 }
 
-/** Single pass over exactly five entities, so "&amp;lt;" becomes "&lt;" and not "<". */
 export function decodeEntities(text: string): string {
   return text.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => ENTITIES[entity] ?? entity)
 }
 
-/** Splits on the literal mark tags only; every other character is plain text. */
 export function splitSnippet(snippet: string): SnippetPart[] {
   const parts: SnippetPart[] = []
   let match = false

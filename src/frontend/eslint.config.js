@@ -4,10 +4,8 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import sonarjs from 'eslint-plugin-sonarjs'
 import tseslint from 'typescript-eslint'
+import noComments from './eslint-rules/no-comments.js'
 
-// The same limits as the C# build (see README.md, "Limits"). Every rule is an error.
-// A React component is one function that holds its markup, so .tsx files get a
-// longer function limit than the 30 lines of .ts files and of C# methods.
 const limits = {
   complexity: ['error', { max: 8 }],
   'sonarjs/cognitive-complexity': ['error', 10],
@@ -21,12 +19,12 @@ const limits = {
 export default tseslint.config(
   { ignores: ['dist', 'public/mockServiceWorker.js'] },
   {
-    // The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
     linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
   },
   {
-    // The same as the C# ban on #pragma and [SuppressMessage]: no eslint-disable comments.
-    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+    files: ['**/*.{js,ts,tsx}'],
+    plugins: { local: { rules: { 'no-comments': noComments } } },
+    rules: { 'local/no-comments': 'error' },
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

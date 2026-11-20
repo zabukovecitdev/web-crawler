@@ -4,7 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>Crawls one claimed URL: robots check, fetch, store, classify, complete, publish.</summary>
 public sealed class CrawlUrlHandler(
     RobotsGate robots,
     FetcherResolver fetchers,
@@ -38,7 +37,6 @@ public sealed class CrawlUrlHandler(
         await PublishFetchCompleted(url, response, outcome, recorded, ct);
     }
 
-    /// <summary>The delay is the one applied to the host after this request (the base delay when the host state did not change).</summary>
     private Task PublishFetchCompleted(
         ClaimedUrl url, FetchResponse response, CrawlOutcome outcome, RecordedFetch recorded, CancellationToken ct)
     {

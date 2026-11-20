@@ -23,7 +23,6 @@ export function usePage(id: number, enabled = true) {
   })
 }
 
-/** storedBytes: the size of the whole stored body, or null when the server did not say. */
 export type PageContent = { text: string; truncated: boolean; storedBytes: number | null }
 
 async function fetchStoredText(path: string, accept: string): Promise<PageContent> {
@@ -32,7 +31,6 @@ async function fetchStoredText(path: string, accept: string): Promise<PageConten
   return { text: await res.text(), truncated: res.headers.get('X-Content-Truncated') === 'true', storedBytes: Number.isFinite(stored) ? stored : null }
 }
 
-/** The stored body, loaded only when `enabled`. Shown as text, never as HTML. */
 export function usePageContent(id: number, enabled: boolean) {
   return useQuery({
     queryKey: ['page-content', id],
@@ -42,7 +40,6 @@ export function usePageContent(id: number, enabled: boolean) {
   })
 }
 
-/** The stored body converted to Markdown by the API, loaded only when `enabled`. */
 export function usePageMarkdown(id: number, enabled: boolean) {
   return useQuery({
     queryKey: ['page-markdown', id],
@@ -58,7 +55,6 @@ export function pageLinksPath(id: number, direction: PageLinkDirection, offset: 
   return `/api/v1/pages/${id}/links${queryString({ direction, limit: LINKS_PAGE_SIZE, offset })}`
 }
 
-/** One page of links on this page (out) or to this page (in). */
 export function usePageLinks(id: number, direction: PageLinkDirection, offset: number) {
   return useQuery({
     queryKey: ['page-links', id, direction, offset],

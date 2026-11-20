@@ -2,7 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Sitemaps;
 
-/// <summary>Finds the sitemap URLs of a host: the Sitemap lines of robots.txt, or /sitemap.xml when there are none.</summary>
 public static class SitemapDiscovery
 {
     private const string Directive = "sitemap:";

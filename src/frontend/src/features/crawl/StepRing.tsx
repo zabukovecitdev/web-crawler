@@ -9,7 +9,6 @@ const QUARTER = CIRCUMFERENCE / 4
 const GAP = 3
 const ARC = QUARTER - GAP
 
-/** The same colours as the step bars: green when done, the accent while it runs. */
 const FILL: Record<JobStep['status'], string> = { done: 'stroke-led', active: 'stroke-primary', waiting: 'stroke-muted' }
 
 function Arc({ index, length, className }: { index: number; length: number; className: string }) {
@@ -30,7 +29,6 @@ function Arc({ index, length, className }: { index: number; length: number; clas
   )
 }
 
-/** The four steps of a crawl as one ring: a quarter each for fetch, store, parse and index, coloured by its status and filled as far as the step got. */
 export function StepRing({ steps }: { steps: JobStep[] }) {
   return (
     <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="-rotate-90" aria-hidden="true">

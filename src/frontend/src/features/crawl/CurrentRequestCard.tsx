@@ -28,7 +28,6 @@ function sentAgo(current: CurrentRequest | null, now: number): string {
   return current ? `${formatSeconds(now - new Date(current.sentAt).getTime())} ago` : '—'
 }
 
-/** What the crawler is asking for right now, on the graphite card. */
 export function CurrentRequestCard({ progress, current }: Props) {
   const now = useNow(progress.status === 'Running' && current !== null, 100)
   const url = current?.url ?? progress.currentUrl

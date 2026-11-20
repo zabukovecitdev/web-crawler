@@ -8,7 +8,6 @@ export type CrawlOptions = {
 
 export const DEFAULT_OPTIONS: CrawlOptions = { maxDepth: '5', maxUrls: '5000', useJsRendering: false }
 
-/** null when the address is fine, else a sentence to show under the field. */
 export function validateUrl(value: string): string | null {
   const text = value.trim()
   if (!text) {

@@ -4,7 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Jobs;
 
-/// <summary>The use cases of a crawl job. The <see cref="CrawlJob"/> decides which transitions are valid.</summary>
 public sealed class CrawlJobService(
     ICrawlJobRepository jobs,
     IUrlFrontier frontier,
@@ -17,7 +16,6 @@ public sealed class CrawlJobService(
         return inserted.IsFailed ? inserted.ToResult<CrawlJob>() : Result.Ok(await Saved(inserted.Value, ct));
     }
 
-    /// <summary>Creates the job and starts it. The result holds the job as it is after the start.</summary>
     public async Task<Result<CrawlJob>> CreateAndStart(NewCrawlJob request, CancellationToken ct)
     {
         var inserted = await Insert(request, ct);
@@ -69,17 +67,12 @@ public sealed class CrawlJobService(
             return started;
         }
 
-        // The seeds go in before the job turns Running. A failed insert leaves a Pending job that can start again.
         await frontier.AddSeeds(job.Id, job.ToSeedUrls(), ct);
         await jobs.Save(job, ct);
         await events.Publish(id, CrawlEventTypes.JobStarted, new { }, ct);
         return Result.Ok();
     }
 
-    /// <summary>
-    /// Processes a completed job again with the current code: fetches again what was skipped for a type that is stored now,
-    /// and parses (and so indexes) the stored pages again. The job is Running again until the stages finish.
-    /// </summary>
     public async Task<Result> Reprocess(int id, CancellationToken ct)
     {
         var loaded = await Load(id, ct);
@@ -95,7 +88,6 @@ public sealed class CrawlJobService(
             return reopened;
         }
 
-        // The work goes back before the job turns Running, so that the completion check never sees a running job without it.
         var work = await frontier.RequeueForReprocess(job.Id, StoredMediaTypes.All, ct);
         await jobs.Save(job, ct);
         await events.Publish(id, CrawlEventTypes.JobStarted, new { reprocess = true, refetch = work.Refetch, reparse = work.Reparse }, ct);
@@ -108,10 +100,6 @@ public sealed class CrawlJobService(
     public Task<Result> Cancel(int id, CancellationToken ct) =>
         Change(id, (job, now) => job.Cancel(now), CrawlEventTypes.JobCancelled, ct);
 
-    /// <summary>
-    /// Queues links of the job again (one link, the failed links or all of them) and makes a finished job run again.
-    /// Fails when no link was queued. The result is the number of links that were queued.
-    /// </summary>
     public async Task<Result<int>> Recrawl(int id, RequeueScope scope, CancellationToken ct)
     {
         var loaded = await Load(id, ct);

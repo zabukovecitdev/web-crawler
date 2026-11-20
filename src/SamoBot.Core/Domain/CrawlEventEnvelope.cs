@@ -3,10 +3,6 @@ using System.Text.Json.Nodes;
 
 namespace SamoBot.Core.Domain;
 
-/// <summary>
-/// Builds the flat JSON of a crawl event: <c>{ crawlJobId, eventType, at, ...fields }</c>, plus <c>id</c> when the event is stored.
-/// The SignalR push and the events endpoint use this one shape. The reserved names win over a payload field of the same name.
-/// </summary>
 public static class CrawlEventEnvelope
 {
     private static readonly string[] Reserved = ["id", "crawlJobId", "eventType", "at"];

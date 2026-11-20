@@ -15,7 +15,6 @@ type Template = {
   state: ContentState
 }
 
-// Rows from docs/design/Site.dc.html, plus the pages the search screen links to.
 const TEMPLATES: Template[] = [
   { n: 1, title: 'Installation guide', path: '/guide/installation', code: 200, type: 'text/html', length: 48200, ms: 172, depth: 2, state: 'ParsedIndexed' },
   { n: 2, title: 'Getting started', path: '/guide/getting-started', code: 200, type: 'text/html', length: 36900, ms: 158, depth: 1, state: 'ParsedIndexed' },
@@ -30,7 +29,6 @@ const TEMPLATES: Template[] = [
   { n: 11, title: 'Robots exclusion standard', path: '/wiki/Robots_exclusion_standard', code: 200, type: 'text/html', length: 88000, ms: 612, depth: 2, state: 'ParsedIndexed' },
 ]
 
-/** Page id = host index * 100 + template number, so ids are stable across reloads. */
 export function pageId(host: string, n: number): number {
   return SITES.findIndex((site) => site.host === host) * 100 + n
 }
@@ -82,7 +80,6 @@ function peersOf(host: string, except: number): LinkPeer[] {
     .map((p) => ({ id: p.id, url: p.url, code: p.statusCode ?? 0 }))
 }
 
-/** Links on or to a page, or null when the page does not exist. Only parsed pages store outgoing links. */
 export function pageLinks(id: number, direction: PageLinkDirection): PageLinkDto[] | null {
   const site = SITES[Math.floor(id / 100)]
   const template = TEMPLATES.find((t) => t.n === id % 100)

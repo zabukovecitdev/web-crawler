@@ -5,7 +5,6 @@ namespace SamoBot.Api.Authentication;
 
 public interface IGoogleTokenValidator
 {
-    /// <summary>Returns the identity when the token is valid for our client id, otherwise null.</summary>
     Task<GoogleIdentity?> ValidateAsync(string credential, CancellationToken cancellationToken);
 }
 

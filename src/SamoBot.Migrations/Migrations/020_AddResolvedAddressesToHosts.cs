@@ -8,7 +8,6 @@ public class AddResolvedAddressesToHosts : Migration
 {
     public override void Up()
     {
-        // Comma-separated IP addresses, as the last DNS lookup returned the allowed ones.
         Alter.Table(TableNames.Database.Hosts)
             .AddColumn("ResolvedAddresses").AsString().Nullable()
             .AddColumn("ResolvedAt").AsDateTimeOffset().Nullable();

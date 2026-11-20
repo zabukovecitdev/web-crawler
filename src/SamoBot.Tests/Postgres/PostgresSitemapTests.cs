@@ -6,7 +6,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>UNVERIFIED in the authoring environment: written without Docker, so these tests have never run.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
@@ -37,7 +36,6 @@ public class PostgresSitemapTests(PostgresFixture postgres) : IAsyncLifetime
         return (await Store.ClaimNext(Lease, default))!;
     }
 
-    /// <summary>Queues the host, claims it and completes the claim with the given files.</summary>
     private async Task Finish(params SitemapFileContent[] files) =>
         (await Store.Complete(await Claim(), new SitemapWalkResult(files, false), default)).Should().BeTrue();
 

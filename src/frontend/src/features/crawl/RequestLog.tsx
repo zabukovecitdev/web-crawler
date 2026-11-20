@@ -29,7 +29,6 @@ function LogLine({ row }: { row: LogRow }) {
   )
 }
 
-/** The newest requests first, at most 200. Not a live region: it would read out every request. */
 export function RequestLog({ rows }: { rows: LogRow[] }) {
   return (
     <Card className="min-w-0 p-5 shadow-zb-1">

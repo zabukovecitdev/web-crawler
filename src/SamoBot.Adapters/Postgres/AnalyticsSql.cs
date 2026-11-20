@@ -1,9 +1,5 @@
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// The SQL of the analytics read model. Every query reads UrlFetches in a FetchedAt window (IX_UrlFetches_FetchedAt)
-/// and joins DiscoveredUrls by primary key. Values come in as parameters; no text here is built from input.
-/// </summary>
 internal static class AnalyticsSql
 {
     private const string Failed = """(f."StatusCode" IS NULL OR f."StatusCode" < 200 OR f."StatusCode" >= 400)""";
@@ -62,7 +58,6 @@ internal static class AnalyticsSql
         WHERE {InWindow} AND {ForHost}
         """;
 
-    /// <summary>The media type without parameters, lower case. Missing types group as unknown.</summary>
     public const string ContentTypes = $"""
         SELECT COALESCE(NULLIF(lower(btrim(split_part(f."ContentType", ';', 1))), ''), 'unknown') AS "ContentType",
                count(*) AS "Requests",
@@ -74,10 +69,6 @@ internal static class AnalyticsSql
         LIMIT 10
         """;
 
-    /// <summary>
-    /// Buckets are UTC. The series runs from the first bucket of the window to the bucket of @To, one row per bucket,
-    /// with zero where nothing was fetched. The first bucket starts at the truncated hour or day but counts only fetches from @From. For the all range it starts at the oldest fetch, cut to @Floor.
-    /// </summary>
     public const string Timeseries = $"""
         WITH base AS (
             SELECT COALESCE(@From::timestamptz, (SELECT min("FetchedAt") FROM "{TableNames.UrlFetches}")) AS "Start"

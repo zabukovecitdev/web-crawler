@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 
 type Props = { kicker: string; title: string; actions?: ReactNode }
 
-/** Label kicker over the page's h1, actions aligned to the right (wrapping on phones). */
 export function PageHeader({ kicker, title, actions }: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">

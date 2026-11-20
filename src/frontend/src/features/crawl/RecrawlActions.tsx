@@ -6,7 +6,6 @@ import { formatNumber } from '@/lib/format'
 import type { CrawlJobAction, CrawlJobDto } from '@/types/api'
 import { crawlKeys, errorMessage, sendAction } from './crawl-api'
 
-/** Sends a recrawl action and refreshes everything that shows the job. */
 function useRecrawl(jobId: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -45,7 +44,6 @@ function ConfirmDialog({ job, open, busy, onOpenChange, onConfirm }: ConfirmProp
   )
 }
 
-/** Retry the failed links, or fetch every link of the job again (behind a confirmation). */
 export function RecrawlActions({ job }: { job: CrawlJobDto }) {
   const [confirming, setConfirming] = useState(false)
   const recrawl = useRecrawl(job.id)

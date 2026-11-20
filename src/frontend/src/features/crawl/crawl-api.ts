@@ -6,7 +6,6 @@ export { errorMessage } from '@/lib/api'
 
 export type StoredEvent = CrawlEvent & { id: number }
 
-/** A hub event: the server also sends the stored id (types/api.ts does not list it). The mock stream has none. */
 export type LiveEvent = CrawlEvent & { id?: number }
 
 export type LinksQuery = { filter: JobLinkFilter; query: string; limit: number; offset: number }
@@ -33,15 +32,10 @@ export function fetchProgress(jobId: number): Promise<CrawlProgress> {
   return apiFetch<CrawlProgress>(`${base(jobId)}/progress`)
 }
 
-/** One page of events. Without `after` the server returns the newest page (tail mode). */
 export function fetchEvents(jobId: number, after?: number): Promise<StoredEvent[]> {
   return apiFetch<StoredEvent[]>(`${base(jobId)}/events${queryString({ after, limit: PAGE_SIZE })}`)
 }
 
-/**
- * Events newer than `cursor`, ascending. Cursor 0 means none seen yet: the newest page (tail mode).
- * Otherwise pages on while a page is full, up to MAX_PAGES.
- */
 export async function fetchEventsSince(jobId: number, cursor: number): Promise<StoredEvent[]> {
   if (cursor <= 0) {
     return fetchEvents(jobId)
@@ -67,12 +61,10 @@ export function sendAction(jobId: number, action: CrawlJobAction): Promise<void>
   return apiFetch<void>(`${base(jobId)}/actions`, { method: 'POST', body: JSON.stringify({ action }) })
 }
 
-/** One page of the links of a job, each with its state, the reason and its steps. */
 export function fetchLinks(jobId: number, query: LinksQuery): Promise<Page<JobLinkDto>> {
   return apiFetch<Page<JobLinkDto>>(`${base(jobId)}/links${queryString(query)}`)
 }
 
-/** Queues one link again. A finished job runs again until the link is done. */
 export function recrawlLink(jobId: number, linkId: number): Promise<void> {
   return apiFetch<void>(`${base(jobId)}/links/${linkId}/recrawl`, { method: 'POST' })
 }

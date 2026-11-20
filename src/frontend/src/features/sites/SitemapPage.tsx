@@ -3,7 +3,6 @@ import { RobotsCard } from './RobotsCard'
 import { SiteFrame } from './SiteFrame'
 import { SitemapCard } from './SitemapCard'
 
-/** /sites/:host/sitemap shows the sitemap; ?tab=robots shows robots.txt. */
 export function SitemapPage() {
   const host = useParams().host ?? ''
   const [search] = useSearchParams()

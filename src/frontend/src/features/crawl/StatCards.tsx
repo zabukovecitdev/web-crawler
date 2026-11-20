@@ -51,7 +51,6 @@ function ElapsedCard({ progress, endedAt }: ElapsedProps) {
   )
 }
 
-/** Pages, queue, failed, elapsed. The counters announce changes politely. */
 export function StatCards({ progress, endedAt }: ElapsedProps) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">

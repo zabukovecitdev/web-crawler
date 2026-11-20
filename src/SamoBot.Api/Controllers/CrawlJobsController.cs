@@ -69,7 +69,6 @@ public sealed class CrawlJobsController(
         return result.IsSuccess ? NoContent() : JobActionResults.Failed(result.Errors);
     }
 
-    /// <summary>Queues one link again. A finished job runs again until the link is done.</summary>
     [HttpPost("{id:int}/links/{linkId:int}/recrawl")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -80,10 +79,6 @@ public sealed class CrawlJobsController(
         return result.IsSuccess ? NoContent() : JobActionResults.Failed(result.Errors);
     }
 
-    /// <summary>
-    /// recrawl fetches every link of the job again; retry-failed only the links that failed. reprocess parses the stored
-    /// pages of a completed job again and fetches only the bodies that were skipped.
-    /// </summary>
     private async Task<Result?> Run(int id, string action, CancellationToken ct) => action switch
     {
         "start" => await service.Start(id, ct),

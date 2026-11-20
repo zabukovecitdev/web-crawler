@@ -7,10 +7,6 @@ using SamoBot.Core.Sitemaps;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// The sitemap queue and storage. One row in SitemapRequests per host is the queue. A claim sets a lease with
-/// FOR UPDATE SKIP LOCKED, like the other work queues. A refresh replaces the files of a host in one transaction.
-/// </summary>
 public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvider timeProvider) : ISitemapStore
 {
     private const string EnqueueFinishedSql = $"""
@@ -44,8 +40,6 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
         RETURNING r."Host", r."LeaseUntil"
         """;
 
-    // One statement. The row lock of the UPDATE serializes callers, and RETURNING sees the new value, so the booked slot is the new
-    // NextAllowedAt minus the delay. A missing host row returns no row, which means no wait.
     private const string ReserveSql = $"""
         UPDATE "{TableNames.Hosts}"
         SET "NextAllowedAt" = GREATEST("NextAllowedAt", @Now) + make_interval(secs => "CrawlDelayMs" / 1000.0)
@@ -67,7 +61,6 @@ public sealed class PostgresSitemapStore(NpgsqlDataSource dataSource, TimeProvid
     private const string CopyUrlsSql =
         $"""COPY "{TableNames.SitemapUrls}" ("Host", "Loc", "NormalizedLoc", "LastModified", "SitemapFileId") FROM STDIN (FORMAT BINARY)""";
 
-    // A request made after the claim stays queued (CompletedAt NULL), so the refresh it asked for is not lost.
     private const string CompleteSql = $"""
         UPDATE "{TableNames.SitemapRequests}"
         SET "CompletedAt" = CASE WHEN "RequestedAt" <= @ClaimedAt THEN @Now ELSE NULL END, "LeaseUntil" = NULL, "Attempts" = 0

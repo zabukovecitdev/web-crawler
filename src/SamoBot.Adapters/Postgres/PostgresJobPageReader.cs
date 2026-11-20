@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Read-only queries for the dashboard.</summary>
 public sealed class PostgresJobPageReader(NpgsqlDataSource dataSource) : IJobPageReader
 {
     private const string ListPagesSql = $"""

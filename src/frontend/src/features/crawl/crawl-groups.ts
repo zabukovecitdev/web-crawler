@@ -2,7 +2,6 @@ import type { CrawlJobDto, CrawlJobStatus } from '@/types/api'
 
 export type CrawlGroup = 'active' | 'finished'
 
-/** Running first: it changes as you watch. Then the jobs that wait for you or for the worker. */
 const ACTIVE_ORDER: Partial<Record<CrawlJobStatus, number>> = { Running: 0, Paused: 1, Pending: 2, Draft: 3 }
 
 export function groupOf(status: CrawlJobStatus): CrawlGroup {
@@ -22,7 +21,6 @@ function byCompletion(a: CrawlJobDto, b: CrawlJobDto): number {
   return time(b.completedAt ?? b.createdAt) - time(a.completedAt ?? a.createdAt)
 }
 
-/** The crawls split into those still in progress (running first) and those that finished (newest first). */
 export function groupJobs(jobs: CrawlJobDto[]): Record<CrawlGroup, CrawlJobDto[]> {
   return {
     active: jobs.filter((job) => groupOf(job.status) === 'active').sort(byActivity),
@@ -30,7 +28,6 @@ export function groupJobs(jobs: CrawlJobDto[]): Record<CrawlGroup, CrawlJobDto[]
   }
 }
 
-/** The group named in the URL (?show=), else in progress when anything is, else finished. */
 export function groupFromParam(param: string | null, groups: Record<CrawlGroup, CrawlJobDto[]>): CrawlGroup {
   if (param === 'active' || param === 'finished') {
     return param

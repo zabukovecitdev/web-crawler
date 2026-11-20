@@ -2,10 +2,6 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>
-/// In Production a configured API key must be long and not a well-known placeholder. An empty key is
-/// valid: it disables the API key.
-/// </summary>
 public sealed class ApiKeyOptionsValidator : IValidateOptions<ApiKeyOptions>
 {
     public const int MinimumLength = 32;

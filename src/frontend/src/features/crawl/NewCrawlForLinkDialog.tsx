@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { CrawlJobDto, JobLinkDto } from '@/types/api'
 import { createJob, crawlKeys, errorMessage } from './crawl-api'
 
-/** A new crawl of exactly one link: depth 0 and a limit of one page, so that nothing else is fetched. */
 function useCrawlOneLink(job: CrawlJobDto) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -21,10 +20,6 @@ function useCrawlOneLink(job: CrawlJobDto) {
 
 type Props = { job: CrawlJobDto; link: JobLinkDto | null; onClose: () => void }
 
-/**
- * A link of a cancelled crawl cannot be recrawled inside it: running that crawl again would also fetch everything
- * that was still queued. This asks to start a new crawl for the one link instead. The cancelled crawl stays closed.
- */
 export function NewCrawlForLinkDialog({ job, link, onClose }: Props) {
   const create = useCrawlOneLink(job)
   return (

@@ -7,7 +7,6 @@ export type LogRow = {
   key: string
   at: string
   url: string
-  /** The page screen of this URL, or null for events recorded before they carried the page id. */
   pagePath: string | null
   statusCode: number
   responseTimeMs: number | null
@@ -36,13 +35,11 @@ function hostOf(url: string): string | null {
   }
 }
 
-/** The dashboard route of the page an event is about: /sites/{host}/pages/{id}. Null when the event has no page id. */
 export function pagePathOf(event: Pick<FetchCompletedEvent, 'pageId' | 'host' | 'url'>): string | null {
   const host = event.host ?? hostOf(event.url)
   return event.pageId && host ? `/sites/${encodeURIComponent(host)}/pages/${event.pageId}` : null
 }
 
-/** Newest first, no duplicates, at most LOG_LIMIT rows. */
 export function mergeRows(existing: LogRow[], incoming: LogRow[]): LogRow[] {
   const byKey = new Map<string, LogRow>()
   for (const row of [...incoming, ...existing]) {
@@ -51,7 +48,6 @@ export function mergeRows(existing: LogRow[], incoming: LogRow[]): LogRow[] {
   return [...byKey.values()].sort((a, b) => b.at.localeCompare(a.at)).slice(0, LOG_LIMIT)
 }
 
-/** "/reference/storage" for a full URL; the input unchanged when it cannot be parsed. */
 export function pathOf(url: string): string {
   try {
     const parsed = new URL(url)

@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils'
 
 export type SectionTab = { to: string; label: string; active: boolean }
 
-/** URL-based tabs: real links, aria-current on the open one. */
 export function SectionTabs({ tabs, label }: { tabs: SectionTab[]; label: string }) {
   return (
     <nav

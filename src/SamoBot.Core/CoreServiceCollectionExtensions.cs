@@ -11,7 +11,6 @@ namespace SamoBot.Core;
 
 public static class CoreServiceCollectionExtensions
 {
-    /// <summary>Registers the handlers and services of the core. The host adds the adapters that implement the ports.</summary>
     public static IServiceCollection AddSamoBotCore(this IServiceCollection services)
     {
         services.TryAddSingleton(TimeProvider.System);

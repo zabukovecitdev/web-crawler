@@ -10,7 +10,6 @@ namespace SamoBot.Tests.Worker;
 
 public class PollingWorkerTests
 {
-    /// <summary>The test sets what each call does. The call number starts at 1.</summary>
     public sealed class Script
     {
         private int _calls;

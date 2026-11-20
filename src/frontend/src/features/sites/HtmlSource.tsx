@@ -11,12 +11,10 @@ import { CONTENT_LABELS } from './labels'
 import { usePageContent, type PageContent } from './pages-api'
 import { isForbidden, isNotFound } from './sites-api'
 
-/** The crawler keeps at most this much of one page (HttpFetcher.MaxBodyBytes). */
 const FETCH_CAP_BYTES = 5 * 1024 * 1024
 
 type Check = { tone: 'success' | 'warning'; word: string; detail: string }
 
-/** Compares the stored copy with what the fetch downloaded, so the reader can trust that nothing is missing. */
 function checkOf(content: PageContent, downloaded: number | null): Check {
   const stored = content.storedBytes
   const size = stored === null ? '' : `${formatNumber(stored)} bytes stored. `
@@ -82,7 +80,6 @@ function Viewer({ content, page }: ViewerProps) {
   )
 }
 
-/** The HTML that the crawler downloaded for this page, as text with line numbers and colours. Never run as HTML. */
 export function HtmlSource({ page }: { page: PageDetail }) {
   const content = usePageContent(page.id, true)
   if (content.isPending) {

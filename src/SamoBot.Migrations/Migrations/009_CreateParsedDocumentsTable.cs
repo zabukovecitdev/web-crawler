@@ -8,17 +8,13 @@ public class CreateParsedDocumentsTable : Migration
 {
     public override void Up()
     {
-        // Drop index if it exists from a previous partial migration run
-        // (This index shouldn't exist since .Unique() on column creates a constraint, not this named index)
         Execute.Sql($@"DROP INDEX IF EXISTS ""public"".""IX_ParsedDocuments_UrlFetchId"";");
 
-        // Check if table already exists (from partial migration run)
         if (!Schema.Table(TableNames.Database.ParsedDocuments).Exists())
         {
             CreateParsedDocuments();
         }
 
-        // Create index if it doesn't exist (idempotent)
         if (!Schema.Table(TableNames.Database.ParsedDocuments).Index("IX_ParsedDocuments_ParsedAt").Exists())
         {
             Create.Index("IX_ParsedDocuments_ParsedAt")
@@ -38,13 +34,13 @@ public class CreateParsedDocumentsTable : Migration
             .WithColumn("Author").AsString(255).Nullable()
             .WithColumn("Language").AsString(10).Nullable()
             .WithColumn("Canonical").AsString(2048).Nullable()
-            .WithColumn("BodyText").AsString().Nullable() // TEXT type for large content
-            .WithColumn("Headings").AsString().Nullable() // JSON array of ParsedHeading
-            .WithColumn("Images").AsString().Nullable() // JSON array of ParsedImage
-            .WithColumn("RobotsDirectives").AsString().Nullable() // JSON object
-            .WithColumn("OpenGraphData").AsString().Nullable() // JSON object
-            .WithColumn("TwitterCardData").AsString().Nullable() // JSON object
-            .WithColumn("JsonLdData").AsString().Nullable() // JSON array of strings
+            .WithColumn("BodyText").AsString().Nullable()
+            .WithColumn("Headings").AsString().Nullable()
+            .WithColumn("Images").AsString().Nullable()
+            .WithColumn("RobotsDirectives").AsString().Nullable()
+            .WithColumn("OpenGraphData").AsString().Nullable()
+            .WithColumn("TwitterCardData").AsString().Nullable()
+            .WithColumn("JsonLdData").AsString().Nullable()
                 .WithColumn("ParsedAt").AsDateTimeOffset().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
             Create.ForeignKey("FK_ParsedDocuments_UrlFetches")

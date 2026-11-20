@@ -1,6 +1,5 @@
 namespace SamoBot.Api.Authentication;
 
-/// <summary>Who may sign in. Both lists empty means nobody may (fail closed).</summary>
 public sealed class AuthOptions
 {
     public const string SectionName = "Auth";
@@ -9,16 +8,10 @@ public sealed class AuthOptions
 
     public string[] AllowedDomains { get; set; } = [];
 
-    /// <summary>Comma-separated alternative to <see cref="AllowedEmails"/>, for a single environment variable.</summary>
     public string AllowedEmailsCsv { get; set; } = string.Empty;
 
-    /// <summary>Comma-separated alternative to <see cref="AllowedDomains"/>.</summary>
     public string AllowedDomainsCsv { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Allows the session cookie over plain http outside Development (compose on localhost).
-    /// Leave false behind HTTPS: the cookie is then <c>Secure</c>.
-    /// </summary>
     public bool AllowInsecureCookie { get; set; }
 }
 

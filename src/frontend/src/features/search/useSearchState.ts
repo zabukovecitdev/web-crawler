@@ -15,7 +15,6 @@ function toParams(next: SearchParams): URLSearchParams {
   return out
 }
 
-/** The URL is the source of truth: ?q=&host=&page= */
 export function useSearchState() {
   const [params, setParams] = useSearchParams()
   const state: SearchParams = {

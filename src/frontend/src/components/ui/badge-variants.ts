@@ -12,7 +12,6 @@ export const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
-        // Zabukovec tones: always paired with a word (and a dot where it means "live").
         success: "border-transparent bg-led-soft text-led-ink",
         warning: "border-transparent bg-amber-soft text-amber-ink",
         neutral: "border-transparent bg-muted text-foreground",

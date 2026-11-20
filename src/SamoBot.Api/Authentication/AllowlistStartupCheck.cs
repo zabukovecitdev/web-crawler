@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>Warns once at startup when nobody can sign in.</summary>
 public sealed partial class AllowlistStartupCheck : IHostedService
 {
     private readonly EmailAllowlist _allowlist;

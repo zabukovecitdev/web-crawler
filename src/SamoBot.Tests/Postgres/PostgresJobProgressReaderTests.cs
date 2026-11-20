@@ -5,7 +5,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>UNVERIFIED: written without Docker. Run with <c>--filter "Category=Integration"</c>.</summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class PostgresJobProgressReaderTests(PostgresFixture postgres) : IAsyncLifetime
@@ -66,7 +65,6 @@ public class PostgresJobProgressReaderTests(PostgresFixture postgres) : IAsyncLi
         (data.Ok, data.Redirect, data.ClientError, data.ServerError).Should().Be((2, 1, 1, 1));
     }
 
-    // UNVERIFIED: written without Docker.
     [Fact]
     public async Task ReadCountsABlockedAddressAsSkippedNotFailedAndLeavesItOutOfTheFetchStatistics()
     {

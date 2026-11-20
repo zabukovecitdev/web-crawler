@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Stores the robots.txt rules of each host. A crawl delay in the rules also sets the delay of the host.</summary>
 public sealed class PostgresRobotsStore(NpgsqlDataSource dataSource) : IRobotsStore
 {
     private const int MaxCrawlDelayMs = 60_000;
@@ -56,7 +55,6 @@ public sealed class PostgresRobotsStore(NpgsqlDataSource dataSource) : IRobotsSt
     }
 }
 
-/// <summary>The row of a stored robots.txt. Dapper fills the properties.</summary>
 internal sealed record StoredRules
 {
     public string Host { get; init; } = string.Empty;

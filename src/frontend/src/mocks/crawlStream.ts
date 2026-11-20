@@ -3,13 +3,9 @@ import type { CrawlEvent } from '@/types/api'
 import { completedEvent, startedEvent } from './data/crawl'
 
 export type MockCrawlStream = {
-  /** Registers a listener; returns the unsubscribe function. The first listener starts the timer. */
   subscribe: (listener: (event: CrawlEvent) => void) => () => void
-  /** Registers the connection-state listener (what the SignalR client would report). */
   onState: (listener: (state: ConnectionState) => void) => void
-  /** Simulates a dropped connection: no events for `ms`, 'reconnecting' meanwhile, then 'live' again. */
   drop: (ms: number) => void
-  /** Stops the timer and drops all listeners. */
   close: () => void
 }
 
@@ -62,12 +58,6 @@ function subscribe(core: Core, listener: (event: CrawlEvent) => void, start: () 
   }
 }
 
-/**
- * Stand-in for the SignalR `CrawlEvent` stream (hub /hubs/crawl-job, JoinJob(jobId)).
- * Every `intervalMs` it emits FetchStarted, then FetchCompleted a bit later, cycling the
- * sample rows from the Live design. Same event shapes as src/types/api.ts. For checking the
- * resync by hand, `window.__crawlMock.drop(8000)` simulates an 8 s connection drop.
- */
 export function createMockCrawlStream(jobId: number, intervalMs = 1200): MockCrawlStream {
   const core: Core = { listeners: new Set(), timer: null, tick: 0, dropped: false, onState: () => undefined }
   const stream: MockCrawlStream = {

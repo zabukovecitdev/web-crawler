@@ -28,7 +28,6 @@ public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
         }
 
         var crashed = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
-        // The worker dies here. Nothing completes the batch.
         _time.Advance(Lease + TimeSpan.FromSeconds(1));
         var recovered = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
 

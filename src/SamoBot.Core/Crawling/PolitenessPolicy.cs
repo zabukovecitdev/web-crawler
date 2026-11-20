@@ -2,20 +2,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>
-/// The pacing of a host after each fetch. Pure: the numbers come in, the new state and the delay go out.
-/// <list type="bullet">
-/// <item>The base delay (robots Crawl-delay or the default) is always the minimum.</item>
-/// <item>A host that answered (status 200 to 499 except 429) updates the moving average of its response time
-/// (alpha 0.3) and resets the failure count. The delay is the larger of the base delay and 5 times the average.</item>
-/// <item>A timeout, a network error, a 5xx and a 429 count as a failure. Each consecutive failure doubles the delay
-/// (2^n, n at most 10).</item>
-/// <item>The adaptive delay (slow host and failures) is capped by <c>maxAdaptiveDelay</c>.</item>
-/// <item>A 429 or 503 with Retry-After waits at least that long (at most 1 hour, not subject to the adaptive cap).
-/// Without Retry-After it backs off from the base delay, 2^n, at most 10 minutes.</item>
-/// <item>A blocked address changes nothing (returns null). The host row keeps its state.</item>
-/// </list>
-/// </summary>
 public sealed class PolitenessPolicy(TimeSpan maxAdaptiveDelay)
 {
     public const double Alpha = 0.3;

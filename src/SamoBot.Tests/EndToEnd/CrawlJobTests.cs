@@ -17,10 +17,6 @@ using SamoBot.Tests.Postgres;
 
 namespace SamoBot.Tests.EndToEnd;
 
-/// <summary>
-/// A whole crawl with real PostgreSQL, RustFS and Meilisearch and a real HTTP stub site.
-/// The clock is fake, so the retry backoff of the failing page costs no real time.
-/// </summary>
 [Collection(PostgresDatabaseDefinition.Name)]
 [Trait("Category", "Integration")]
 public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infrastructure)
@@ -57,7 +53,6 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
             .BuildServiceProvider();
     }
 
-    /// <summary>Runs each handler once. Returns the number of crawled, parsed and indexed items.</summary>
     private static async Task<int> RunHandlersOnce(IServiceProvider root)
     {
         await using var scope = root.CreateAsyncScope();
@@ -81,7 +76,6 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
                 return;
             }
 
-            // Busy: move just past the host delay. Idle: jump to the next retry.
             _time.Advance(worked > 0 ? TimeSpan.FromMilliseconds(1100) : TimeSpan.FromSeconds(30));
         }
 
@@ -97,7 +91,6 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         await using var site = await StubSite.Start();
         await using var provider = Build();
         var service = provider.GetRequiredService<CrawlJobService>();
-        // The stub site is on a loopback address, which the seed validator rejects. The job goes straight into the repository.
         var job = CrawlJob.Create(new NewCrawlJob(null, [$"{site.BaseUrl}/"], null, null, false), _time.GetUtcNow()).Value;
         var jobId = await provider.GetRequiredService<ICrawlJobRepository>().Insert(job, default);
         (await service.Start(jobId, default)).IsSuccess.Should().BeTrue();

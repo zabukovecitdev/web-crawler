@@ -7,7 +7,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Api.Controllers;
 
-/// <summary>The links of a job: where each one stands (fetch, store, parse, index) and why.</summary>
 [ApiController]
 [Route("api/v1/crawl-jobs")]
 [Authorize]

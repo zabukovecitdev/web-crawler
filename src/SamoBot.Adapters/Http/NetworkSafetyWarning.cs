@@ -6,7 +6,6 @@ namespace SamoBot.Adapters.Http;
 
 public static partial class NetworkSafetyWarning
 {
-    /// <summary>Call once after the host is built. It logs a warning when the address policy is switched off.</summary>
     public static void LogIfPrivateAddressesAllowed(this IServiceProvider services)
     {
         if (services.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.AllowPrivateAddresses)

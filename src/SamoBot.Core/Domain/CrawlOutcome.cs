@@ -2,7 +2,6 @@ using SamoBot.Core.Common;
 
 namespace SamoBot.Core.Domain;
 
-/// <summary>The result of one crawl. Each outcome knows the new state of its URL.</summary>
 public abstract record CrawlOutcome
 {
     public abstract UrlUpdate ToUpdate(ClaimedUrl url, DateTimeOffset now);
@@ -29,7 +28,6 @@ public sealed record Disabled(string Reason) : CrawlOutcome
         Disable(url, Reason);
 }
 
-/// <summary>The host resolves only to addresses that the crawler may not connect to. The URL is skipped for good.</summary>
 public sealed record Blocked : CrawlOutcome
 {
     public const string Reason = "blocked-address";

@@ -5,10 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Read-only queries about the stored sitemaps of a host. A sitemap URL counts as crawled when a page of the host
-/// with the same normalized URL has a fetch. When several jobs hold that page, the newest crawl wins.
-/// </summary>
 public sealed class PostgresSitemapReader(NpgsqlDataSource dataSource) : ISitemapReader
 {
     private const string FilesSql = $"""
@@ -63,7 +59,6 @@ public sealed class PostgresSitemapReader(NpgsqlDataSource dataSource) : ISitema
     }
 }
 
-/// <summary>The row of a stored sitemap file. Dapper fills the properties.</summary>
 internal sealed record SitemapFileRow
 {
     public string Host { get; init; } = string.Empty;
@@ -76,7 +71,6 @@ internal sealed record SitemapFileRow
     public SitemapFile ToFile() => new(Host, Url, ParentUrl, Enum.Parse<SitemapKind>(Kind), UrlCount, FetchedAt);
 }
 
-/// <summary>The counts row of a host. Dapper fills the properties.</summary>
 internal sealed record SitemapCountsRow
 {
     public int UrlCount { get; init; }

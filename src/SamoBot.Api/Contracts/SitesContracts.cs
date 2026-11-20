@@ -2,18 +2,15 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Api.Contracts;
 
-/// <summary>Caps on the list endpoints, so a request cannot make the database scan far past the useful range.</summary>
 public static class ListLimits
 {
     public const int MaxOffset = 100_000;
     public const int MaxQueryLength = 200;
 }
 
-/// <summary>A parsed query or the text of the 400 response.</summary>
 public sealed record ListQueryResult<T>(T? Query, string? Error)
     where T : class;
 
-/// <summary>Turns the query string of the sites and host pages endpoints into read-model queries.</summary>
 public static class ListQueries
 {
     private const int MaxLimit = 200;

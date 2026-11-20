@@ -67,7 +67,6 @@ export function progressOf(job: CrawlJobDto): CrawlProgress {
 
 type Row = { path: string; statusCode: number; ms: number; length: number; content: ContentStatus; type: string }
 
-// Rows from docs/design/Live.dc.html.
 const ROWS: Row[] = [
   { path: '/reference/storage', statusCode: 200, ms: 166, length: 41700, content: 'Stored', type: 'text/html' },
   { path: '/reference/search-index', statusCode: 200, ms: 203, length: 58300, content: 'Stored', type: 'text/html' },
@@ -104,13 +103,11 @@ export function completedEvent(jobId: number, i: number): CrawlEvent {
   }
 }
 
-/** Past requests, oldest id first; the newest one finished 1.5 s ago. */
 export function recentEvents(jobId: number, after?: number, limit = 100): (CrawlEvent & { id: number })[] {
   const events = Array.from({ length: ROWS.length }, (_, i) => ({
     ...completedEvent(jobId, i),
     at: ago((ROWS.length - i) * 1500),
     id: i + 1,
   }))
-  // Same rule as the server: no `after` is the newest `limit`; otherwise the first `limit` after it.
   return after === undefined ? events.slice(-limit) : events.filter((event) => event.id > after).slice(0, limit)
 }

@@ -3,7 +3,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Core.Parsing;
 
-/// <summary>Turns the links of a page into absolute, normalized, unique http and https URLs.</summary>
 public static class LinkResolver
 {
     public static IReadOnlyList<string> Resolve(Uri pageUrl, IEnumerable<ParsedLink> links) =>
@@ -13,14 +12,10 @@ public static class LinkResolver
             .Distinct()
             .ToList();
 
-    /// <summary>The normalized form of an absolute URL, or null when it is not http or https.</summary>
     public static string? Normalize(Uri url) => ResolveOne(url, url.AbsoluteUri);
 
-    /// <summary>The absolute, normalized http or https URL of a link, or null when it is not one.</summary>
     public static string? ResolveOne(Uri pageUrl, string href)
     {
-        // The base-URI overload is the safe form of new Uri(pageUrl, href).
-        // Uri.TryCreate(href, UriKind.Absolute) would turn "/path" into a file:// URI on Linux.
         if (string.IsNullOrWhiteSpace(href) || !Uri.TryCreate(pageUrl, href, out var absolute))
         {
             return null;

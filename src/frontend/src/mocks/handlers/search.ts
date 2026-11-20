@@ -3,7 +3,6 @@ import type { SearchHitDto, SearchResponse } from '@/types/api'
 import { pageId } from '../data/pages'
 import { ago, HOUR, json, MINUTE, paginate } from '../util'
 
-// Results from docs/design/Search.dc.html ("crawl delay").
 const HITS: SearchHitDto[] = [
   {
     pageId: pageId('docs.example.com', 3), host: 'docs.example.com', url: 'https://docs.example.com/reference/configuration',

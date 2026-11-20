@@ -8,7 +8,6 @@ namespace SamoBot.Adapters.Postgres;
 
 public static class PostgresServiceCollectionExtensions
 {
-    /// <summary>Registers the shared data source. Each repository opens its own connection from it.</summary>
     public static IServiceCollection AddSamoBotPostgres(this IServiceCollection services, IConfiguration configuration)
     {
         var options = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();

@@ -7,11 +7,6 @@ using Markdig.Syntax.Inlines;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>
-/// Renders a Markdown body as an HTML page for <see cref="HtmlAgilityPackParser"/>. The title comes from the front matter
-/// (<c>title</c>) or else the first level-one heading. The description comes from the front matter (<c>description</c> or
-/// <c>summary</c>). Only top-level scalar front matter keys are read.
-/// </summary>
 internal static class MarkdownPage
 {
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()

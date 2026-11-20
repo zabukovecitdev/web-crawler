@@ -1,7 +1,5 @@
 import animate from 'tailwindcss-animate'
 
-// Every colour is a CSS variable holding space-separated RGB channels (see src/index.css),
-// so opacity modifiers such as bg-primary/80 keep working.
 const token = (name) => `rgb(var(--${name}) / <alpha-value>)`
 
 const pair = (name) => ({ DEFAULT: token(name), foreground: token(`${name}-foreground`) })

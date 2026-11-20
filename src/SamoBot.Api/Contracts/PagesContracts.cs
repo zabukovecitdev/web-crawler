@@ -1,13 +1,11 @@
 namespace SamoBot.Api.Contracts;
 
-/// <summary>A stored body read up to a byte cap. Truncated is true when the body is longer than the cap.</summary>
 public sealed record StoredContent(byte[] Bytes, bool Truncated, long TotalBytes)
 {
     public const int MaxBytes = 2 * 1024 * 1024;
 
     public const string TruncatedHeader = "X-Content-Truncated";
 
-    /// <summary>The size of the whole stored body in bytes, so that a reader can check that it has all of it.</summary>
     public const string StoredBytesHeader = "X-Content-Stored-Bytes";
 
     public static async Task<StoredContent> Read(Stream stream, int maxBytes, CancellationToken ct)

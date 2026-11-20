@@ -21,14 +21,12 @@ type Session = {
 }
 
 function buildConnection(): HubConnection {
-  // The CSRF middleware wants this header on every cookie POST, the negotiate request included.
   return new HubConnectionBuilder()
     .withUrl(`${apiBase}/hubs/crawl-job`, { withCredentials: true, headers: { 'X-Requested-With': 'samobot' } })
     .withAutomaticReconnect()
     .build()
 }
 
-/** True for a 401 from the hub; negotiate failures wrap the status code in the message only. */
 export function isUnauthorized(error: unknown): boolean {
   if (error instanceof HttpError && error.statusCode === 401) {
     return true
@@ -70,7 +68,6 @@ function join(s: Session): void {
   )
 }
 
-/** Never calls start() on a connected hub: a connected one only re-joins. */
 function start(s: Session): void {
   if (s.stopped) {
     return
@@ -111,7 +108,6 @@ function stop(s: Session): void {
   }
 }
 
-/** Connects to the crawl hub, joins the job's group and keeps trying. Returns the cleanup. */
 export function connectCrawlHub(jobId: number, handlers: HubHandlers): () => void {
   const s: Session = { connection: buildConnection(), jobId, handlers, stopped: false, timer: undefined }
   wire(s)

@@ -5,11 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// Stores the resolved addresses in the Hosts table. The cache key is the DNS name. A row of the host key
-/// (the authority, with or without a port) belongs to the name when the part before the port is the name.
-/// A name with no Hosts row is not stored. The in-memory layer still remembers it.
-/// </summary>
 public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHostAddressCache
 {
     private const string FindSql = $"""
@@ -52,7 +47,6 @@ public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHos
 
     private static object Keys(string host) => new { Host = host, Prefix = $"{host}:" };
 
-    /// <summary>An address that does not parse is dropped. The caller then resolves again.</summary>
     internal static IReadOnlyList<IPAddress> Parse(string? text) =>
         (text ?? string.Empty)
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -61,7 +55,6 @@ public sealed class PostgresHostAddressCache(NpgsqlDataSource dataSource) : IHos
             .ToList();
 }
 
-/// <summary>The cached columns of a Hosts row. Dapper fills the properties.</summary>
 internal sealed record HostAddressRow
 {
     public string? ResolvedAddresses { get; init; }

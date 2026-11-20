@@ -233,6 +233,8 @@ A new kind of decision (a new `PagePolicy` property) also needs the place that e
 
 ## Design decisions
 
+The reasons behind the code are in [docs/adr](docs/adr/README.md). The code has no comments (ADR 0001).
+
 - PostgreSQL replaces RabbitMQ, Redis and Neo4j. One system holds all state, and one transaction records each result.
 - `OutcomeClassifier` is the only place that maps a status code to a result. Each `CrawlOutcome` knows its new URL state.
 - `PollingWorker<THandler>` is the only place in the worker that catches `Exception`.
@@ -250,6 +252,7 @@ A new kind of decision (a new `PagePolicy` property) also needs the place that e
 | Nesting depth of control blocks | 2 | S134 |
 | Lines in a file | 300 | S104 |
 | Braces on `if`, `for`, `foreach`, `while` | always | IDE0011 |
+| Comments | none; `comments-baseline.txt` may only shrink | SB0001, SB0002 (`src/SamoBot.Analyzers`) |
 
 `#pragma warning disable` and `[SuppressMessage]` are not permitted.
 
@@ -266,6 +269,7 @@ A new kind of decision (a new `PagePolicy` property) also needs the place that e
 | Nesting depth of control blocks | 2 | `max-depth` |
 | Lines in a file | 300 | `max-lines` |
 | Braces on `if`, `for`, `while` | always | `curly` |
+| Comments | none; `eslint-suppressions.json` may only shrink (`npm run lint:baseline` prunes it) | `local/no-comments` |
 
 `eslint-disable` comments and `@ts-ignore` are not permitted (`noInlineConfig`).
 

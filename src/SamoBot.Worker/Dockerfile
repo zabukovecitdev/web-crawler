@@ -6,6 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
+COPY ["src/SamoBot.Analyzers/SamoBot.Analyzers.csproj", "src/SamoBot.Analyzers/"]
 COPY ["src/SamoBot.Worker/SamoBot.Worker.csproj", "src/SamoBot.Worker/"]
 COPY ["src/SamoBot.Adapters/SamoBot.Adapters.csproj", "src/SamoBot.Adapters/"]
 COPY ["src/SamoBot.Core/SamoBot.Core.csproj", "src/SamoBot.Core/"]

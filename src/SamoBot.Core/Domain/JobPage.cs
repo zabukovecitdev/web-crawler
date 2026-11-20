@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>One frontier URL of a job, as the dashboard shows it. The property names match the existing API.</summary>
 public sealed record JobPage
 {
     public int Id { get; init; }

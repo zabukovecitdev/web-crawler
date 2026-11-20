@@ -1,4 +1,3 @@
-// Minimal types for Google Identity Services (https://accounts.google.com/gsi/client).
 type CredentialResponse = { credential: string }
 
 type GoogleId = {
@@ -16,7 +15,6 @@ const SRC = 'https://accounts.google.com/gsi/client'
 
 let pending: Promise<GoogleId> | null = null
 
-/** Loads the GIS script once and resolves with its `accounts.id` API. */
 export function loadGoogle(): Promise<GoogleId> {
   pending ??= new Promise<GoogleId>((resolve, reject) => {
     const script = document.createElement('script')
@@ -40,7 +38,6 @@ export function loadGoogle(): Promise<GoogleId> {
 let initializedFor: string | null = null
 let currentCallback: ((credential: string) => void) | null = null
 
-/** Initializes GIS once per client id; the latest callback receives the credential. */
 export function initGoogle(id: GoogleId, clientId: string, callback: (credential: string) => void): void {
   currentCallback = callback
   if (initializedFor === clientId) {
@@ -50,7 +47,6 @@ export function initGoogle(id: GoogleId, clientId: string, callback: (credential
   initializedFor = clientId
 }
 
-/** Stops delivering credentials to this callback (the button unmounted). */
 export function releaseGoogle(callback: (credential: string) => void): void {
   if (currentCallback === callback) {
     currentCallback = null

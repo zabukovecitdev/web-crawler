@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>One row in the fetch history of a URL.</summary>
 public sealed record FetchRecord
 {
     public required DateTimeOffset FetchedAt { get; init; }

@@ -7,7 +7,6 @@ function countLines(content: string, directive: string): number {
 
 export type RobotsFacts = { blockedPaths: number; sitemapsNamed: number }
 
-/** Facts read from the file text. The server stays the source of truth for the crawl delay. */
 export function robotsFacts(robots: RobotsDto): RobotsFacts {
   return {
     blockedPaths: countLines(robots.content, 'Disallow'),

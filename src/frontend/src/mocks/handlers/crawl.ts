@@ -37,7 +37,6 @@ function createJob(request: CreateCrawlJobRequest): CrawlJobDto {
 
 const PRIVATE_HOST = /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/
 
-/** The server's 400 for a bad seed (docs/api-contract.md: http/https only, no loopback or private addresses). */
 function seedProblem(seed: string | undefined): string | null {
   try {
     const url = new URL(seed ?? '')

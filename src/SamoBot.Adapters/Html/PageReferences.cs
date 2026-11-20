@@ -3,7 +3,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Html;
 
-/// <summary>The links and images of a page.</summary>
 internal static class PageReferences
 {
     public static IReadOnlyList<ParsedLink> Links(HtmlDocument document) =>

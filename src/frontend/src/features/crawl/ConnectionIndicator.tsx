@@ -8,7 +8,6 @@ const WORDS: Record<ConnectionState, string> = {
   offline: 'Offline, checking every 3 s',
 }
 
-/** Live / Reconnecting / Offline. The LED is lit only while live. */
 export function ConnectionIndicator({ state }: { state: ConnectionState }) {
   return (
     <p role="status" className="label m-0 inline-flex items-center gap-2">

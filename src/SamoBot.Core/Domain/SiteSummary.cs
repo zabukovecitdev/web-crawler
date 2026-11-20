@@ -11,7 +11,6 @@ public enum SiteStatus
     Never
 }
 
-/// <summary>A site is a host. The row aggregates every job that touched the host.</summary>
 public record SiteSummary
 {
     public string Host { get; init; } = string.Empty;

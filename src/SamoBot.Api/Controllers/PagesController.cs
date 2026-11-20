@@ -25,7 +25,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return page is null ? NotFound() : Ok(page);
     }
 
-    /// <summary>The links on a page (direction=out, the default) or the pages that link to it (direction=in).</summary>
     [HttpGet("{id:int}/links")]
     [ProducesResponseType<PagedResult<PageLinkItem>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -47,7 +46,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return links is null ? NotFound() : Ok(links);
     }
 
-    /// <summary>The stored body of a page as text. 403 when the site asked for no stored copy to be shown (noarchive).</summary>
     [HttpGet("{id:int}/content")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -64,8 +62,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return File(body.Content.Bytes, "text/plain; charset=utf-8");
     }
 
-    /// <summary>The stored body of a page as clean Markdown, made on demand. 403 when the site asked for no stored copy to be shown (noarchive).
-    /// X-Content-Truncated tells that the HTML was cut at the size cap before the conversion.</summary>
     [HttpGet("{id:int}/markdown")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -84,10 +80,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return File(Encoding.UTF8.GetBytes(result), "text/markdown; charset=utf-8");
     }
 
-    /// <summary>
-    /// A Markdown or plain-text body is already readable as Markdown, so the endpoint returns it unchanged. The HTML converter would escape
-    /// its line starts and join its lines. The parser makes the same choice (a plain-text body that starts like HTML is HTML).
-    /// </summary>
     private static bool IsHtml(string? contentType, string text)
     {
         var mediaType = StoredMediaTypes.MediaType(contentType);
@@ -99,7 +91,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return !StoredMediaTypes.IsPlainText(mediaType) || StoredMediaTypes.LooksLikeHtml(text);
     }
 
-    /// <summary>Finds the stored copy and loads its capped body. Gives an error result (404, or 403 for noarchive) instead when there is nothing to show.</summary>
     private async Task<(StoredBody? Body, IActionResult? Error)> LoadStoredBody(int id, CancellationToken ct)
     {
         var copy = await pages.FindStoredCopy(id, ct);
@@ -117,7 +108,6 @@ public sealed class PagesController(IPageReader pages, IContentStore contentStor
         return (new StoredBody(copy, await StoredContent.Read(stream, StoredContent.MaxBytes, ct)), null);
     }
 
-    /// <summary>The body is untrusted page content: forbid sniffing and any active use if a browser opens it directly.</summary>
     private void SetContentHeaders(string fileName, StoredContent content)
     {
         Response.Headers[StoredContent.TruncatedHeader] = content.Truncated ? "true" : "false";

@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Read-only queries about crawled pages.</summary>
 public sealed class PostgresPageReader(NpgsqlDataSource dataSource) : IPageReader
 {
     public async Task<PagedResult<PageSummary>> ListHostPages(string host, PageQuery query, CancellationToken ct)

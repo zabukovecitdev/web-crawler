@@ -4,7 +4,6 @@ export type NavItem = {
   to: string
   label: string
   icon: LucideIcon
-  /** Path prefixes that keep this item highlighted. */
   match: string[]
 }
 

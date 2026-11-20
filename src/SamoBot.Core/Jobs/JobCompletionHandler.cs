@@ -9,7 +9,6 @@ public sealed class JobCompletionHandler(
     ICrawlEventPublisher events,
     TimeProvider timeProvider) : IWorkHandler
 {
-    /// <summary>Completes the finished jobs. It returns 0, so that the polling loop waits between runs.</summary>
     public async Task<int> HandleBatch(CancellationToken ct)
     {
         var completed = await jobs.CompleteFinishedJobs(timeProvider.GetUtcNow(), ct);

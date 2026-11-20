@@ -1,13 +1,8 @@
-// The frozen API contract (docs/api-contract.md). JSON is camelCase. Dates are ISO 8601 strings.
-// Backend and frontend agents both build to these shapes. Change them only through the lead.
-
 export type Page<T> = { total: number; items: T[] }
 
-// --- Auth ---
 export type Me = { userId: string; name: string; email: string | null; pictureUrl: string | null }
 export type GoogleSignInRequest = { credential: string }
 
-// --- Sites (a site is a host) ---
 export type SiteStatus = 'Crawling' | 'Crawled' | 'Paused' | 'Never'
 export type SiteSummary = {
   host: string
@@ -35,7 +30,6 @@ export type SiteDetail = SiteSummary & {
   contentTypes: { contentType: string; count: number }[]
 }
 
-// --- Pages ---
 export type ContentState = 'ParsedIndexed' | 'ParsedWaitingForIndex' | 'WaitingForParse' | 'Redirect' | 'Skipped' | 'NotStored' | 'Failed'
 export type PageSummary = {
   id: number
@@ -66,7 +60,6 @@ export type PageDetail = PageSummary & {
   usedJsRendering: boolean
   fetches: FetchRecordDto[]
   parsed: ParsedPageDto | null
-  /** The earliest page that linked to this one; null for seed URLs. */
   foundOn: { pageId: number; url: string } | null
 }
 export type PageLinkDirection = 'out' | 'in'
@@ -94,7 +87,6 @@ export type ParsedPageDto = {
   openGraph: Record<string, string>
 }
 
-// --- Sitemap and robots.txt ---
 export type RobotsDto = { host: string; content: string; crawlDelayMs: number | null; fetchedAt: string; expiresAt: string }
 export type SitemapFileDto = { url: string; parentUrl: string | null; kind: 'Index' | 'UrlSet'; urlCount: number; fetchedAt: string }
 export type SitemapUrlDto = { loc: string; lastModified: string | null; crawlState: 'Crawled' | 'NotCrawled' | 'Blocked'; statusCode: number | null; pageId: number | null }
@@ -108,19 +100,17 @@ export type SitemapDto = {
 }
 export type ExplainDto = { url: string; allowedByRobots: boolean; matchedRule: string | null; crawlDelayMs: number | null }
 
-// --- Search ---
 export type SearchHitDto = {
   pageId: number
   host: string
   url: string
   title: string
-  snippet: string // contains <mark>…</mark> around matches; the only HTML allowed, render it by splitting on the tags, never innerHTML
+  snippet: string
   language: string
   fetchedAt: string | null
 }
 export type SearchResponse = Page<SearchHitDto> & { tookMs: number; hosts: { host: string; count: number }[] }
 
-// --- Crawl jobs ---
 export type CrawlJobStatus = 'Draft' | 'Pending' | 'Running' | 'Paused' | 'Completed' | 'Cancelled' | 'Failed'
 export type CrawlJobDto = {
   id: number
@@ -142,13 +132,8 @@ export type CreateCrawlJobRequest = {
   useJsRendering?: boolean
   startImmediately?: boolean
 }
-/**
- * recrawl fetches every link of the job again; retry-failed only the links that failed.
- * reprocess parses the stored pages of a completed job again and fetches only the bodies that were skipped.
- */
 export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-failed' | 'reprocess'
 
-// --- Links of a crawl job: GET /crawl-jobs/{id}/links, POST /crawl-jobs/{id}/links/{linkId}/recrawl ---
 export type LinkState = 'Queued' | 'Fetching' | 'Retrying' | 'Parsing' | 'Indexing' | 'Indexed' | 'NotIndexed' | 'Skipped' | 'Failed'
 export type LinkStepStatus = 'Pending' | 'Waiting' | 'Active' | 'Done' | 'Skipped' | 'Failed'
 export type LinkSteps = { fetch: LinkStepStatus; store: LinkStepStatus; parse: LinkStepStatus; index: LinkStepStatus }
@@ -159,7 +144,7 @@ export type JobLinkDto = {
   depth: number
   title: string | null
   state: LinkState
-  reason: string // one sentence: why the link is in this state
+  reason: string
   steps: LinkSteps
   statusCode: number | null
   failCount: number
@@ -169,7 +154,6 @@ export type JobLinkDto = {
 }
 export type JobLinkFilter = 'all' | 'problems' | 'notIndexed' | 'pending' | 'indexed'
 export type LinkProblem = { reason: string; label: string; count: number }
-/** The number of links of a job in each state. problems: why the failed and retrying links failed. */
 export type JobLinkSummary = {
   total: number
   queued: number
@@ -204,7 +188,6 @@ export type CrawlProgress = {
 }
 export type ContentStatus = 'Stored' | 'Skipped' | 'NotStored' | 'Failed'
 
-// SignalR hub /hubs/crawl-job, method JoinJob(jobId), client event "CrawlEvent".
 export type CrawlEvent =
   | { crawlJobId: number; eventType: 'JobCreated' | 'JobStarted' | 'JobPaused' | 'JobCancelled' | 'JobCompleted' | 'JobRecrawlRequested'; at: string }
   | { crawlJobId: number; eventType: 'FetchStarted'; at: string; url: string; depth: number }
@@ -212,7 +195,6 @@ export type CrawlEvent =
       crawlJobId: number
       eventType: 'FetchCompleted'
       at: string
-      /** The page (discovered URL) id and host; missing on events recorded before they were added. */
       pageId?: number
       host?: string
       url: string
@@ -226,7 +208,6 @@ export type CrawlEvent =
       outcome: string
     }
 
-// --- Analytics ---
 export type AnalyticsRange = '24h' | '7d' | '30d' | 'all'
 export type AnalyticsOverview = {
   hosts: number
@@ -234,7 +215,7 @@ export type AnalyticsOverview = {
   requests: number
   bytes: number
   failedPages: number
-  failureRate: number // 0..1
+  failureRate: number
   p50ResponseMs: number | null
   p95ResponseMs: number | null
   maxResponseMs: number | null

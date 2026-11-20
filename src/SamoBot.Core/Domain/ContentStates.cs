@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>What is known about the latest fetch of a URL and its parsed document.</summary>
 public sealed record PageStateFacts
 {
     public int? StatusCode { get; init; }
@@ -11,12 +10,6 @@ public sealed record PageStateFacts
     public string? FailReason { get; init; }
 }
 
-/// <summary>
-/// Derives the content state of a page. A URL without a fetch is Failed when it has a fail reason, else NotStored.
-/// A status below 200 or from 400 up is Failed. A status in 300-399 is Redirect. Only a successful stored type with content is
-/// stored: a success without a stored object is Skipped for other types and NotStored for a stored type (HTML, Markdown, plain text). A stored page waits for
-/// the parser until it has a parsed document, then waits for the index until the document is indexed.
-/// </summary>
 public static class ContentStates
 {
     public static ContentState Derive(PageStateFacts facts)

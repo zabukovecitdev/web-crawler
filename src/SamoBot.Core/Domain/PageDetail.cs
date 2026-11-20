@@ -10,7 +10,6 @@ public sealed record PageDetail : PageSummary
     public IReadOnlyList<PageFetch> Fetches { get; init; } = [];
     public PageParsed? Parsed { get; init; }
 
-    /// <summary>The earliest stored link that points at this page, or null (seeds, or no link stored yet).</summary>
     public FoundOn? FoundOn { get; init; }
 }
 

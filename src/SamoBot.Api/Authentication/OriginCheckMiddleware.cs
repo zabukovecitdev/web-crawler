@@ -3,12 +3,6 @@ using SamoBot.Api.Hosting;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>
-/// WebSockets are not subject to CORS, and a page on a sibling subdomain sends the session cookie
-/// (SameSite=Lax is per site, not per origin). So the hub and the sign-in call accept a browser only
-/// when its <c>Origin</c> is the API's own origin or one of the configured CORS origins. Requests
-/// without an <c>Origin</c> header (not a browser) pass.
-/// </summary>
 public sealed class OriginCheckMiddleware
 {
     private const string HubPrefix = "/hubs";

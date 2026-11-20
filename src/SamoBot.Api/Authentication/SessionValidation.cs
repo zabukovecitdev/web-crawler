@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace SamoBot.Api.Authentication;
 
-/// <summary>
-/// Runs on every cookie-authenticated request: the account must still be on the allowlist and the
-/// session must be younger than <see cref="SessionPrincipal.MaxAge"/>. The check is an in-memory lookup.
-/// </summary>
 public static class SessionValidation
 {
     private const long MaxUnixSeconds = 253_402_300_799;

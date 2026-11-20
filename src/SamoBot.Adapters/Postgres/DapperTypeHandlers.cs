@@ -7,7 +7,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Maps JSON text columns to their types: string lists, kept response headers and page policies. Dapper keeps the handlers in global state.</summary>
 internal static class DapperTypeHandlers
 {
     private static readonly Lock Gate = new();
@@ -46,7 +45,6 @@ internal static class DapperTypeHandlers
         public override ResponseHeaders Parse(object value) => ResponseHeadersJson.Read(value.ToString());
     }
 
-    /// <summary>A missing or unreadable policy (a page parsed before policies were stored) is the default policy.</summary>
     private sealed class PagePolicyHandler : SqlMapper.TypeHandler<PagePolicy>
     {
         public override void SetValue(IDbDataParameter parameter, PagePolicy? value) =>

@@ -1,7 +1,6 @@
 import type { ParsedPageDto } from '@/types/api'
 import { Panel } from './Panel'
 
-/** The headings of the page as an indented outline: the structure of the content at a glance. */
 export function PageOutlineCard({ parsed }: { parsed: ParsedPageDto | null }) {
   const headings = parsed?.headings ?? []
   return (

@@ -4,7 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Tests.Fakes;
 
-/// <summary>Serves sitemap bodies by URL. An unknown URL gives 404.</summary>
 public sealed class FakeSitemapSource : ISitemapSource
 {
     private readonly Dictionary<string, byte[]> _bodies = [];
@@ -20,7 +19,6 @@ public sealed class FakeSitemapSource : ISitemapSource
         return this;
     }
 
-    /// <summary>Answers a URL with an error status and no body.</summary>
     public FakeSitemapSource Fail(string url, int statusCode)
     {
         _failures[url] = statusCode;

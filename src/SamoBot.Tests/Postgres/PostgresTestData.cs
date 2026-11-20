@@ -4,7 +4,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Postgres;
 
-/// <summary>Direct SQL inserts for the integration tests. The tests do not use the adapters to prepare data.</summary>
 public static class PostgresTestData
 {
     public static Task<int> InsertJob(
@@ -20,7 +19,6 @@ public static class PostgresTestData
             """,
             new { status, allowedHosts, maxUrls });
 
-    /// <summary>Inserts a URL and its host row. The host is due at the fake start time.</summary>
     public static async Task<int> InsertUrl(
         NpgsqlDataSource dataSource,
         int jobId,
@@ -42,7 +40,6 @@ public static class PostgresTestData
             new { host, url, status, next = nextCrawlAt ?? TestData.Now, jobId, depth });
     }
 
-    /// <summary>Inserts a fetch with stored HTML for a URL. The parser can claim it.</summary>
     public static Task<int> InsertFetch(NpgsqlDataSource dataSource, int urlId, string objectName = "obj", bool parsed = false) =>
         Scalar<int>(
             dataSource,

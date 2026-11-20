@@ -39,7 +39,6 @@ function ViewBody({ view, page }: { view: ContentView; page: PageDetail }) {
   return <TextView parsed={page.parsed} />
 }
 
-/** The page body in one card: read it rendered (default), as Markdown, as the indexed plain text, or as the downloaded HTML. */
 export function PageContentCard({ page }: { page: PageDetail }) {
   const [params, setParams] = useSearchParams()
   const view = contentViewOf(params.get('view'))

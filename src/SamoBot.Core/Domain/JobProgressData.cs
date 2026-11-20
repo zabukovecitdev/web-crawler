@@ -1,6 +1,5 @@
 namespace SamoBot.Core.Domain;
 
-/// <summary>The raw numbers of one job that the progress query reads. <see cref="CrawlProgress.From"/> turns them into the API shape.</summary>
 public sealed record JobProgressData
 {
     public int JobId { get; init; }
@@ -17,13 +16,10 @@ public sealed record JobProgressData
     public string? CurrentUrl { get; init; }
     public int? CurrentDepth { get; init; }
 
-    /// <summary>The delay of the host of the current URL. Without a URL in flight, the host of the first seed.</summary>
     public int CrawlDelayMs { get; init; } = 1000;
 
-    /// <summary>True when the robots.txt of that host sets the delay.</summary>
     public bool DelayFromRobots { get; init; }
 
-    /// <summary>True when the delay applied after the last fetch is larger than the base delay of the host.</summary>
     public bool DelayIsAdaptive { get; init; }
 
     public DateTimeOffset? NextAllowedAt { get; init; }

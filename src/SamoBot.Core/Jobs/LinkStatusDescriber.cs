@@ -3,11 +3,6 @@ using static SamoBot.Core.Domain.LinkStepStatus;
 
 namespace SamoBot.Core.Jobs;
 
-/// <summary>
-/// Explains one link of a job: which of the steps fetch, store, parse and index are done, and in words why the link is
-/// where it is. The state itself comes from the query (<see cref="JobLinkFacts.State"/>), so the list, its filters and the
-/// counts of a job always agree.
-/// </summary>
 public static class LinkStatusDescriber
 {
     private sealed record Look(LinkSteps Steps, Func<JobLinkFacts, string> Reason);
@@ -50,7 +45,6 @@ public static class LinkStatusDescriber
         };
     }
 
-    /// <summary>A URL that robots.txt or the address policy stopped was never requested: its fetch step is skipped, not done.</summary>
     private static bool WasRequested(JobLinkFacts link) =>
         link.State != LinkState.Skipped || link.FailReason is not (LinkReasons.Robots or Blocked.Reason);
 }

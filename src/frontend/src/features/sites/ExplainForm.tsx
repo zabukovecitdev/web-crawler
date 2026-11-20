@@ -22,7 +22,6 @@ function Result({ result }: { result: ExplainDto }) {
   )
 }
 
-/** "Test a URL" against the host's robots.txt. */
 export function ExplainForm({ host }: { host: string }) {
   const id = useId()
   const [url, setUrl] = useState(`https://${host}/`)

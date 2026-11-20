@@ -2,27 +2,16 @@ using System.Text.RegularExpressions;
 
 namespace SamoBot.Core.Directives;
 
-/// <summary>
-/// Reads the comma-separated directive lists of the robots meta tag and the X-Robots-Tag header. Matching is by whole
-/// directive, never by substring. A directive with a value is "name: value"; a value that itself contains a comma (an RFC 850
-/// date after unavailable_after) is joined back, because no directive name starts with a digit.
-/// </summary>
 public static partial class RobotsDirectiveParser
 {
-    /// <summary>Directives that carry a value, so "name: value" is never read as a crawler name.</summary>
     private static readonly HashSet<string> DirectivesWithValue = new(StringComparer.OrdinalIgnoreCase)
     {
         "unavailable_after", "max-snippet", "max-image-preview", "max-video-preview"
     };
 
-    /// <summary>A directive list without crawler names, such as the content of a meta tag.</summary>
     public static IReadOnlyList<RobotsDirective> ParseList(string? content, string source) =>
         Tokens(content).Select(token => Directive(token, source)).ToList();
 
-    /// <summary>
-    /// One X-Robots-Tag value. It can start with a crawler name ("googlebot: nofollow"); the name applies to the directives
-    /// after it, up to the next name. Only the directives without a name or with <paramref name="userAgent"/> are returned.
-    /// </summary>
     public static IReadOnlyList<RobotsDirective> ParseScoped(string? line, string userAgent, string source)
     {
         var result = new List<RobotsDirective>();

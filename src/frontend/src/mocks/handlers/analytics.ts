@@ -2,7 +2,6 @@ import { http } from 'msw'
 import type { AnalyticsOverview, ContentTypeCount, HostAnalytics, StatusClassCounts, TimeseriesPoint } from '@/types/api'
 import { ago, HOUR, json } from '../util'
 
-// Numbers from docs/design/Analytics.dc.html.
 const HOSTS: HostAnalytics[] = [
   { host: 'docs.example.com', pages: 4812, requests: 5904, p50ResponseMs: 184, p95ResponseMs: 520, maxResponseMs: 5004, bytes: 711e6, failureRate: 0.008, crawlDelayMs: 1000 },
   { host: 'example.org', pages: 3204, requests: 3790, p50ResponseMs: 142, p95ResponseMs: 388, maxResponseMs: 1940, bytes: 436e6, failureRate: 0.004, crawlDelayMs: 1000 },
@@ -40,7 +39,6 @@ const PER_HOUR = [0, 0, 0, 0, 0, 0, 12, 40, 36, 20, 0, 0, 180, 420, 96, 0, 0, 64
 
 const DAY = 24 * HOUR
 
-/** Hour buckets for 24h, otherwise day buckets; scaled down for a single host. */
 function timeseries(url: URL): TimeseriesPoint[] {
   const bucket = url.searchParams.get('bucket')
   const share = hostShare(url.searchParams.get('host'))

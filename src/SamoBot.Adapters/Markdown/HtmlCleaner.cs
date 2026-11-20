@@ -3,7 +3,6 @@ using HtmlAgilityPack;
 
 namespace SamoBot.Adapters.Markdown;
 
-/// <summary>Prepares page HTML for the Markdown converter: picks the main content, removes noise and makes URLs absolute.</summary>
 internal static partial class HtmlCleaner
 {
     private static readonly HashSet<string> NoiseTags = new(StringComparer.Ordinal)
@@ -50,7 +49,6 @@ internal static partial class HtmlCleaner
         return articles is { Count: 1 } ? articles[0] : node.SelectSingleNode("//body") ?? node;
     }
 
-    /// <summary>One walk over the tree: removes noise and cleans images. The anchors are cleaned after it, because an anchor is empty only once its images are known.</summary>
     private static void CleanContent(HtmlNode root, Uri baseUrl)
     {
         var anchors = new List<HtmlNode>();

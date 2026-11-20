@@ -3,11 +3,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Http;
 
-/// <summary>
-/// A small in-memory layer in front of another cache, so that a connect does not query PostgreSQL each time.
-/// It keeps what it saw or saved and never decides freshness: the caller checks <see cref="ResolvedHost.ResolvedAt"/>.
-/// A name that the inner cache did not know is remembered as unknown until it is saved.
-/// </summary>
 public sealed class MemoryHostAddressCache(IHostAddressCache inner) : IHostAddressCache
 {
     public const int MaxEntries = 10_000;

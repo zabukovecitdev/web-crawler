@@ -5,7 +5,6 @@ export type LinkPeer = { id: number; url: string; code: number }
 const ANCHORS = ['Read the guide', 'Configuration', 'Next step', null, 'See the reference', 'Back to start']
 const TOTAL = 60
 
-/** Edge cases the Links view has to handle: external, nofollow, never crawled, and a non-http URL. */
 function specials(): PageLinkDto[] {
   return [
     { url: 'https://en.wikipedia.org/wiki/Web_crawler', text: 'Web crawler', internal: false, noFollow: false, pageId: null, statusCode: null },
@@ -15,7 +14,6 @@ function specials(): PageLinkDto[] {
   ]
 }
 
-/** Links on a page: the edge cases first, then internal links to the other crawled pages. */
 export function outLinks(peers: LinkPeer[]): PageLinkDto[] {
   const links = specials()
   for (let i = 0; links.length < TOTAL && peers.length > 0; i++) {
@@ -32,7 +30,6 @@ export function outLinks(peers: LinkPeer[]): PageLinkDto[] {
   return links
 }
 
-/** Pages that link to this page, with the anchor each used. */
 export function inLinks(peers: LinkPeer[]): PageLinkDto[] {
   return peers.map((peer, i) => ({
     url: peer.url,

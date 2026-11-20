@@ -6,7 +6,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Storage;
 
-/// <summary>Stores page content in MinIO. The first save creates the bucket when it does not exist.</summary>
 public sealed class MinioContentStore(IMinioClient client, IOptions<MinioOptions> options) : IContentStore, IDisposable
 {
     private readonly SemaphoreSlim _bucketLock = new(1, 1);
@@ -69,7 +68,6 @@ public sealed class MinioContentStore(IMinioClient client, IOptions<MinioOptions
         }
     }
 
-    // Only HTML pages reach the store. The object name always ends with .html.
     private static string EnsureHtmlExtension(string objectName) =>
         Path.GetExtension(objectName).Equals(".html", StringComparison.OrdinalIgnoreCase)
             ? objectName

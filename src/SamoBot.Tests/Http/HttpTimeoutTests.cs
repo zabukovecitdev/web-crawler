@@ -10,7 +10,6 @@ using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Http;
 
-/// <summary>The deadlines against a real socket on loopback: a server that never answers, and one that drips its body.</summary>
 public class HttpTimeoutTests
 {
     private static readonly TimeSpan Drip = TimeSpan.FromMilliseconds(200);

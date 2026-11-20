@@ -17,7 +17,6 @@ namespace SamoBot.Adapters;
 
 public static class AdaptersServiceCollectionExtensions
 {
-    /// <summary>Registers every adapter. The configuration needs the sections Database, MinIO, Meilisearch and ChromeRendering.</summary>
     public static IServiceCollection AddSamoBotAdapters(this IServiceCollection services, IConfiguration configuration) => services
         .AddSamoBotPostgres(configuration)
         .AddPostgresAdapters()
@@ -45,8 +44,6 @@ public static class AdaptersServiceCollectionExtensions
     {
         services.Configure<ChromeRenderingOptions>(configuration.GetSection(ChromeRenderingOptions.SectionName));
 
-        // The fetcher does not follow redirects, because the frontier handles them. The robots source follows a few.
-        // Both connect through SafeConnect, so every hop is checked against the address policy.
         services.AddSafeNetwork(configuration);
         services.AddSingleton(provider => new PolitenessPolicy(
             TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<CrawlerNetworkOptions>>().Value.MaxAdaptiveDelaySeconds)));
@@ -54,7 +51,6 @@ public static class AdaptersServiceCollectionExtensions
         services.AddSafeHttpClient<HttpFetcher>(followRedirects: false);
         services.AddSafeHttpClient<HttpRobotsSource>(followRedirects: true);
 
-        // The sitemap source gets the raw bytes: no redirects and no decompression, so that the parser caps the decompressed size.
         services.AddSafeHttpClient<HttpSitemapSource>(followRedirects: false, decompress: false);
 
         services.AddTransient<IFetcher>(provider => provider.GetRequiredService<HttpFetcher>());
@@ -82,7 +78,6 @@ public static class AdaptersServiceCollectionExtensions
         return services.AddSingleton<IContentStore, MinioContentStore>();
     }
 
-    /// <summary>Registers only the search index. The MCP server needs nothing else.</summary>
     public static IServiceCollection AddSamoBotSearch(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MeilisearchOptions>(configuration.GetSection(MeilisearchOptions.SectionName));

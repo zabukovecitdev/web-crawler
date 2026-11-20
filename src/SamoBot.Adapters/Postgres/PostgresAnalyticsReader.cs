@@ -5,7 +5,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>Read-only crawl analytics over UrlFetches.</summary>
 public sealed class PostgresAnalyticsReader(NpgsqlDataSource dataSource, TimeProvider timeProvider) : IAnalyticsReader
 {
     public async Task<AnalyticsOverview> Overview(AnalyticsRange range, CancellationToken ct)

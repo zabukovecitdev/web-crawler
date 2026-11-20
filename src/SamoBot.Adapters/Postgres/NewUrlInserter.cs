@@ -6,10 +6,6 @@ using SamoBot.Core.Domain;
 
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>
-/// The one place that adds URLs to the frontier. It applies the scope of the job:
-/// the allowed hosts and the maximum number of URLs. It also adds the host rows that the claim query needs.
-/// </summary>
 internal static class NewUrlInserter
 {
     private const string InsertSql = $"""

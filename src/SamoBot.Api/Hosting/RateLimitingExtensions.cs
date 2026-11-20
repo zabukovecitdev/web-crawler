@@ -8,14 +8,6 @@ using SamoBot.Api.Authentication;
 
 namespace SamoBot.Api.Hosting;
 
-/// <summary>
-/// The API's rate limiter, and the only one: the dashboard's nginx does not limit. It keys on the signed-in
-/// user, otherwise on the client address, and counts a wrong <c>X-Api-Key</c> separately with far fewer
-/// attempts. All limiters are token buckets: a short burst is allowed, then requests are admitted at a steady
-/// rate. It runs after authentication and before authorization, so unauthenticated calls to protected
-/// endpoints (a 401) are counted too. The hub is limited like any path, which only counts the HTTP requests
-/// that open a connection (negotiate, upgrade), not the messages inside it.
-/// </summary>
 public static partial class RateLimitingExtensions
 {
     public const string SignInPolicy = "auth-signin";
@@ -52,7 +44,6 @@ public static partial class RateLimitingExtensions
             return Token($"user:{user}", limits.PermitsPerMinute);
         }
 
-        // An X-Api-Key that did not authenticate is a wrong guess: give those far fewer attempts.
         return context.Request.Headers.ContainsKey(ApiKeyAuthenticationHandler.HeaderName)
             ? Token($"apikey-failure:{ClientKey(context)}", limits.ApiKeyFailuresPerMinute)
             : Token($"anonymous:{ClientKey(context)}", limits.AnonymousPermitsPerMinute);
@@ -70,7 +61,6 @@ public static partial class RateLimitingExtensions
         AutoReplenishment = true
     };
 
-    /// <summary>The client address; an IPv6 client is limited as a whole /64, since one host owns that many.</summary>
     internal static string ClientKey(HttpContext context)
     {
         var address = context.Connection.RemoteIpAddress;
@@ -114,24 +104,16 @@ public static partial class RateLimitingExtensions
     private static partial void LogRejected(ILogger logger, string path);
 }
 
-/// <summary>
-/// Requests per minute for each kind of caller. Section <c>RateLimiting</c>; the per-user key
-/// <c>PermitsPerMinute</c> keeps its old name.
-/// </summary>
 public sealed class RateLimitOptions
 {
     public const string SectionName = "RateLimiting";
 
-    /// <summary>A signed-in user (cookie session or API key).</summary>
     public int PermitsPerMinute { get; set; } = 300;
 
-    /// <summary>One client address without credentials.</summary>
     public int AnonymousPermitsPerMinute { get; set; } = 120;
 
-    /// <summary>One client address on <c>POST /api/v1/auth/google</c>, on top of the anonymous limit.</summary>
     public int SignInPermitsPerMinute { get; set; } = 10;
 
-    /// <summary>One client address sending an <c>X-Api-Key</c> that does not match.</summary>
     public int ApiKeyFailuresPerMinute { get; set; } = 10;
 
     public void Validate()

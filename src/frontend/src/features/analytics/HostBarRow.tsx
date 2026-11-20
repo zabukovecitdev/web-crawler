@@ -11,9 +11,7 @@ export type HostBar = {
   host: string
   value: number
   max: number
-  /** Optional marker (p95) on the same axis. */
   marker?: number | null
-  /** The one thing that matters gets the signal colour. */
   highlight?: boolean
   text: string
   summary: string
@@ -21,7 +19,6 @@ export type HostBar = {
 
 const CONFIG: ChartConfig = { value: { label: 'Value' } }
 
-/** One row: host link, a single-axis bar (with an optional marker), then the value as text. */
 export function HostBarRow({ bar }: { bar: HostBar }) {
   return (
     <div className="grid grid-cols-1 items-center gap-1 py-[7px] text-[13px] leading-[18px] sm:grid-cols-[minmax(96px,168px)_minmax(0,1fr)_132px] sm:gap-3">

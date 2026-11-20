@@ -8,7 +8,6 @@ public sealed record SitemapUrlDto(string Loc, DateTimeOffset? LastModified, Sit
 
 public sealed record SitemapUrlsDto(int Total, IReadOnlyList<SitemapUrlDto> Items);
 
-/// <summary>The shape of SitemapDto in src/frontend/src/types/api.ts.</summary>
 public sealed record SitemapDto(
     string Host,
     IReadOnlyList<SitemapFileDto> Files,

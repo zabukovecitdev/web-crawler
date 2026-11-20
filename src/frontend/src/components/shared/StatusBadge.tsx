@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Led } from './Led'
 import { httpStatusLook, type Tone } from './status'
 
-/** HTTP status: "200 OK", "404 Client error". Word and mark, not just colour. */
 export function StatusBadge({ code }: { code: number | null | undefined }) {
   const look = httpStatusLook(code)
   return (
@@ -14,7 +13,6 @@ export function StatusBadge({ code }: { code: number | null | undefined }) {
   )
 }
 
-/** A badge with a word and, for live states, an LED. */
 export function ToneBadge({ tone, live = false, children }: { tone: Tone; live?: boolean; children: string }) {
   return (
     <Badge variant={tone}>

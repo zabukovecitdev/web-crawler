@@ -9,7 +9,6 @@ namespace SamoBot.Tests.Api;
 
 public class RateLimitingTests
 {
-    // The burst of a bucket is max(3, permitsPerMinute / 5), so small limits give a burst of 3.
     private const int Burst = 3;
 
     private static Task<AuthTestHost> StartAsync(Dictionary<string, string?>? settings = null) =>

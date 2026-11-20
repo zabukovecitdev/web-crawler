@@ -3,13 +3,8 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Crawling;
 
-/// <summary>What <see cref="FetchRecorder"/> stored: the object name of the saved body, and the delay applied to the host.</summary>
 public sealed record RecordedFetch(string? ObjectName, TimeSpan Delay);
 
-/// <summary>
-/// Stores the body of a fetch and records the result in the frontier: the fetch row, the new URL state and the pacing of
-/// the host, all in one transaction (<see cref="IUrlFrontier.Complete"/>).
-/// </summary>
 public sealed class FetchRecorder(
     IContentStore contentStore,
     IUrlFrontier frontier,
@@ -26,7 +21,6 @@ public sealed class FetchRecorder(
         return new RecordedFetch(objectName, pacing?.Delay ?? TimeSpan.FromMilliseconds(url.CrawlDelayMs));
     }
 
-    /// <summary>A URL that robots.txt disallows. No request was made, so the host keeps its pacing state.</summary>
     public Task RecordDisallowed(ClaimedUrl url, CancellationToken ct)
     {
         var update = new Disabled("robots").ToUpdate(url, timeProvider.GetUtcNow());

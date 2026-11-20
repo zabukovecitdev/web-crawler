@@ -99,7 +99,6 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         claimed.Should().ContainSingle().Which.Id.Should().Be(due);
     }
 
-    /// <summary>UNVERIFIED: written without Docker.</summary>
     [Fact]
     public async Task ClaimReturnsTheCrawlDelayOfTheHost()
     {
@@ -194,7 +193,6 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         ((object?)row.LastCrawlAt).Should().BeNull();
     }
 
-    // UNVERIFIED: written without Docker.
     [Fact]
     public async Task CompleteOfABlockedUrlDisablesItRecordsStatusZeroAndNeverClaimsItAgain()
     {

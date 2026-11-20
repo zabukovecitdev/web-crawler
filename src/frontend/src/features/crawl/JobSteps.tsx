@@ -43,7 +43,6 @@ function Notes({ job }: { job: CrawlJobDto }) {
   )
 }
 
-/** What the job has done so far: one sentence (unless the caller shows it already), the four steps with counts, and why links failed. */
 export function JobSteps({ job, headline = true }: { job: CrawlJobDto; headline?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">

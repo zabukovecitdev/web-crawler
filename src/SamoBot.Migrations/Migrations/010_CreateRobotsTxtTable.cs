@@ -13,13 +13,13 @@ public class CreateRobotsTxtTable : Migration
             Create.Table(TableNames.Database.RobotsTxt)
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
                 .WithColumn("Host").AsString(2048).NotNullable()
-                .WithColumn("Content").AsString().NotNullable() // TEXT type for full robots.txt content
-                .WithColumn("ParsedRules").AsCustom("JSONB").NotNullable() // Parsed rules as JSON
+                .WithColumn("Content").AsString().NotNullable()
+                .WithColumn("ParsedRules").AsCustom("JSONB").NotNullable()
                 .WithColumn("FetchedAt").AsDateTimeOffset().NotNullable()
                 .WithColumn("ExpiresAt").AsDateTimeOffset().NotNullable()
                 .WithColumn("CrawlDelayMs").AsInt32().Nullable()
                 .WithColumn("IsFetchError").AsBoolean().NotNullable().WithDefaultValue(false)
-                .WithColumn("ErrorMessage").AsString().Nullable() // TEXT type for error details
+                .WithColumn("ErrorMessage").AsString().Nullable()
                 .WithColumn("StatusCode").AsInt32().Nullable();
 
             Create.UniqueConstraint("UQ_RobotsTxt_Host")

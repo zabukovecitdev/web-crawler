@@ -28,7 +28,6 @@ function Line({ number, tokens, wrap }: { number: number; tokens: Token[]; wrap:
 
 type Props = { lines: Token[][]; wrap: boolean; complete: boolean }
 
-/** The source, one numbered row for each line, with a mark at the end so the reader knows nothing follows. */
 export const HtmlSourceLines = memo(function HtmlSourceLines({ lines, wrap, complete }: Props) {
   return (
     <>

@@ -8,7 +8,6 @@ import { syncOnce, useEventSync } from './useEventSync'
 
 const NO_REFETCH = { refetchOnWindowFocus: false } as const
 
-/** Loads /progress and /events once and feeds them to the reducer. */
 function useInitialLoad(jobId: number, dispatch: Dispatch<CrawlAction>) {
   const progress = useQuery({ queryKey: crawlKeys.progress(jobId), queryFn: () => fetchProgress(jobId), ...NO_REFETCH })
   const events = useQuery({ queryKey: crawlKeys.events(jobId), queryFn: () => fetchEvents(jobId), ...NO_REFETCH })
@@ -25,7 +24,6 @@ function useInitialLoad(jobId: number, dispatch: Dispatch<CrawlAction>) {
   return progress
 }
 
-/** The job with its link counts. It is read again while links still move: parsing and indexing go on after the last fetch. */
 function useJob(jobId: number) {
   return useQuery({
     queryKey: crawlKeys.job(jobId),
@@ -34,7 +32,6 @@ function useJob(jobId: number) {
   })
 }
 
-/** Initial state, then live events (socket) or polling (offline). Stops once the job has ended. */
 export function useCrawlData(jobId: number) {
   const [state, dispatch] = useReducer(crawlReducer, initialCrawlState)
   const job = useJob(jobId)
@@ -54,7 +51,7 @@ export function useCrawlData(jobId: number) {
   useEffect(() => {
     if (finished) {
       void refetchJob()
-      syncOnce(jobId, lastEventId.current, dispatch).catch(() => undefined) // the last sync, then everything stops
+      syncOnce(jobId, lastEventId.current, dispatch).catch(() => undefined)
     }
   }, [finished, refetchJob, jobId])
 

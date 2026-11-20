@@ -4,10 +4,6 @@ using SamoBot.Core.Ports;
 
 namespace SamoBot.Core.Parsing;
 
-/// <summary>
-/// Parses one stored fetch and hands the result to the parse queue. What the site allows (robots meta tags, X-Robots-Tag,
-/// rel values, canonical, meta refresh, &lt;base&gt;) is decided by the crawl directives, not here.
-/// </summary>
 public sealed class ParsePageHandler(
     IContentStore contentStore,
     IPageParser parser,

@@ -3,7 +3,6 @@ using SamoBot.Core.Directives;
 
 namespace SamoBot.Core.Domain;
 
-/// <summary>Where a link of a crawl job stands on its way to the search index. The dashboard reads these names.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LinkState
 {
@@ -21,7 +20,6 @@ public enum LinkState
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LinkStepStatus
 {
-    /// <summary>The step was not reached.</summary>
     Pending,
     Waiting,
     Active,
@@ -30,10 +28,8 @@ public enum LinkStepStatus
     Failed
 }
 
-/// <summary>The four steps every link goes through, in order.</summary>
 public sealed record LinkSteps(LinkStepStatus Fetch, LinkStepStatus Store, LinkStepStatus Parse, LinkStepStatus Index);
 
-/// <summary>What the database knows about one link of a job. <see cref="State"/> is derived by the query.</summary>
 public sealed record JobLinkFacts
 {
     public int Id { get; init; }
@@ -52,7 +48,6 @@ public sealed record JobLinkFacts
     public PagePolicy? Policy { get; init; }
 }
 
-/// <summary>One link of a job as the dashboard shows it: its state, the reason in words and the state of each step.</summary>
 public sealed record JobLink
 {
     public int Id { get; init; }
@@ -81,10 +76,8 @@ public enum JobLinkFilter
 
 public sealed record JobLinkQuery(JobLinkFilter Filter, string? Query, int Limit, int Offset);
 
-/// <summary>A reason that links of a job failed, with the number of links.</summary>
 public sealed record LinkProblem(string Reason, string Label, int Count);
 
-/// <summary>The number of links of a job in each state, and why the failed ones failed.</summary>
 public sealed record JobLinkSummary(IReadOnlyDictionary<LinkState, int> Counts, IReadOnlyList<LinkProblem> Problems)
 {
     public static readonly JobLinkSummary Empty = new(new Dictionary<LinkState, int>(), []);
@@ -106,7 +99,6 @@ public sealed record JobLinkSummary(IReadOnlyDictionary<LinkState, int> Counts, 
     private int Of(LinkState state) => Counts.GetValueOrDefault(state);
 }
 
-/// <summary>Which links a recrawl puts back in the queue: one link, the failed links, or every link of the job.</summary>
 public sealed record RequeueScope(int? UrlId, bool FailedOnly)
 {
     public static readonly RequeueScope All = new(null, false);

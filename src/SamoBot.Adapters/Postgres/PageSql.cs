@@ -1,6 +1,5 @@
 namespace SamoBot.Adapters.Postgres;
 
-/// <summary>The SQL of the page read model. A page is a DiscoveredUrls row; its latest fetch is the row at LastFetchId.</summary>
 internal static class PageSql
 {
     private const string SummaryColumns = """
@@ -59,8 +58,6 @@ internal static class PageSql
         WHERE "FromUrlId" = @Id
         """;
 
-    // Incoming links of a page: the md5 equality uses the index, the text equality rules out a collision.
-    // Only pages of the same job count: the same normalized URL can exist in several jobs.
     private const string IncomingJoins = $"""
         FROM "{TableNames.DiscoveredUrls}" t
         JOIN "{TableNames.Links}" l ON md5(l."ToUrl") = md5(t."NormalizedUrl") AND l."ToUrl" = t."NormalizedUrl"

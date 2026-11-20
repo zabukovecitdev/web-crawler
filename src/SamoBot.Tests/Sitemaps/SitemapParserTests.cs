@@ -86,7 +86,6 @@ public class SitemapParserTests
     [Fact]
     public void ParseRejectsALocWhoseNormalizedFormIsOverTheByteLimit()
     {
-        // Each "é" is 2 UTF-8 bytes raw but 6 bytes once percent-encoded, so the raw loc fits and the normalized form does not.
         var loc = $"https://a.example/{new string('é', 600)}";
 
         Encoding.UTF8.GetByteCount(loc).Should().BeLessThan(SitemapLimits.MaxLocBytes);

@@ -6,7 +6,6 @@ export type StatusRow = {
   label: string
   count: number
   share: string
-  /** CSS colour from the Zabukovec variables. */
   color: string
 }
 
