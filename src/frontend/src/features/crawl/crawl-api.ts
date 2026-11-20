@@ -4,8 +4,6 @@ import type { CrawlEvent, CrawlJobAction, CrawlJobDto, CrawlProgress, CreateCraw
 
 export { errorMessage } from '@/lib/api'
 
-
-
 export type LinksQuery = { filter: JobLinkFilter; query: string; limit: number; offset: number }
 
 const PAGE_SIZE = 200

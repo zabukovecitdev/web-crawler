@@ -44,6 +44,6 @@ public sealed class CrawlJobTelemetryController(
         var events = after is { } cursor
             ? await pages.ListEvents(id, Math.Max(0, cursor), size, ct)
             : await pages.ListRecentEvents(id, size, ct);
-        return Ok(events.Select(item => CrawlEventEnvelope.Build(item.CrawlJobId, item.EventType, item.CreatedAt, item.Payload, item.Id)));
+        return Ok(events.Select(item => CrawlEventEnvelope.Build(item.Id, item.CrawlJobId, item.EventType, item.CreatedAt, item.Payload)));
     }
 }

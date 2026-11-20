@@ -42,7 +42,7 @@ public class ApiJsonContractTests
     [Fact]
     public void StoredEventIsFlatAndCarriesTheCursorId()
     {
-        var json = Serialize(CrawlEventEnvelope.Build(1, "FetchStarted", TestData.Now, """{"url":"https://a.example/","depth":2}""", 3));
+        var json = Serialize(CrawlEventEnvelope.Build(3, 1, "FetchStarted", TestData.Now, """{"url":"https://a.example/","depth":2}"""));
 
         json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("id", "crawlJobId", "eventType", "at", "url", "depth");
         json.GetProperty("id").GetInt64().Should().Be(3);

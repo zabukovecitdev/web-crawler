@@ -30,7 +30,7 @@ public sealed class PostgresCrawlEventPublisher(NpgsqlDataSource dataSource) : I
         var stored = await connection.QuerySingleAsync<(long Id, DateTimeOffset CreatedAt)>(
             new CommandDefinition(InsertSql, new { CrawlJobId = crawlJobId, EventType = eventType, Payload = payloadJson }, cancellationToken: ct));
 
-        var envelope = CrawlEventEnvelope.Build(crawlJobId, eventType, stored.CreatedAt, payloadJson, stored.Id).ToJsonString();
+        var envelope = CrawlEventEnvelope.Build(stored.Id, crawlJobId, eventType, stored.CreatedAt, payloadJson).ToJsonString();
         if (Encoding.UTF8.GetByteCount(envelope) <= MaxNotifyBytes)
         {
             await connection.ExecuteAsync(new CommandDefinition(NotifySql, new { Channel, Envelope = envelope }, cancellationToken: ct));
