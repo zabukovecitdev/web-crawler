@@ -16,8 +16,9 @@ request log is *not* a live region, because it would read out every request.
 - The screen loads `/progress` and `/events` once, then takes live events from SignalR. When the socket is down, it polls.
 - It syncs every 3 s while the socket is not live and every 30 s while it is, and once on every transition into live (first
   connect, reconnect, recovery from offline).
-- An event is applied once. The newest 500 applied ids are kept, so a live event and a poll of the same event count once.
-  A live event without an id is always applied. The largest id applied from any source is the cursor of the next poll.
+- An event is applied once. Every event carries its stored id, on the hub and from the events endpoint. The newest 500 applied
+  ids are kept, so a live event and a poll of the same event count once. The largest id applied from any source is the cursor
+  of the next poll. The mock stream numbers its events after the mock history.
 - With no cursor, the events endpoint returns the newest page (tail mode). Otherwise the client pages on while a page is full,
   up to a maximum number of pages.
 - A finished request moves the counters on at once, and the next snapshot replaces them.

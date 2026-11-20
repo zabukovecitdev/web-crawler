@@ -34,7 +34,7 @@ Transport notes:
 | `GET /api/v1/crawl-jobs/{id}/links?filter=all\|problems\|notIndexed\|pending\|indexed&query&limit&offset` | | `Page<JobLinkDto>`: each link with its `state`, a `reason` sentence and the status of its steps (`fetch`, `store`, `parse`, `index`) |
 | `POST /api/v1/crawl-jobs/{id}/links/{linkId}/recrawl` | | `204`; `409` when the link is in flight, not part of the job, or the job was cancelled |
 | `GET /api/v1/crawl-jobs/{id}/progress` | | `CrawlProgress` |
-| `GET /api/v1/crawl-jobs/{id}/events?after&limit` | | `CrawlEvent[]` with `id`, ascending. `limit` defaults to 100 (1..500). Without `after`: the newest `limit` events. With `after` (negative counts as 0): events with `id > after`, at most `limit`; the next cursor is the largest `id` returned. |
+| `GET /api/v1/crawl-jobs/{id}/events?after&limit` | | `CrawlEvent[]`, ascending by `id`. Every event carries its stored `id`, here and on the hub, so a client counts an event once whichever path delivered it. `limit` defaults to 100 (1..500). Without `after`: the newest `limit` events. With `after` (negative counts as 0): events with `id > after`, at most `limit`; the next cursor is the largest `id` returned. |
 | `GET /api/v1/analytics/overview?range` | | `AnalyticsOverview` |
 | `GET /api/v1/analytics/hosts?range` | | `HostAnalytics[]` |
 | `GET /api/v1/analytics/status-codes?range&host` | | `StatusClassCounts` |

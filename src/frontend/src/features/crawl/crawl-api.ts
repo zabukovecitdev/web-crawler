@@ -4,9 +4,7 @@ import type { CrawlEvent, CrawlJobAction, CrawlJobDto, CrawlProgress, CreateCraw
 
 export { errorMessage } from '@/lib/api'
 
-export type StoredEvent = CrawlEvent & { id: number }
 
-export type LiveEvent = CrawlEvent & { id?: number }
 
 export type LinksQuery = { filter: JobLinkFilter; query: string; limit: number; offset: number }
 
@@ -32,15 +30,15 @@ export function fetchProgress(jobId: number): Promise<CrawlProgress> {
   return apiFetch<CrawlProgress>(`${base(jobId)}/progress`)
 }
 
-export function fetchEvents(jobId: number, after?: number): Promise<StoredEvent[]> {
-  return apiFetch<StoredEvent[]>(`${base(jobId)}/events${queryString({ after, limit: PAGE_SIZE })}`)
+export function fetchEvents(jobId: number, after?: number): Promise<CrawlEvent[]> {
+  return apiFetch<CrawlEvent[]>(`${base(jobId)}/events${queryString({ after, limit: PAGE_SIZE })}`)
 }
 
-export async function fetchEventsSince(jobId: number, cursor: number): Promise<StoredEvent[]> {
+export async function fetchEventsSince(jobId: number, cursor: number): Promise<CrawlEvent[]> {
   if (cursor <= 0) {
     return fetchEvents(jobId)
   }
-  const all: StoredEvent[] = []
+  const all: CrawlEvent[] = []
   let after = cursor
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const events = await fetchEvents(jobId, after)

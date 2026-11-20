@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CrawlProgress } from '@/types/api'
-import type { LiveEvent, StoredEvent } from './crawl-api'
+import type { CrawlEvent, CrawlProgress } from '@/types/api'
 import { crawlReducer, initialCrawlState, type CrawlState } from './crawl-state'
 
 const PROGRESS = {
@@ -12,12 +11,12 @@ const PROGRESS = {
   maxResponseMs: 200,
 } as unknown as CrawlProgress
 
-function completed(id: number | undefined, url = `https://a.test/${id}`): LiveEvent {
+function completed(id: number, url = `https://a.test/${id}`): CrawlEvent {
   return {
     id,
     crawlJobId: 1,
     eventType: 'FetchCompleted',
-    at: `2026-01-01T00:00:${String(id ?? 0).padStart(2, '0')}Z`,
+    at: `2026-01-01T00:00:${String(id).padStart(2, '0')}Z`,
     url,
     depth: 1,
     statusCode: 200,
@@ -27,10 +26,10 @@ function completed(id: number | undefined, url = `https://a.test/${id}`): LiveEv
     contentStatus: 'Stored',
     delayMs: 0,
     outcome: 'ok',
-  } as LiveEvent
+  }
 }
 
-const stored = (id: number) => completed(id) as StoredEvent
+const stored = (id: number) => completed(id)
 const base: CrawlState = { ...initialCrawlState, progress: PROGRESS }
 const okCount = (s: CrawlState) => s.progress?.statusCounts.ok
 
@@ -47,13 +46,6 @@ it('ignores a live event whose id history already applied', () => {
   const after = crawlReducer(history, { type: 'live', event: completed(5) })
   expect(after).toBe(history)
   expect(okCount(after)).toBe(10)
-})
-
-it('always applies a live event without an id', () => {
-  const once = crawlReducer(base, { type: 'live', event: completed(undefined, 'https://a.test/x') })
-  const twice = crawlReducer(once, { type: 'live', event: completed(undefined, 'https://a.test/y') })
-  expect(okCount(twice)).toBe(12)
-  expect(twice.seen).toEqual([])
 })
 
 it('keeps history out of the counters and moves the cursor to the largest id', () => {
