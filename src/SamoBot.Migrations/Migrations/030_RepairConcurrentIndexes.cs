@@ -15,10 +15,12 @@ public class RepairConcurrentIndexes : Migration
         new("IX_DiscoveredUrls_Host_NormalizedUrl", "DiscoveredUrls", "(\"Host\", \"NormalizedUrl\")")
     ];
 
+    private const string IndexSchema = "public";
+
     private const string StateSql = """
         SELECT i.indisvalid, pg_get_indexdef(i.indexrelid)
         FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
-        WHERE c.relname = @name
+        WHERE c.relname = @name AND c.relnamespace = @schema::regnamespace AND i.indrelid = format('%I.%I', @schema, @table)::regclass
         """;
 
     public override void Up() => Execute.WithConnection((connection, transaction) =>
@@ -38,38 +40,70 @@ public class RepairConcurrentIndexes : Migration
 
     private static void Repair(IDbConnection connection, IDbTransaction? transaction, ExpectedIndex index)
     {
-        var state = State(connection, transaction, index.Name);
+        var state = State(connection, transaction, index);
         if (state is { } found && IsHealthy(found.Valid, found.Definition, index))
         {
             return;
         }
 
-        if (state is not null)
+        if (state is { Valid: true })
         {
-            Run(connection, transaction, $"DROP INDEX CONCURRENTLY \"{index.Name}\"");
+            Replace(connection, transaction, index);
+            return;
         }
 
-        Run(connection, transaction, $"CREATE INDEX CONCURRENTLY \"{index.Name}\" ON \"{index.Table}\" {index.Columns}");
+        if (state is not null)
+        {
+            Run(connection, transaction, $"DROP INDEX CONCURRENTLY {Qualified(index.Name)}");
+        }
+
+        Run(connection, transaction, CreateSql(index.Name, index));
     }
 
-    private static (bool Valid, string Definition)? State(IDbConnection connection, IDbTransaction? transaction, string name)
+    private static void Replace(IDbConnection connection, IDbTransaction? transaction, ExpectedIndex index)
     {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = StateSql;
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = "name";
-        parameter.Value = name;
-        command.Parameters.Add(parameter);
+        var replacement = $"{index.Name}_rebuild";
+        Run(connection, transaction, $"DROP INDEX CONCURRENTLY IF EXISTS {Qualified(replacement)}");
+        Run(connection, transaction, CreateSql(replacement, index));
+        Run(connection, transaction, $"DROP INDEX CONCURRENTLY {Qualified(index.Name)}");
+        Run(connection, transaction, $"ALTER INDEX {Qualified(replacement)} RENAME TO \"{index.Name}\"");
+    }
+
+    private static string CreateSql(string name, ExpectedIndex index) =>
+        $"CREATE INDEX CONCURRENTLY \"{name}\" ON {Qualified(index.Table)} {index.Columns}";
+
+    private static string Qualified(string name) => $"\"{IndexSchema}\".\"{name}\"";
+
+    private static (bool Valid, string Definition)? State(IDbConnection connection, IDbTransaction? transaction, ExpectedIndex index)
+    {
+        using var command = Command(connection, transaction, StateSql);
+        Add(command, "name", index.Name);
+        Add(command, "schema", IndexSchema);
+        Add(command, "table", index.Table);
         using var reader = command.ExecuteReader();
         return reader.Read() ? (reader.GetBoolean(0), reader.GetString(1)) : null;
     }
 
+    private static void Add(IDbCommand command, string name, string value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
     private static void Run(IDbConnection connection, IDbTransaction? transaction, string sql)
     {
-        using var command = connection.CreateCommand();
+        using var command = Command(connection, transaction, sql);
+        command.ExecuteNonQuery();
+    }
+
+    private static IDbCommand Command(IDbConnection connection, IDbTransaction? transaction, string sql)
+    {
+        var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = sql;
-        command.ExecuteNonQuery();
+        command.CommandTimeout = 0;
+        return command;
     }
 }
