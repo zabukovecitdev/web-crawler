@@ -18,8 +18,9 @@ public static partial class RateLimitingExtensions
 
     public static IServiceCollection AddSamoBotRateLimiting(this IServiceCollection services, IConfiguration configuration)
     {
-        var limits = configuration.GetSection(RateLimitOptions.SectionName).Get<RateLimitOptions>() ?? new RateLimitOptions();
+        var limits = RateLimitOptions.From(configuration.GetSection(RateLimitOptions.SectionName));
         limits.Validate();
+        services.AddSingleton(limits);
 
         services.AddRateLimiter(options =>
         {
@@ -35,13 +36,21 @@ public static partial class RateLimitingExtensions
 
     public static IApplicationBuilder UseSamoBotRateLimiting(this IApplicationBuilder app) => app.UseRateLimiter();
 
+    public static void LogIfLegacyRateLimitKey(this IServiceProvider services)
+    {
+        if (services.GetRequiredService<RateLimitOptions>().UsesLegacyUserKey)
+        {
+            LogLegacyKey(services.GetRequiredService<ILoggerFactory>().CreateLogger("SamoBot.Api.RateLimiting"));
+        }
+    }
+
     private static RateLimitPartition<string> Partition(HttpContext context, RateLimitOptions limits)
     {
         var signedIn = context.User.Identity?.IsAuthenticated == true;
         var user = signedIn ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
         if (user is not null)
         {
-            return Token($"user:{user}", limits.PermitsPerMinute);
+            return Token($"user:{user}", limits.UserPermitsPerMinute);
         }
 
         return context.Request.Headers.ContainsKey(ApiKeyAuthenticationHandler.HeaderName)
@@ -102,13 +111,21 @@ public static partial class RateLimitingExtensions
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Rate limit exceeded for {Path}.")]
     private static partial void LogRejected(ILogger logger, string path);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Warning,
+        Message = "RateLimiting:PermitsPerMinute is deprecated and will be removed. Rename it to RateLimiting:UserPermitsPerMinute.")]
+    private static partial void LogLegacyKey(ILogger logger);
 }
 
 public sealed class RateLimitOptions
 {
     public const string SectionName = "RateLimiting";
 
-    public int PermitsPerMinute { get; set; } = 300;
+    public const string LegacyUserKey = "PermitsPerMinute";
+
+    public int UserPermitsPerMinute { get; set; } = 300;
 
     public int AnonymousPermitsPerMinute { get; set; } = 120;
 
@@ -116,9 +133,23 @@ public sealed class RateLimitOptions
 
     public int ApiKeyFailuresPerMinute { get; set; } = 10;
 
+    public bool UsesLegacyUserKey { get; private set; }
+
+    public static RateLimitOptions From(IConfigurationSection section)
+    {
+        var options = section.Get<RateLimitOptions>() ?? new RateLimitOptions();
+        if (section[nameof(UserPermitsPerMinute)] is null && section.GetValue<int?>(LegacyUserKey) is { } legacy)
+        {
+            options.UserPermitsPerMinute = legacy;
+            options.UsesLegacyUserKey = true;
+        }
+
+        return options;
+    }
+
     public void Validate()
     {
-        Require(PermitsPerMinute, nameof(PermitsPerMinute));
+        Require(UserPermitsPerMinute, nameof(UserPermitsPerMinute));
         Require(AnonymousPermitsPerMinute, nameof(AnonymousPermitsPerMinute));
         Require(SignInPermitsPerMinute, nameof(SignInPermitsPerMinute));
         Require(ApiKeyFailuresPerMinute, nameof(ApiKeyFailuresPerMinute));

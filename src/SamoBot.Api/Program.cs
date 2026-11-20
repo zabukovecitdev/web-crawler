@@ -60,6 +60,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 app.Services.LogIfPrivateAddressesAllowed();
+app.Services.LogIfLegacyRateLimitKey();
 
 if (app.Environment.IsDevelopment())
 {
