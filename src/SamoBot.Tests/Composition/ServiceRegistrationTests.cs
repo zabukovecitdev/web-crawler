@@ -10,6 +10,7 @@ using SamoBot.Core.Crawling;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
+using SamoBot.Core.SiteChecks;
 using SamoBot.Core.Sitemaps;
 using SamoBot.Core.Ports;
 
@@ -39,14 +40,17 @@ public class ServiceRegistrationTests
     [InlineData(typeof(IndexBatchHandler))]
     [InlineData(typeof(JobCompletionHandler))]
     [InlineData(typeof(SitemapBatchHandler))]
+    [InlineData(typeof(BrowserGuardHandler))]
+    [InlineData(typeof(ReviewGuardHandler))]
     [InlineData(typeof(CrawlJobService))]
+    [InlineData(typeof(SiteCheckService))]
     public async Task ResolveBuildsEachHandlerAndServiceWithAllItsDependencies(Type type)
     {
         await using var provider = Build();
         await using var scope = provider.CreateAsyncScope();
 
         scope.ServiceProvider.GetRequiredService(type).Should().NotBeNull();
-        if (type != typeof(CrawlJobService))
+        if (type != typeof(CrawlJobService) && type != typeof(SiteCheckService))
         {
             scope.ServiceProvider.GetRequiredService(type).Should().BeAssignableTo<IWorkHandler>();
         }
@@ -93,5 +97,16 @@ public class ServiceRegistrationTests
         var resolver = scope.ServiceProvider.GetRequiredService<FetcherResolver>();
 
         resolver.For(Fakes.TestData.Url()).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ResolveSharesOneBrowserAvailabilityBetweenTheApiAndTheWorkerLoops()
+    {
+        await using var provider = Build();
+        await using var scope = provider.CreateAsyncScope();
+
+        scope.ServiceProvider.GetRequiredService<Core.Browser.BrowserAvailability>()
+            .Should().BeSameAs(provider.GetRequiredService<Core.Browser.BrowserAvailability>());
+        provider.GetRequiredService<IBrowserProbe>().Should().BeOfType<Adapters.Browser.CdpBrowserProbe>();
     }
 }

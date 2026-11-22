@@ -162,7 +162,7 @@ public class PostgresJobLinkTests(PostgresFixture postgres) : IAsyncLifetime
         (await Frontier.Requeue(job, RequeueScope.Link(url), default)).Should().Be(1);
         (await Frontier.Requeue(job + 1, RequeueScope.Link(url), default)).Should().Be(0);
 
-        var claimed = await Frontier.Claim(10, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(30), default);
+        var claimed = await Frontier.Claim(10, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(30), true, default);
         claimed.Should().ContainSingle().Which.FailCount.Should().Be(0);
         (await PostgresTestData.Scalar<long>(postgres.DataSource, """SELECT count(*) FROM "UrlFetches" """)).Should().Be(1);
     }

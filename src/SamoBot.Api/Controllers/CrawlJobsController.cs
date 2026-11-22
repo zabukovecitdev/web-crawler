@@ -3,6 +3,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SamoBot.Api.Contracts;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Ports;
@@ -44,6 +45,11 @@ public sealed class CrawlJobsController(
         var owner = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var input = request.ToNewJob(owner);
         var created = request.StartImmediately == true ? await service.CreateAndStart(input, ct) : await service.Create(input, ct);
+        if (created.Errors.Any(error => error is BrowserUnavailableError))
+        {
+            return JobActionResults.Failed(created.Errors);
+        }
+
         if (created.IsFailed)
         {
             return CreateFailed(created.Errors);

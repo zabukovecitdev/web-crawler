@@ -14,6 +14,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             JOIN "{TableNames.Hosts}" h ON h."Host" = u."Host"
             JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId" AND j."Status" = 'Running'
             WHERE h."NextAllowedAt" <= @Now
+              AND (@BrowserAvailable OR NOT u."UseJsRendering")
               AND ((u."Status" = 'Idle' AND COALESCE(u."NextCrawlAt", @Now) <= @Now)
                 OR (u."Status" = 'InFlight' AND u."LeaseUntil" < @Now))
             ORDER BY u."Host", u."Depth", u."Id"
@@ -94,11 +95,18 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
         return await connection.ExecuteAsync(new CommandDefinition(RequeueSql, parameters, cancellationToken: ct));
     }
 
-    public async Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct)
+    public async Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, bool browserAvailable, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         var now = timeProvider.GetUtcNow();
-        var parameters = new { Now = now, BatchSize = batchSize, LeaseSeconds = lease.TotalSeconds, HoldSeconds = hold.TotalSeconds };
+        var parameters = new
+        {
+            Now = now,
+            BatchSize = batchSize,
+            LeaseSeconds = lease.TotalSeconds,
+            HoldSeconds = hold.TotalSeconds,
+            BrowserAvailable = browserAvailable
+        };
         var urls = await connection.QueryAsync<ClaimedUrl>(new CommandDefinition(ClaimSql, parameters, cancellationToken: ct));
         return urls.Select(url => url with { HeldUntil = now + hold }).ToList();
     }

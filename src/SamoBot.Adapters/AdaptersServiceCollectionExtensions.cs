@@ -37,6 +37,9 @@ public static class AdaptersServiceCollectionExtensions
         .AddSingleton<IRobotsStore, PostgresRobotsStore>()
         .AddSingleton<ISitemapStore, PostgresSitemapStore>()
         .AddSingleton<ISitemapReader, PostgresSitemapReader>()
+        .AddSingleton<ISitemapPlanReader, PostgresSitemapPlanReader>()
+        .AddSingleton<IBrowserPauseStore, PostgresBrowserPauseStore>()
+        .AddSingleton<IReviewPauseStore, PostgresReviewPauseStore>()
         .AddSingleton<IHostAddressCache>(provider => new MemoryHostAddressCache(ActivatorUtilities.CreateInstance<PostgresHostAddressCache>(provider)))
         .AddSingleton<ICrawlEventPublisher, PostgresCrawlEventPublisher>();
 
@@ -56,6 +59,7 @@ public static class AdaptersServiceCollectionExtensions
         services.AddTransient<IFetcher>(provider => provider.GetRequiredService<HttpFetcher>());
         services.AddTransient<ISitemapSource>(provider => provider.GetRequiredService<HttpSitemapSource>());
         services.AddTransient<IRobotsSource>(provider => provider.GetRequiredService<HttpRobotsSource>());
+        services.AddHttpClient<IBrowserProbe, CdpBrowserProbe>();
         services.AddSingleton<BrowserFetcher>();
         return services.AddSingleton<IFetcher>(provider => provider.GetRequiredService<BrowserFetcher>());
     }

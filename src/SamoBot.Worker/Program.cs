@@ -20,6 +20,8 @@ builder.Services.AddHostedService<PollingWorker<ParseBatchHandler>>();
 builder.Services.AddHostedService<PollingWorker<IndexBatchHandler>>();
 builder.Services.AddHostedService<PollingWorker<JobCompletionHandler>>();
 builder.Services.AddHostedService<PollingWorker<SitemapBatchHandler>>();
+builder.Services.AddHostedService<PollingWorker<BrowserGuardHandler>>();
+builder.Services.AddHostedService<PollingWorker<ReviewGuardHandler>>();
 
 var host = builder.Build();
 host.Services.LogIfPrivateAddressesAllowed();

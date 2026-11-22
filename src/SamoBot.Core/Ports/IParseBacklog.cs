@@ -7,4 +7,6 @@ public interface IParseBacklog
     Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct);
 
     Task Complete(FetchToParse fetch, ParseResult result, CancellationToken ct);
+
+    Task Escalate(FetchToParse fetch, CancellationToken ct);
 }

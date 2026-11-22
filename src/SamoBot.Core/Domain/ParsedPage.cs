@@ -17,6 +17,7 @@ public sealed record ParsedPage
     public IReadOnlyDictionary<string, string> OpenGraphData { get; init; } = new Dictionary<string, string>();
     public IReadOnlyDictionary<string, string> TwitterCardData { get; init; } = new Dictionary<string, string>();
     public IReadOnlyList<string> JsonLdData { get; init; } = [];
+    public PageShell Shell { get; init; } = PageShell.Empty;
 }
 
 public sealed record ParsedHeading(int Level, string Text);

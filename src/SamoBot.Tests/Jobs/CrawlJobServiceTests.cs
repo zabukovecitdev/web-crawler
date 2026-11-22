@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Jobs;
 using SamoBot.Tests.Fakes;
@@ -11,11 +12,12 @@ public class CrawlJobServiceTests
     private readonly FakeCrawlJobRepository _jobs = new();
     private readonly FakeUrlFrontier _frontier = new();
     private readonly FakeEventPublisher _events = new();
+    private readonly FakeBrowserProbe _browser = new();
     private readonly CrawlJobService _service;
 
     public CrawlJobServiceTests()
     {
-        _service = new CrawlJobService(_jobs, _frontier, _events, new FakeTimeProvider(TestData.Now));
+        _service = new CrawlJobService(_jobs, _frontier, _events, new BrowserGate(new BrowserAvailability(_browser, new FakeTimeProvider(TestData.Now))), new FakeTimeProvider(TestData.Now));
     }
 
     private static NewCrawlJob Request(params string[] seeds) => TestData.NewJob(seeds, 2, 100);

@@ -30,7 +30,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
             await PostgresTestData.InsertUrl(postgres.DataSource, job, $"https://h{i}.example/");
         }
 
-        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Frontier().Claim(12, Lease, Hold, default)));
+        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Frontier().Claim(12, Lease, Hold, true, default)));
 
         var ids = results.SelectMany(r => r).Select(u => u.Id).ToList();
         ids.Should().OnlyHaveUniqueItems();
@@ -45,11 +45,11 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var first = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/", depth: 0);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/mid", depth: 1);
 
-        var claimed = await Frontier().Claim(10, Lease, Hold, default);
+        var claimed = await Frontier().Claim(10, Lease, Hold, true, default);
         await Frontier().Complete(claimed[0], new Succeeded(TimeSpan.FromDays(1)).ToUpdate(claimed[0], TestData.Now), Fetch(), default);
-        var immediately = await Frontier().Claim(10, Lease, Hold, default);
+        var immediately = await Frontier().Claim(10, Lease, Hold, true, default);
         _time.Advance(TimeSpan.FromSeconds(2));
-        var afterDelay = await Frontier().Claim(10, Lease, Hold, default);
+        var afterDelay = await Frontier().Claim(10, Lease, Hold, true, default);
 
         claimed.Select(u => u.Id).Should().Equal(first);
         immediately.Should().BeEmpty();
@@ -62,7 +62,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var paused = await PostgresTestData.InsertJob(postgres.DataSource, status: "Paused");
         await PostgresTestData.InsertUrl(postgres.DataSource, paused, "https://a.example/");
 
-        (await Frontier().Claim(10, Lease, Hold, default)).Should().BeEmpty();
+        (await Frontier().Claim(10, Lease, Hold, true, default)).Should().BeEmpty();
     }
 
     [Fact]
@@ -71,11 +71,11 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         var id = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
 
-        var first = await Frontier().Claim(10, Lease, Hold, default);
+        var first = await Frontier().Claim(10, Lease, Hold, true, default);
         _time.Advance(TimeSpan.FromSeconds(30));
-        var whileLeased = await Frontier().Claim(10, Lease, Hold, default);
+        var whileLeased = await Frontier().Claim(10, Lease, Hold, true, default);
         _time.Advance(TimeSpan.FromMinutes(2));
-        var afterExpiry = await Frontier().Claim(10, Lease, Hold, default);
+        var afterExpiry = await Frontier().Claim(10, Lease, Hold, true, default);
 
         first.Should().ContainSingle().Which.Id.Should().Be(id);
         whileLeased.Should().BeEmpty();
@@ -94,7 +94,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
 
         var due = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://due.example/");
 
-        var claimed = await Frontier().Claim(5, Lease, Hold, default);
+        var claimed = await Frontier().Claim(5, Lease, Hold, true, default);
 
         claimed.Should().ContainSingle().Which.Id.Should().Be(due);
     }
@@ -107,7 +107,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         await PostgresTestData.Scalar<int>(
             postgres.DataSource, """UPDATE "Hosts" SET "CrawlDelayMs" = 2500 WHERE "Host" = 'a.example' RETURNING 1""");
 
-        var claimed = await Frontier().Claim(1, Lease, Hold, default);
+        var claimed = await Frontier().Claim(1, Lease, Hold, true, default);
 
         claimed.Should().ContainSingle().Which.CrawlDelayMs.Should().Be(2500);
     }
@@ -116,7 +116,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, url, depth);
-        return (await Frontier().Claim(1, Lease, Hold, default)).Single();
+        return (await Frontier().Claim(1, Lease, Hold, true, default)).Single();
     }
 
     private static FetchRecord Fetch() => new()
@@ -209,7 +209,7 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
         var fetchStatus = await PostgresTestData.Scalar<int>(
             postgres.DataSource, """SELECT "StatusCode" FROM "UrlFetches" WHERE "DiscoveredUrlId" = @id""", new { id = url.Id });
         fetchStatus.Should().Be(0);
-        (await Frontier().Claim(10, Lease, Hold, default)).Should().BeEmpty();
+        (await Frontier().Claim(10, Lease, Hold, true, default)).Should().BeEmpty();
     }
 
     [Fact]
@@ -268,6 +268,22 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
 
         var stored = await PostgresTestData.Rows<string>(postgres.DataSource, """SELECT "Url" FROM "DiscoveredUrls" WHERE "CrawlJobId" = @job ORDER BY "Url" """, new { job });
         stored.Should().Equal("https://a.example/", "https://a.example/blog/2026/b", "https://a.example/q?blog=1", "https://a.example/x/y");
+    }
+
+    [Fact]
+    public async Task ClaimLeavesTheUrlsThatNeedTheBrowserWhileItIsUnavailable()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        var plain = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/plain");
+        var browser = await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://b.example/js");
+        await PostgresTestData.Execute(postgres.DataSource, """UPDATE "DiscoveredUrls" SET "UseJsRendering" = true WHERE "Id" = @browser""", new { browser });
+
+        var without = await Frontier().Claim(10, Lease, Hold, false, default);
+        _time.Advance(TimeSpan.FromMinutes(2));
+        var with = await Frontier().Claim(10, Lease, Hold, true, default);
+
+        without.Select(url => url.Id).Should().Equal(plain);
+        with.Select(url => url.Id).Should().Contain(browser);
     }
 
     [Fact]

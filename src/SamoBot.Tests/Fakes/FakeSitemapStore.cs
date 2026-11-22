@@ -18,7 +18,13 @@ public sealed class FakeSitemapStore : ISitemapStore
         return Task.CompletedTask;
     }
 
-    public Task Enqueue(string host, CancellationToken ct) => Task.CompletedTask;
+    public List<string> Enqueued { get; } = [];
+
+    public Task Enqueue(string host, CancellationToken ct)
+    {
+        Enqueued.Add(host);
+        return Task.CompletedTask;
+    }
 
     public Task<SitemapClaim?> ClaimNext(TimeSpan lease, CancellationToken ct) =>
         Task.FromResult(Claims.TryDequeue(out var host) ? new SitemapClaim(host, TestData.Now, TestData.Now + lease) : null);

@@ -1,3 +1,4 @@
+using SamoBot.Core.Browser;
 using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
@@ -14,7 +15,14 @@ public sealed class ParsePageHandler(
 {
     public async Task Handle(FetchToParse fetch, CancellationToken ct)
     {
-        var context = contexts.Create(fetch, await Parse(fetch, ct));
+        var parsed = await Parse(fetch, ct);
+        if (fetch.CanEscalate && JsDetector.IsSuspect(parsed.Shell))
+        {
+            await queue.Escalate(fetch, ct);
+            return;
+        }
+
+        var context = contexts.Create(fetch, parsed);
         var policy = policies.Evaluate(context);
         var page = context.Page with { Canonical = context.Canonical is { } canonical ? LinkResolver.Normalize(canonical) ?? string.Empty : string.Empty };
         var pageLinks = PageLinkPreparer.Prepare(context, link => !links.IsFollowable(link, context));

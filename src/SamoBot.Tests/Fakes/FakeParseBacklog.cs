@@ -9,6 +9,7 @@ public sealed record CompletedParse(FetchToParse Fetch, ParsedPage Page, PagePol
 public sealed class FakeParseBacklog(params FetchToParse[] due) : IParseBacklog
 {
     public List<CompletedParse> Completed { get; } = [];
+    public List<FetchToParse> Escalated { get; } = [];
     public (int BatchSize, TimeSpan Lease)? LastClaim { get; private set; }
 
     public Task<IReadOnlyList<FetchToParse>> Claim(int batchSize, TimeSpan lease, CancellationToken ct)
@@ -20,6 +21,12 @@ public sealed class FakeParseBacklog(params FetchToParse[] due) : IParseBacklog
     public Task Complete(FetchToParse fetch, ParseResult result, CancellationToken ct)
     {
         Completed.Add(new CompletedParse(fetch, result.Page, result.Policy, result.NewUrls, result.PageLinks));
+        return Task.CompletedTask;
+    }
+
+    public Task Escalate(FetchToParse fetch, CancellationToken ct)
+    {
+        Escalated.Add(fetch);
         return Task.CompletedTask;
     }
 }

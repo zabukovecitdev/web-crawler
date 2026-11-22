@@ -27,9 +27,9 @@ public class CrashRecoveryTests(PostgresFixture postgres) : IAsyncLifetime
             await PostgresTestData.InsertUrl(postgres.DataSource, job, $"https://h{i}.example/");
         }
 
-        var crashed = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
+        var crashed = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, true, default);
         _time.Advance(Lease + TimeSpan.FromSeconds(1));
-        var recovered = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, default);
+        var recovered = await new PostgresUrlFrontier(postgres.DataSource, _time).Claim(20, Lease, Hold, true, default);
 
         crashed.Should().HaveCount(8);
         recovered.Select(url => url.Id).Should().BeEquivalentTo(crashed.Select(url => url.Id));

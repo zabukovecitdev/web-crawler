@@ -31,3 +31,8 @@ public sealed class ExplainRequest
 {
     public string Url { get; set; } = string.Empty;
 }
+
+public sealed class SiteCheckRequest
+{
+    public string Url { get; set; } = string.Empty;
+}

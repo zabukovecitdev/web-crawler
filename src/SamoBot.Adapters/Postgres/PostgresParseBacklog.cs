@@ -55,6 +55,13 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
         UPDATE "{TableNames.UrlFetches}" SET "ParsedAt" = @Now, "LeaseUntil" = NULL WHERE "Id" = @FetchId
         """;
 
+    private const string EscalateSql = $"""
+        UPDATE "{TableNames.DiscoveredUrls}"
+        SET "UseJsRendering" = true, "Status" = 'Idle', "NextCrawlAt" = @Now, "FailCount" = 0, "FailReason" = NULL,
+            "LeaseUntil" = NULL, "LastCrawlAt" = NULL, "LastFetchId" = NULL, "StatusUpdatedAt" = @Now
+        WHERE "Id" = @UrlId
+        """;
+
     private const int MaxCanonicalLength = 2048;
 
     static PostgresParseBacklog() => DapperTypeHandlers.Register();
@@ -76,6 +83,16 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
         await connection.ExecuteAsync(new CommandDefinition(UpsertPageSql, PageParameters(fetch, result, now), transaction, cancellationToken: ct));
         await NewUrlInserter.Insert(connection, transaction, fetch.CrawlJobId, result.NewUrls, now, ct);
         await PageLinkWriter.Replace(connection, transaction, fetch.UrlId, result.PageLinks, now, ct);
+        await connection.ExecuteAsync(new CommandDefinition(MarkParsedSql, new { fetch.FetchId, Now = now }, transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct);
+    }
+
+    public async Task Escalate(FetchToParse fetch, CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var now = timeProvider.GetUtcNow();
+        await connection.ExecuteAsync(new CommandDefinition(EscalateSql, new { fetch.UrlId, Now = now }, transaction, cancellationToken: ct));
         await connection.ExecuteAsync(new CommandDefinition(MarkParsedSql, new { fetch.FetchId, Now = now }, transaction, cancellationToken: ct));
         await transaction.CommitAsync(ct);
     }

@@ -169,4 +169,38 @@ public class HtmlAgilityPackParserTests
         page.Title.Should().Be("Wrong type");
         page.Links.Should().ContainSingle(l => l.Url == "/x");
     }
+
+    [Fact]
+    public void TheShellCountsTextLinksAndScripts()
+    {
+        var shell = Parse(Page).Shell;
+
+        (shell.TextLength > 0, shell.LinkCount, shell.ScriptCount, shell.InlineScriptBytes).Should().Be((true, 1, 1, "var hidden = 1;".Length));
+        (shell.EmptyAppContainer, shell.NoscriptNotice).Should().Be((false, false));
+    }
+
+    [Theory]
+    [InlineData("<div id=\"root\"></div>", true)]
+    [InlineData("<div id=\"app\">   </div>", true)]
+    [InlineData("<div id=\"__next\"><script>x</script></div>", true)]
+    [InlineData("<app-root></app-root>", true)]
+    [InlineData("<div id=\"root\"><main><p>Hello</p></main></div>", false)]
+    [InlineData("<div id=\"other\"></div>", false)]
+    public void AnEmptyAppContainerIsRecognised(string body, bool expected) =>
+        Parse($"<html><body>{body}<script src=\"/a.js\"></script></body></html>").Shell.EmptyAppContainer.Should().Be(expected);
+
+    [Theory]
+    [InlineData("You need to enable JavaScript to run this app.", true)]
+    [InlineData("JavaScript is required for this site", true)]
+    [InlineData("<img src=\"https://t.example/pixel.gif\">", false)]
+    public void ANoscriptNoticeAboutJavaScriptIsRecognised(string text, bool expected) =>
+        Parse($"<html><body><noscript>{text}</noscript><p>x</p></body></html>").Shell.NoscriptNotice.Should().Be(expected);
+
+    [Fact]
+    public void ExternalScriptsCountButAddNoInlineBytes()
+    {
+        var shell = Parse("<html><body><script src=\"/a.js\"></script><script src=\"/b.js\"></script></body></html>").Shell;
+
+        (shell.ScriptCount, shell.InlineScriptBytes).Should().Be((2, 0));
+    }
 }

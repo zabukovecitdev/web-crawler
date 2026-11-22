@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Crawling;
 using SamoBot.Core.Domain;
 using SamoBot.Tests.Fakes;
@@ -27,7 +28,7 @@ public class CrawlBatchHandlerTests
             new FetchRecorder(new FakeContentStore(), frontier, new PolitenessPolicy(TimeSpan.FromSeconds(60)), time),
             new FakeEventPublisher());
 
-        var count = await new CrawlBatchHandler(frontier, urlHandler, new InFlightHold(TimeSpan.FromSeconds(50))).HandleBatch(default);
+        var count = await new CrawlBatchHandler(frontier, urlHandler, new InFlightHold(TimeSpan.FromSeconds(50)), new BrowserAvailability(new FakeBrowserProbe(), time)).HandleBatch(default);
 
         count.Should().Be(2);
         frontier.LastClaim.Should().Be((20, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(50)));

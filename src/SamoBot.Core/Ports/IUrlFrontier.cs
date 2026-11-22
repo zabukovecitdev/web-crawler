@@ -4,7 +4,7 @@ namespace SamoBot.Core.Ports;
 
 public interface IUrlFrontier
 {
-    Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, CancellationToken ct);
+    Task<IReadOnlyList<ClaimedUrl>> Claim(int batchSize, TimeSpan lease, TimeSpan hold, bool browserAvailable, CancellationToken ct);
 
     Task Complete(ClaimedUrl url, UrlUpdate update, FetchRecord? fetch, CancellationToken ct);
 

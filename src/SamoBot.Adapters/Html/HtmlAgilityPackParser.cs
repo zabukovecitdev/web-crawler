@@ -11,6 +11,8 @@ public sealed class HtmlAgilityPackParser : IPageParser
     public ParsedPage Parse(Stream content, string? contentType)
     {
         var document = Load(content, StoredMediaTypes.MediaType(contentType));
+        var bodyText = PageText.BodyText(document);
+        var links = PageReferences.Links(document);
 
         return new ParsedPage
         {
@@ -21,14 +23,15 @@ public sealed class HtmlAgilityPackParser : IPageParser
             Language = PageMetadata.Language(document),
             Canonical = PageMetadata.Canonical(document),
             Headings = PageText.Headings(document),
-            BodyText = PageText.BodyText(document),
-            Links = PageReferences.Links(document),
+            BodyText = bodyText,
+            Links = links,
             Images = PageReferences.Images(document),
             BaseHref = PageMetadata.BaseHref(document),
             MetaTags = PageMetadata.MetaTags(document),
             OpenGraphData = StructuredData.OpenGraph(document),
             TwitterCardData = StructuredData.TwitterCard(document),
-            JsonLdData = StructuredData.JsonLd(document)
+            JsonLdData = StructuredData.JsonLd(document),
+            Shell = ShellSignals.Read(document, bodyText, links.Count)
         };
     }
 

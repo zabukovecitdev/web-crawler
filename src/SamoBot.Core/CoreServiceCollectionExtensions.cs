@@ -1,10 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Crawling;
 using SamoBot.Core.Directives;
 using SamoBot.Core.Indexing;
 using SamoBot.Core.Jobs;
 using SamoBot.Core.Parsing;
+using SamoBot.Core.SiteChecks;
 using SamoBot.Core.Sitemaps;
 
 namespace SamoBot.Core;
@@ -21,7 +23,9 @@ public static class CoreServiceCollectionExtensions
             .AddCrawling()
             .AddParsing()
             .AddIndexing()
+            .AddBrowser()
             .AddJobs()
+            .AddSiteChecks()
             .AddSitemaps();
     }
 
@@ -41,7 +45,19 @@ public static class CoreServiceCollectionExtensions
 
     private static IServiceCollection AddJobs(this IServiceCollection services) => services
         .AddScoped<CrawlJobService>()
-        .AddScoped<JobCompletionHandler>();
+        .AddScoped<JobCompletionHandler>()
+        .AddScoped<BrowserGuardHandler>()
+        .AddScoped<ReviewGuardHandler>();
+
+    private static IServiceCollection AddBrowser(this IServiceCollection services) => services
+        .AddSingleton<BrowserAvailability>()
+        .AddScoped<BrowserGate>();
+
+    private static IServiceCollection AddSiteChecks(this IServiceCollection services) => services
+        .AddScoped<StartPageResolver>()
+        .AddScoped<JsDetectionService>()
+        .AddScoped<SitemapPlanner>()
+        .AddScoped<SiteCheckService>();
 
     private static IServiceCollection AddSitemaps(this IServiceCollection services) => services
         .AddSingleton<SitemapEnqueueSchedule>()

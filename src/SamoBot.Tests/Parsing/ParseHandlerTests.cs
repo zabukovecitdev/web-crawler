@@ -215,4 +215,52 @@ public class ParseHandlerTests
         queue.LastClaim.Should().Be((10, TimeSpan.FromMinutes(5)));
         queue.Completed.Should().HaveCount(1);
     }
+
+    private static readonly PageShell EmptyShell = new(84, 1, 4, 0, true, false);
+
+    [Fact]
+    public async Task AnEmptyAppShellInAnAutoJobIsSentBackToBeRenderedInTheBrowser()
+    {
+        var fetch = Fetch with { CanEscalate = true };
+        var (queue, handler) = Build(new ParsedPage { Shell = EmptyShell }, fetch);
+
+        await handler.Handle(fetch, default);
+
+        queue.Escalated.Should().Equal(fetch);
+        queue.Completed.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task APageThatWasAlreadyRenderedIsParsedEvenWhenItLooksEmpty()
+    {
+        var (queue, handler) = Build(new ParsedPage { Shell = EmptyShell });
+
+        await handler.Handle(Fetch, default);
+
+        queue.Escalated.Should().BeEmpty();
+        queue.Completed.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task APageWithItsContentIsNotEscalated()
+    {
+        var fetch = Fetch with { CanEscalate = true };
+        var (queue, handler) = Build(new ParsedPage { Shell = new PageShell(5000, 100, 2, 0, false, false) }, fetch);
+
+        await handler.Handle(fetch, default);
+
+        queue.Escalated.Should().BeEmpty();
+        queue.Completed.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task LinksOutsideTheTickedFoldersAreNotQueued()
+    {
+        var fetch = Fetch with { PathRules = [new PathRule(PathRuleKind.Exclude, "/about/")] };
+
+        var completed = await Run(Page(), fetch);
+
+        completed.Links.Should().BeEmpty();
+        completed.PageLinks.Should().HaveCount(2);
+    }
 }

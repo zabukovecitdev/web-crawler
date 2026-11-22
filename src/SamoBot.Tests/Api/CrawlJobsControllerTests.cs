@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Time.Testing;
 using SamoBot.Api.Contracts;
 using SamoBot.Api.Controllers;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Jobs;
 using SamoBot.Tests.Fakes;
@@ -14,16 +15,19 @@ public class CrawlJobsControllerTests
 {
     private readonly FakeCrawlJobRepository _jobs = new();
     private readonly FakeUrlFrontier _frontier = new();
+    private readonly FakeBrowserProbe _browser = new();
     private readonly CrawlJobsController _controller;
 
     public CrawlJobsControllerTests()
     {
-        var service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), new FakeTimeProvider(TestData.Now));
+        var service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), Gate(_browser), new FakeTimeProvider(TestData.Now));
         _controller = new CrawlJobsController(service, _jobs, new FakeJobLinkReader())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
     }
+
+    private static BrowserGate Gate(FakeBrowserProbe probe) => new(new BrowserAvailability(probe, new FakeTimeProvider(TestData.Now)));
 
     private void AddJob(CrawlJobStatus status = CrawlJobStatus.Pending)
     {

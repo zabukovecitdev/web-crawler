@@ -25,7 +25,7 @@ public class PostgresHostHoldTests(PostgresFixture postgres) : IAsyncLifetime
     private FetchRecorder Recorder() =>
         new(new FakeContentStore(), Frontier(), new PolitenessPolicy(TimeSpan.FromSeconds(60)), _time);
 
-    private Task<IReadOnlyList<ClaimedUrl>> Claim(int batch = 10) => Frontier().Claim(batch, Lease, Hold, default);
+    private Task<IReadOnlyList<ClaimedUrl>> Claim(int batch = 10) => Frontier().Claim(batch, Lease, Hold, true, default);
 
     private async Task<int> TwoUrlsOnOneHost()
     {

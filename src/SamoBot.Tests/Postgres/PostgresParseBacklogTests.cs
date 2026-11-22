@@ -47,6 +47,55 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
     }
 
     [Fact]
+    public async Task ClaimCarriesThePathRulesAndOnlyAnAutoJobMayEscalateAnHttpPage()
+    {
+        var (job, urlId) = await JobWithUrl();
+        await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
+        await PostgresTestData.Execute(
+            postgres.DataSource,
+            """UPDATE "CrawlJobs" SET "PathRules" = '[{"kind":"Exclude","prefix":"/blog/"}]', "FollowLinkedPages" = false WHERE "Id" = @job""",
+            new { job });
+
+        var fetch = (await Queue().Claim(10, Lease, default)).Single();
+
+        fetch.PathRules.Should().Equal(new PathRule(PathRuleKind.Exclude, "/blog/"));
+        (fetch.FollowLinkedPages, fetch.CanEscalate).Should().Be((false, true));
+    }
+
+    [Theory]
+    [InlineData("Never", false, false)]
+    [InlineData("Always", false, false)]
+    [InlineData("Auto", true, false)]
+    [InlineData("Auto", false, true)]
+    public async Task OnlyAnHttpPageOfAnAutoJobCanEscalate(string mode, bool alreadyBrowser, bool expected)
+    {
+        var (job, urlId) = await JobWithUrl();
+        await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
+        await PostgresTestData.Execute(
+            postgres.DataSource,
+            """UPDATE "CrawlJobs" SET "RenderMode" = @mode WHERE "Id" = @job; UPDATE "DiscoveredUrls" SET "UseJsRendering" = @alreadyBrowser WHERE "Id" = @urlId""",
+            new { mode, job, alreadyBrowser, urlId });
+
+        (await Queue().Claim(10, Lease, default)).Single().CanEscalate.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task EscalateSendsTheUrlBackToTheFrontierForTheBrowserAndMarksTheFetchParsed()
+    {
+        var (_, urlId) = await JobWithUrl();
+        var fetchId = await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
+        await PostgresTestData.Execute(postgres.DataSource, """UPDATE "DiscoveredUrls" SET "LastFetchId" = @fetchId, "LastCrawlAt" = now() WHERE "Id" = @urlId""", new { fetchId, urlId });
+        var fetch = (await Queue().Claim(10, Lease, default)).Single();
+
+        await Queue().Escalate(fetch, default);
+
+        var url = await PostgresTestData.Row(postgres.DataSource, """SELECT "UseJsRendering", "Status", "LastFetchId", "LastCrawlAt" FROM "DiscoveredUrls" WHERE "Id" = @urlId""", new { urlId });
+        ((bool)url.UseJsRendering, (string)url.Status, (object?)url.LastFetchId, (object?)url.LastCrawlAt).Should().Be((true, "Idle", null, null));
+        (await PostgresTestData.Scalar<bool>(postgres.DataSource, """SELECT "ParsedAt" IS NOT NULL FROM "UrlFetches" WHERE "Id" = @fetchId""", new { fetchId })).Should().BeTrue();
+        (await Queue().Claim(10, Lease, default)).Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ClaimDoesNotReturnALeasedFetchUntilTheLeaseExpires()
     {
         var (_, urlId) = await JobWithUrl();

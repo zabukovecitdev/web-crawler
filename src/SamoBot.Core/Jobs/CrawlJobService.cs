@@ -1,4 +1,5 @@
 using FluentResults;
+using SamoBot.Core.Browser;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
 using SamoBot.Core.Scope;
@@ -9,49 +10,50 @@ public sealed class CrawlJobService(
     ICrawlJobRepository jobs,
     IUrlFrontier frontier,
     ICrawlEventPublisher events,
+    BrowserGate browser,
     TimeProvider timeProvider)
 {
     public async Task<Result<CrawlJob>> Create(NewCrawlJob request, CancellationToken ct)
     {
-        var inserted = await Insert(request, ct);
-        return inserted.IsFailed ? inserted.ToResult<CrawlJob>() : Result.Ok(await Saved(inserted.Value, ct));
+        var prepared = Prepare(request);
+        return prepared.IsFailed ? prepared : Result.Ok((await Insert(prepared.Value, ct)).Job);
     }
 
     public async Task<Result<CrawlJob>> CreateAndStart(NewCrawlJob request, CancellationToken ct)
     {
-        var inserted = await Insert(request, ct);
-        if (inserted.IsFailed)
+        var prepared = Prepare(request);
+        if (prepared.IsFailed)
         {
-            return inserted.ToResult<CrawlJob>();
+            return prepared;
         }
 
-        var started = await Start(inserted.Value.Id, ct);
-        return started.IsFailed ? started.ToResult<CrawlJob>() : Result.Ok(await Saved(inserted.Value, ct));
+        var allowed = await browser.Ensure(prepared.Value, ct);
+        if (allowed.IsFailed)
+        {
+            return allowed.ToResult<CrawlJob>();
+        }
+
+        var inserted = await Insert(prepared.Value, ct);
+        var started = await Start(inserted.Id, ct);
+        return started.IsFailed ? started.ToResult<CrawlJob>() : Result.Ok(await jobs.Find(inserted.Id, ct) ?? inserted.Job);
     }
 
     private sealed record Inserted(int Id, CrawlJob Job);
 
-    private async Task<Result<Inserted>> Insert(NewCrawlJob request, CancellationToken ct)
+    private Result<CrawlJob> Prepare(NewCrawlJob request)
     {
         var problems = SeedUrlValidator.Validate(request.SeedUrls).Concat(PathRuleValidator.Validate(request.PathRules)).ToList();
-        if (problems.Count > 0)
-        {
-            return Result.Fail<Inserted>(problems.Select(problem => new Error(problem)));
-        }
-
-        var created = CrawlJob.Create(request, timeProvider.GetUtcNow());
-        if (created.IsFailed)
-        {
-            return created.ToResult<Inserted>();
-        }
-
-        var id = await jobs.Insert(created.Value, ct);
-        await events.Publish(id, CrawlEventTypes.JobCreated, new { seedCount = created.Value.SeedUrls.Count }, ct);
-        return Result.Ok(new Inserted(id, created.Value));
+        return problems.Count > 0
+            ? Result.Fail<CrawlJob>(problems.Select(problem => new Error(problem)))
+            : CrawlJob.Create(request, timeProvider.GetUtcNow());
     }
 
-    private async Task<CrawlJob> Saved(Inserted inserted, CancellationToken ct) =>
-        await jobs.Find(inserted.Id, ct) ?? inserted.Job;
+    private async Task<Inserted> Insert(CrawlJob created, CancellationToken ct)
+    {
+        var id = await jobs.Insert(created, ct);
+        await events.Publish(id, CrawlEventTypes.JobCreated, new { seedCount = created.SeedUrls.Count }, ct);
+        return new Inserted(id, await jobs.Find(id, ct) ?? created);
+    }
 
     public async Task<Result> Start(int id, CancellationToken ct)
     {
@@ -62,7 +64,8 @@ public sealed class CrawlJobService(
         }
 
         var job = loaded.Value;
-        var started = job.Start(timeProvider.GetUtcNow());
+        var allowed = await browser.Ensure(job, ct);
+        var started = allowed.IsFailed ? allowed : job.Start(timeProvider.GetUtcNow());
         if (started.IsFailed)
         {
             return started;

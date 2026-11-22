@@ -30,7 +30,7 @@ public class PostgresPacingTests(PostgresFixture postgres) : IAsyncLifetime
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource);
         await PostgresTestData.InsertUrl(postgres.DataSource, job, url);
-        return (await Frontier().Claim(1, Lease, Hold, default)).Single();
+        return (await Frontier().Claim(1, Lease, Hold, true, default)).Single();
     }
 
     private static FetchRecord Fetch() => new() { FetchedAt = TestData.Now, StatusCode = 200, ResponseTimeMs = 42, FinalUrl = "https://a.example/" };
@@ -45,7 +45,7 @@ public class PostgresPacingTests(PostgresFixture postgres) : IAsyncLifetime
         await PostgresTestData.InsertUrl(postgres.DataSource, job, "https://a.example/");
         await SetHost("\"AvgResponseMs\" = 420.5, \"ConsecutiveFailures\" = 3");
 
-        var claimed = (await Frontier().Claim(1, Lease, Hold, default)).Single();
+        var claimed = (await Frontier().Claim(1, Lease, Hold, true, default)).Single();
 
         (claimed.AvgResponseMs, claimed.ConsecutiveFailures).Should().Be((420.5, 3));
     }
@@ -173,7 +173,7 @@ public class PostgresPacingTests(PostgresFixture postgres) : IAsyncLifetime
             }
         }
 
-        var results = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => Frontier().Claim(10, Lease, Hold, default)));
+        var results = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => Frontier().Claim(10, Lease, Hold, true, default)));
 
         var hosts = results.SelectMany(r => r).Select(u => u.Host).ToList();
         hosts.Should().OnlyHaveUniqueItems();
