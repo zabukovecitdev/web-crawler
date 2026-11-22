@@ -1,4 +1,4 @@
-import type { ContentStatus, CrawlJobStatus, CrawlProgress } from '@/types/api'
+import type { ContentStatus, CrawlJobStatus, CrawlProgress, PauseReason } from '@/types/api'
 import { formatNumber } from '@/lib/format'
 import type { Tone } from '@/components/shared/status'
 
@@ -55,8 +55,13 @@ const JOB_LOOKS: Record<CrawlJobStatus, JobLook> = {
   Failed: { tone: 'signal', word: 'Failed', live: false },
 }
 
-export function jobLook(status: CrawlJobStatus): JobLook {
-  return JOB_LOOKS[status]
+const PAUSE_LOOKS: Record<PauseReason, JobLook> = {
+  'browser-unavailable': { tone: 'warning', word: 'Waiting for browser', live: false },
+  review: { tone: 'neutral', word: 'Waiting for your review', live: false },
+}
+
+export function jobLook(status: CrawlJobStatus, pauseReason: PauseReason | null = null): JobLook {
+  return status === 'Paused' && pauseReason ? PAUSE_LOOKS[pauseReason] : JOB_LOOKS[status]
 }
 
 export function percentOf(part: number, max: number | null): number | null {

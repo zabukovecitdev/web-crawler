@@ -10,7 +10,13 @@ function useCrawlOneLink(job: CrawlJobDto) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (url: string) =>
-      createJob({ seedUrls: [url], maxDepth: 0, maxUrls: 1, useJsRendering: job.useJsRendering, startImmediately: true }),
+      createJob({
+        seedUrls: [url],
+        pathRules: [{ kind: 'Exclude', prefix: '/' }],
+        renderMode: job.renderMode,
+        jsNeeded: job.jsNeeded,
+        startImmediately: true,
+      }),
     onSuccess: (created) => {
       void queryClient.invalidateQueries({ queryKey: crawlKeys.jobs })
       navigate(`/crawls/${created.id}`)

@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { CrawlJobAction, CrawlJobDto, CreateCrawlJobRequest } from '@/types/api'
 import { JOBS, NO_LINKS, progressOf, recentEvents } from '../data/crawl'
+import { browserState } from '../data/plan'
 import { ago, json, noContent, notFound } from '../util'
 
 const STATUS_AFTER: Record<CrawlJobAction, CrawlJobDto['status']> = {
@@ -16,6 +17,17 @@ function findJob(id: unknown): CrawlJobDto | undefined {
   return JOBS.find((job) => job.id === Number(id))
 }
 
+function planFields(request: CreateCrawlJobRequest): Pick<CrawlJobDto, 'renderMode' | 'jsNeeded' | 'pathRules' | 'seedFromSitemap' | 'followLinkedPages' | 'reviewAfterPages'> {
+  return {
+    renderMode: request.renderMode ?? 'Auto',
+    jsNeeded: request.jsNeeded ?? false,
+    pathRules: request.pathRules ?? [],
+    seedFromSitemap: request.seedFromSitemap ?? false,
+    followLinkedPages: request.followLinkedPages ?? true,
+    reviewAfterPages: request.reviewAfterPages ?? null,
+  }
+}
+
 function createJob(request: CreateCrawlJobRequest): CrawlJobDto {
   const [seed] = request.seedUrls
   const job: CrawlJobDto = {
@@ -23,9 +35,12 @@ function createJob(request: CreateCrawlJobRequest): CrawlJobDto {
     status: request.startImmediately ? 'Running' : 'Draft',
     host: new URL(seed).host,
     seedUrls: request.seedUrls,
-    maxDepth: request.maxDepth ?? 5,
-    maxUrls: request.maxUrls ?? 5000,
-    useJsRendering: request.useJsRendering ?? false,
+    maxDepth: request.maxDepth ?? null,
+    maxUrls: request.maxUrls ?? null,
+    useJsRendering: request.renderMode === 'Always',
+    ...planFields(request),
+    pauseReason: null,
+    pauseDetail: null,
     createdAt: ago(0),
     startedAt: request.startImmediately ? ago(0) : null,
     completedAt: null,
@@ -49,6 +64,17 @@ function seedProblem(seed: string | undefined): string | null {
   }
 }
 
+function needsBrowser(request: CreateCrawlJobRequest): boolean {
+  return request.startImmediately === true && (request.renderMode === 'Always' || (request.renderMode === 'Auto' && request.jsNeeded === true))
+}
+
+function browserDown(): Response {
+  return HttpResponse.json(
+    { title: 'The browser service is not available.', status: 409, detail: 'This site needs JavaScript, but the browser service is not available.', code: 'browser-unavailable' },
+    { status: 409 },
+  )
+}
+
 function badRequest(detail: string): Response {
   return HttpResponse.json({ title: 'Invalid crawl job', detail, status: 400 }, { status: 400 })
 }
@@ -61,7 +87,10 @@ export const crawlHandlers = [
   http.post('*/api/v1/crawl-jobs', async ({ request }) => {
     const body = (await request.json()) as CreateCrawlJobRequest
     const problem = seedProblem(body.seedUrls?.[0])
-    return problem ? badRequest(problem) : json(createJob(body), 201)
+    if (problem) {
+      return badRequest(problem)
+    }
+    return needsBrowser(body) && !browserState.up ? browserDown() : json(createJob(body), 201)
   }),
   http.get('*/api/v1/crawl-jobs/:id', ({ params }) => {
     const job = findJob(params.id)

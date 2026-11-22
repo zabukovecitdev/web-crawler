@@ -7,6 +7,9 @@ import { CrawlActions, ReprocessAction } from './CrawlActions'
 import { CurrentRequestCard } from './CurrentRequestCard'
 import { FinalSummary } from './FinalSummary'
 import { JobLinksPanel } from './JobLinksPanel'
+import { JobMapCard } from '../plan/JobMapCard'
+import { PauseNotice } from '../plan/PauseNotice'
+import { useJobMap } from '../plan/useJobMap'
 import { JobStatusBadge } from './JobStatusBadge'
 import { JobSteps } from './JobSteps'
 import { PolitenessCard } from './PolitenessCard'
@@ -34,7 +37,7 @@ function CrawlHeader({ job, progress, live }: HeaderProps) {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="m-0 break-all text-[32px] font-semibold leading-[38px] tracking-[-0.02em]">{job.host}</h1>
-          <JobStatusBadge status={progress.status} />
+          <JobStatusBadge status={progress.status} pauseReason={job.pauseReason} />
         </div>
         {live}
       </div>
@@ -51,6 +54,17 @@ function elapsedOf(progress: CrawlProgress, endedAt: string | null): string {
   const start = progress.startedAt ? new Date(progress.startedAt).getTime() : null
   const end = endedAt ? new Date(endedAt).getTime() : Date.now()
   return start === null ? '—' : formatElapsed(end - start)
+}
+
+function JobMapSection({ job, progress }: { job: CrawlJobDto; progress: CrawlProgress }) {
+  const map = useJobMap(job, progress.status)
+  const found = progress.crawled + progress.queued + progress.inFlight + progress.failed
+  return (
+    <>
+      <PauseNotice job={job} status={progress.status} fetched={progress.crawled + progress.failed} found={found} />
+      <JobMapCard map={map} />
+    </>
+  )
 }
 
 function CrawlDetail({ jobId }: { jobId: number }) {
@@ -71,6 +85,7 @@ function CrawlDetail({ jobId }: { jobId: number }) {
       <Panel title="Progress" kicker="What happened so far">
         <JobSteps job={{ ...job.data, status: progress.status }} />
       </Panel>
+      <JobMapSection job={job.data} progress={progress} />
       <StatCards progress={progress} endedAt={finished ? endedAt : null} />
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="order-last min-w-0 lg:order-first">

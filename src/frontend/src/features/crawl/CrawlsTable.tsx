@@ -27,7 +27,7 @@ function Summary({ job }: { job: CrawlJobDto }) {
         <Link to={`/crawls/${job.id}`} className="readout break-all text-base font-semibold underline-offset-4 hover:underline">
           {job.host}
         </Link>
-        <JobStatusBadge status={job.status} />
+        <JobStatusBadge status={job.status} pauseReason={job.pauseReason} />
         <span className="readout text-[13px] text-muted-foreground">
           #{job.id} · {whenText(job)}
         </span>

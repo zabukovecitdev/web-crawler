@@ -20,12 +20,34 @@ const SMALL_DONE_LINKS = summary({ indexed: 412, notIndexed: 6, skipped: 21 })
 const CANCELLED_LINKS = summary({ queued: 640, indexed: 220, skipped: 14, failed: 2, problems: [{ reason: 'Timeout', label: 'Timed out', count: 2 }] })
 const PAUSED_LINKS = summary({ queued: 300, parsing: 12, indexed: 180, notIndexed: 3, skipped: 9 })
 
+type PlanFields = Pick<
+  CrawlJobDto,
+  'renderMode' | 'jsNeeded' | 'pathRules' | 'seedFromSitemap' | 'followLinkedPages' | 'reviewAfterPages' | 'pauseReason' | 'pauseDetail'
+>
+
+const PLAN_DEFAULTS: PlanFields = {
+  renderMode: 'Auto',
+  jsNeeded: false,
+  pathRules: [],
+  seedFromSitemap: true,
+  followLinkedPages: true,
+  reviewAfterPages: null,
+  pauseReason: null,
+  pauseDetail: null,
+}
+
+type JobBase = Omit<CrawlJobDto, keyof PlanFields> & Partial<PlanFields>
+
+function job(base: JobBase): CrawlJobDto {
+  return { ...PLAN_DEFAULTS, ...base }
+}
+
 export const JOBS: CrawlJobDto[] = [
-  { id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null, links: LIVE_LINKS },
-  { id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR), links: DONE_LINKS },
-  { id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR), links: SMALL_DONE_LINKS },
-  { id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR), links: CANCELLED_LINKS },
-  { id: 38, status: 'Paused', host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null, links: PAUSED_LINKS },
+  job({ id: LIVE_JOB_ID, status: 'Running', host: 'docs.example.com', seedUrls: ['https://docs.example.com/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(25 * MINUTE), startedAt: ago(24 * MINUTE + 12_000), completedAt: null, links: LIVE_LINKS }),
+  job({ id: 41, status: 'Completed', host: 'example.org', seedUrls: ['https://example.org/'], maxDepth: 5, maxUrls: 5000, useJsRendering: false, createdAt: ago(4 * HOUR), startedAt: ago(4 * HOUR), completedAt: ago(2 * HOUR), links: DONE_LINKS }),
+  job({ id: 40, status: 'Completed', host: 'blog.example.net', seedUrls: ['https://blog.example.net/'], maxDepth: 4, maxUrls: 3000, useJsRendering: false, createdAt: ago(31 * HOUR), startedAt: ago(31 * HOUR), completedAt: ago(30 * HOUR), links: SMALL_DONE_LINKS }),
+  job({ id: 39, status: 'Cancelled', host: 'shop.example.com', seedUrls: ['https://shop.example.com/'], maxDepth: 3, maxUrls: 2000, useJsRendering: true, renderMode: 'Always', jsNeeded: true, createdAt: ago(77 * HOUR), startedAt: ago(77 * HOUR), completedAt: ago(76 * HOUR), links: CANCELLED_LINKS }),
+  job({ id: 38, status: 'Paused', pauseReason: 'review', reviewAfterPages: 100, seedFromSitemap: false, host: 'wiki.example.edu', seedUrls: ['https://wiki.example.edu/'], maxDepth: 5, maxUrls: 1000, useJsRendering: false, createdAt: ago(121 * HOUR), startedAt: ago(121 * HOUR), completedAt: null, links: PAUSED_LINKS }),
 ]
 
 const RUNNING = {

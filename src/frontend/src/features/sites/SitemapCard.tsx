@@ -13,7 +13,7 @@ import { LINK, TD, TH } from './table-styles'
 
 const LIMIT = 25
 const dateOnly = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-export const NO_SITEMAP = 'No sitemap found yet. It is read after a crawl finishes.'
+export const NO_SITEMAP = 'No sitemap found yet. It is read when you plan a crawl and again after a crawl finishes.'
 
 function Coverage({ sitemap }: { sitemap: SitemapDto }) {
   const { urlCount, crawledCount } = sitemap

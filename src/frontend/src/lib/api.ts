@@ -80,6 +80,18 @@ export function readableError(text: string, fallback: string): string {
   }
 }
 
+export function errorCode(error: unknown): string | null {
+  if (!(error instanceof ApiError)) {
+    return null
+  }
+  try {
+    const body: unknown = JSON.parse(error.body)
+    return isRecord(body) && typeof body.code === 'string' ? body.code : null
+  } catch {
+    return null
+  }
+}
+
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong.'
 }

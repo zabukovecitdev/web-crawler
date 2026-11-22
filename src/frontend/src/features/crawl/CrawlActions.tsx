@@ -1,22 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { CrawlJobAction, CrawlJobStatus } from '@/types/api'
-import { crawlKeys, errorMessage, sendAction } from './crawl-api'
+import { errorMessage } from './crawl-api'
+import { useJobAction } from './useJobAction'
 
 type Props = { jobId: number; host: string; status: CrawlJobStatus }
-
-function useJobAction(jobId: number) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (action: CrawlJobAction) => sendAction(jobId, action),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.job(jobId) })
-      void queryClient.invalidateQueries({ queryKey: crawlKeys.jobs })
-    },
-  })
-}
 
 type CancelProps = { host: string; open: boolean; busy: boolean; onOpenChange: (open: boolean) => void; onConfirm: () => void }
 

@@ -10,6 +10,7 @@ const AnalyticsPage = lazy(() =>
 const CrawlDetailPage = lazy(() =>
   import('@/features/crawl/CrawlDetailPage').then((m) => ({ default: m.CrawlDetailPage })),
 )
+const PlanPage = lazy(() => import('@/features/plan/PlanPage').then((m) => ({ default: m.PlanPage })))
 const CrawlsPage = lazy(() => import('@/features/crawl/CrawlsPage').then((m) => ({ default: m.CrawlsPage })))
 const SearchPage = lazy(() => import('@/features/search/SearchPage').then((m) => ({ default: m.SearchPage })))
 const PageDetailPage = lazy(() =>
@@ -34,6 +35,7 @@ export function AppRoutes() {
           <Route path="/sites/:host/sitemap" element={<SitemapPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/crawls" element={<CrawlsPage />} />
+          <Route path="/crawls/new" element={<PlanPage />} />
           <Route path="/crawls/:jobId" element={<CrawlDetailPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>

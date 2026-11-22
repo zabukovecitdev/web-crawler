@@ -111,6 +111,11 @@ export type SearchHitDto = {
 }
 export type SearchResponse = Page<SearchHitDto> & { tookMs: number; hosts: { host: string; count: number }[] }
 
+export type RenderMode = 'Auto' | 'Always' | 'Never'
+export type PathRuleKind = 'Include' | 'Exclude'
+export type PathRule = { kind: PathRuleKind; prefix: string; exact?: boolean }
+export type PauseReason = 'browser-unavailable' | 'review'
+
 export type CrawlJobStatus = 'Draft' | 'Pending' | 'Running' | 'Paused' | 'Completed' | 'Cancelled' | 'Failed'
 export type CrawlJobDto = {
   id: number
@@ -120,6 +125,14 @@ export type CrawlJobDto = {
   maxDepth: number | null
   maxUrls: number | null
   useJsRendering: boolean
+  renderMode: RenderMode
+  jsNeeded: boolean
+  pathRules: PathRule[]
+  seedFromSitemap: boolean
+  followLinkedPages: boolean
+  reviewAfterPages: number | null
+  pauseReason: PauseReason | null
+  pauseDetail: string | null
   createdAt: string
   startedAt: string | null
   completedAt: string | null
@@ -129,7 +142,12 @@ export type CreateCrawlJobRequest = {
   seedUrls: string[]
   maxDepth?: number
   maxUrls?: number
-  useJsRendering?: boolean
+  renderMode?: RenderMode
+  jsNeeded?: boolean
+  pathRules?: PathRule[]
+  seedFromSitemap?: boolean
+  followLinkedPages?: boolean
+  reviewAfterPages?: number
   startImmediately?: boolean
 }
 export type CrawlJobAction = 'start' | 'pause' | 'cancel' | 'recrawl' | 'retry-failed' | 'reprocess'
@@ -236,3 +254,43 @@ export type HostAnalytics = {
 export type StatusClassCounts = { ok: number; redirect: number; clientError: number; serverError: number }
 export type ContentTypeCount = { contentType: string; requests: number; stored: boolean }
 export type TimeseriesPoint = { bucket: string; requests: number }
+
+export type JsVerdict = 'NotNeeded' | 'Needed' | 'ProbablyNeeded'
+export type SitemapPlanState = 'Ready' | 'Pending' | 'None' | 'Failed'
+export type SitemapPlanDto = { state: SitemapPlanState; files: number; urls: number; checkedAt: string | null }
+export type BrowserStatusDto = { available: boolean; reason: string | null; checkedAt: string }
+export type PageShellDto = { textLength: number; linkCount: number; emptyAppContainer: boolean }
+export type SiteCheckDto = {
+  requestedUrl: string
+  startUrl: string
+  host: string
+  redirected: boolean
+  startPage: { statusCode: number; reachable: boolean; blockedByRobots: boolean; problem: string | null }
+  robots: { startAllowed: boolean; crawlDelaySeconds: number | null; disallowed: string[] }
+  sitemap: SitemapPlanDto
+  browser: BrowserStatusDto
+  javaScript: { verdict: JsVerdict; plain: PageShellDto; rendered: PageShellDto | null }
+  checkedAt: string
+}
+
+export type TreeNodeKind = 'Folder' | 'Page' | 'Rest'
+export type TreeCountsDto = {
+  pages: number
+  done: number
+  failed: number
+  skipped: number
+  stopped: number
+  fetching: number
+  queued: number
+  oldestModified: string | null
+  newestModified: string | null
+}
+export type TreeNodeDto = {
+  prefix: string
+  kind: TreeNodeKind
+  hasChildren: boolean
+  blocked: boolean
+  counts: TreeCountsDto
+  children: TreeNodeDto[] | null
+}
+export type PathTreeDto = { host: string; parent: string; total: TreeCountsDto; nodes: TreeNodeDto[] }
