@@ -6,7 +6,20 @@ public sealed class CreateCrawlJobRequest
     public int? MaxDepth { get; set; }
     public int? MaxUrls { get; set; }
     public bool? UseJsRendering { get; set; }
+    public string? RenderMode { get; set; }
+    public bool? JsNeeded { get; set; }
+    public List<PathRuleRequest>? PathRules { get; set; }
+    public bool? SeedFromSitemap { get; set; }
+    public bool? FollowLinkedPages { get; set; }
+    public int? ReviewAfterPages { get; set; }
     public bool? StartImmediately { get; set; }
+}
+
+public sealed class PathRuleRequest
+{
+    public string? Kind { get; set; }
+    public string? Prefix { get; set; }
+    public bool? Exact { get; set; }
 }
 
 public sealed class CrawlJobActionRequest

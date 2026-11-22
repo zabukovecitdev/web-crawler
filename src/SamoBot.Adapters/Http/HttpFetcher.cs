@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using SamoBot.Adapters.Browser;
 using SamoBot.Core.Common;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Directives;
@@ -9,7 +8,6 @@ namespace SamoBot.Adapters.Http;
 
 public sealed class HttpFetcher(
     HttpClient httpClient,
-    IOptions<ChromeRenderingOptions> chrome,
     IOptions<CrawlerNetworkOptions> network,
     ResponseHeaderSelection keptHeaders,
     TimeProvider timeProvider) : IFetcher
@@ -19,7 +17,7 @@ public sealed class HttpFetcher(
 
     public const string Accept = "text/html,application/xhtml+xml;q=0.9,text/markdown;q=0.8,text/plain;q=0.7,*/*;q=0.6";
 
-    public bool Supports(ClaimedUrl url) => !url.UseJsRendering || !chrome.Value.IsAvailable;
+    public bool Supports(ClaimedUrl url) => !url.UseJsRendering;
 
     public async Task<FetchResponse> Fetch(ClaimedUrl url, CancellationToken ct)
     {

@@ -5,4 +5,9 @@ public sealed record NewCrawlJob(
     IReadOnlyList<string> SeedUrls,
     int? MaxDepth,
     int? MaxUrls,
-    bool UseJsRendering);
+    RenderMode RenderMode,
+    bool JsNeeded,
+    IReadOnlyList<PathRule> PathRules,
+    bool SeedFromSitemap,
+    bool FollowLinkedPages,
+    int? ReviewAfterPages);

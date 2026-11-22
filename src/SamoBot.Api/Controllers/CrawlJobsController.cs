@@ -42,7 +42,7 @@ public sealed class CrawlJobsController(
     public async Task<IActionResult> Create([FromBody] CreateCrawlJobRequest request, CancellationToken ct = default)
     {
         var owner = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var input = new NewCrawlJob(owner, request.SeedUrls, request.MaxDepth, request.MaxUrls, request.UseJsRendering ?? false);
+        var input = request.ToNewJob(owner);
         var created = request.StartImmediately == true ? await service.CreateAndStart(input, ct) : await service.Create(input, ct);
         if (created.IsFailed)
         {

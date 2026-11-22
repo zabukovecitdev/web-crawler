@@ -8,9 +8,10 @@ namespace SamoBot.Adapters.Postgres;
 
 internal static class NewUrlInserter
 {
-    private const string InsertSql = $"""
+    private static readonly string InsertSql = $"""
         WITH job AS (
-            SELECT "UseJsRendering", "AllowedHosts"::jsonb AS allowed,
+            SELECT {PathRuleSql.UseBrowser} AS "UseJsRendering", "AllowedHosts"::jsonb AS allowed,
+                   "PathRules"::jsonb AS rules,
                    COALESCE("MaxUrls", 2147483647) AS max_urls
             FROM "{TableNames.CrawlJobs}" WHERE "Id" = @JobId
         ),
@@ -23,6 +24,7 @@ internal static class NewUrlInserter
             SELECT DISTINCT ON (i.normalized) i.*
             FROM incoming i, job
             WHERE jsonb_exists(job.allowed, i.host)
+              AND {PathRuleSql.Allows("job.rules", PathRuleSql.PathOf("i.normalized"))}
               AND NOT EXISTS (SELECT 1 FROM "{TableNames.DiscoveredUrls}" d
                               WHERE d."CrawlJobId" = @JobId AND d."NormalizedUrl" = i.normalized)
             ORDER BY i.normalized, i.ord

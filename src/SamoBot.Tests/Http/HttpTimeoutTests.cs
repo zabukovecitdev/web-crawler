@@ -34,7 +34,7 @@ public class HttpTimeoutTests
     }
 
     private static HttpFetcher Fetcher(CrawlerNetworkOptions? limits = null, HttpClient? client = null) =>
-        new(client ?? Client(), Options.Create(new ChromeRenderingOptions()), Options.Create(limits ?? Limits()), TestDirectives.Headers, TimeProvider.System);
+        new(client ?? Client(), Options.Create(limits ?? Limits()), TestDirectives.Headers, TimeProvider.System);
 
     private static HttpRobotsSource Robots() => new(Client(), Options.Create(Limits()), TimeProvider.System);
 

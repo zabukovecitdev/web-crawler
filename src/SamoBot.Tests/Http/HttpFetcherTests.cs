@@ -9,10 +9,9 @@ namespace SamoBot.Tests.Http;
 
 public class HttpFetcherTests
 {
-    private static HttpFetcher Fetcher(Func<HttpRequestMessage, HttpResponseMessage> respond, bool chromeEnabled = false) =>
+    private static HttpFetcher Fetcher(Func<HttpRequestMessage, HttpResponseMessage> respond) =>
         new(
             new HttpClient(new StubHttpHandler(respond)),
-            Options.Create(new ChromeRenderingOptions { Enabled = chromeEnabled, CdpEndpoint = chromeEnabled ? "http://chrome:9222" : null }),
             Options.Create(new CrawlerNetworkOptions()),
             TestDirectives.Headers,
             TimeProvider.System);
@@ -110,21 +109,14 @@ public class HttpFetcherTests
     }
 
     [Theory]
-    [InlineData(false, false, true)]
-    [InlineData(true, false, true)]
-    [InlineData(false, true, true)]
-    [InlineData(true, true, false)]
-    public void SupportsUsesTheBrowserOnlyForJsUrlsWhenRenderingIsEnabled(bool useJs, bool chromeEnabled, bool expected)
-    {
-        var fetcher = Fetcher(_ => Html(HttpStatusCode.OK), chromeEnabled);
-
-        fetcher.Supports(TestData.Url(useJsRendering: useJs)).Should().Be(expected);
-    }
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void SupportsLeavesTheUrlsThatNeedTheBrowserToTheBrowser(bool useJs, bool expected) =>
+        Fetcher(_ => Html(HttpStatusCode.OK)).Supports(TestData.Url(useJsRendering: useJs)).Should().Be(expected);
 
     private static HttpFetcher FetcherAt(DateTimeOffset now, Func<HttpRequestMessage, HttpResponseMessage> respond) =>
         new(
             new HttpClient(new StubHttpHandler(respond)),
-            Options.Create(new ChromeRenderingOptions()),
             Options.Create(new CrawlerNetworkOptions()),
             TestDirectives.Headers,
             new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now));

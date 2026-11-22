@@ -1,5 +1,6 @@
 using FluentResults;
 using SamoBot.Core.Common;
+using SamoBot.Core.Scope;
 
 namespace SamoBot.Core.Domain;
 
@@ -11,9 +12,16 @@ public sealed class CrawlJob
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
     public int? MaxUrls { get; init; }
-    public bool UseJsRendering { get; init; }
+    public RenderMode RenderMode { get; init; } = RenderMode.Auto;
+    public bool JsNeeded { get; init; }
+    public bool SeedFromSitemap { get; init; }
+    public bool FollowLinkedPages { get; init; } = true;
     public DateTimeOffset CreatedAt { get; init; }
 
+    public IReadOnlyList<PathRule> PathRules { get; private set; } = [];
+    public int? ReviewAfterPages { get; private set; }
+    public string? PauseReason { get; private set; }
+    public string? PauseDetail { get; private set; }
     public CrawlJobStatus Status { get; private set; } = CrawlJobStatus.Pending;
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? StartedAt { get; private set; }
@@ -35,11 +43,44 @@ public sealed class CrawlJob
             AllowedHosts = hosts,
             MaxDepth = request.MaxDepth,
             MaxUrls = request.MaxUrls,
-            UseJsRendering = request.UseJsRendering,
+            RenderMode = request.RenderMode,
+            JsNeeded = request.JsNeeded,
+            SeedFromSitemap = request.SeedFromSitemap,
+            FollowLinkedPages = request.FollowLinkedPages || !request.SeedFromSitemap,
+            PathRules = PinnedStartPages.Apply(request.PathRules, StartPaths(seeds)),
+            ReviewAfterPages = request.SeedFromSitemap ? null : request.ReviewAfterPages,
             CreatedAt = now,
             UpdatedAt = now
         });
     }
+
+    public Result ChangePathRules(IReadOnlyList<PathRule> rules, DateTimeOffset now)
+    {
+        if (Status is not (CrawlJobStatus.Pending or CrawlJobStatus.Running or CrawlJobStatus.Paused))
+        {
+            return Result.Fail($"The folders of a {Status} crawl cannot be changed.");
+        }
+
+        PathRules = PinnedStartPages.Apply(rules, StartPaths(SeedUrls));
+        UpdatedAt = now;
+        return Result.Ok();
+    }
+
+    public Result PauseFor(string reason, string? detail, DateTimeOffset now)
+    {
+        var result = Transition(Status is CrawlJobStatus.Running, CrawlJobStatus.Paused, now);
+        if (result.IsSuccess)
+        {
+            PauseReason = reason;
+            PauseDetail = detail;
+        }
+
+        return result;
+    }
+
+    public bool NeedsBrowser => RenderModes.NeedsBrowser(RenderMode, JsNeeded);
+
+    public bool IsPausedFor(string reason) => Status is CrawlJobStatus.Paused && PauseReason == reason;
 
     public IReadOnlyList<NewUrl> ToSeedUrls() =>
         SeedUrls
@@ -51,10 +92,14 @@ public sealed class CrawlJob
 
     public Result Start(DateTimeOffset now)
     {
+        var wasReview = IsPausedFor(PauseReasons.Review);
         var result = Transition(Status is CrawlJobStatus.Pending or CrawlJobStatus.Paused, CrawlJobStatus.Running, now);
         if (result.IsSuccess)
         {
             StartedAt ??= now;
+            PauseReason = null;
+            PauseDetail = null;
+            ReviewAfterPages = wasReview ? null : ReviewAfterPages;
         }
 
         return result;
@@ -71,8 +116,17 @@ public sealed class CrawlJob
         return result;
     }
 
-    public Result Pause(DateTimeOffset now) =>
-        Transition(Status is CrawlJobStatus.Running, CrawlJobStatus.Paused, now);
+    public Result Pause(DateTimeOffset now)
+    {
+        var result = Transition(Status is CrawlJobStatus.Running, CrawlJobStatus.Paused, now);
+        if (result.IsSuccess)
+        {
+            PauseReason = null;
+            PauseDetail = null;
+        }
+
+        return result;
+    }
 
     public Result Cancel(DateTimeOffset now)
     {
@@ -113,6 +167,11 @@ public sealed class CrawlJob
         CompletedAt = now;
         UpdatedAt = now;
     }
+
+    private static IEnumerable<string> StartPaths(IEnumerable<string> seeds) =>
+        seeds
+            .Select(seed => UrlNormalizer.TryClean(seed, out var clean) ? clean!.AbsolutePath : null)
+            .OfType<string>();
 
     private static string? HostOf(string seed) => UrlNormalizer.TryClean(seed, out var clean) ? clean!.Authority : null;
 

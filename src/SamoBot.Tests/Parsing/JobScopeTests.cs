@@ -55,4 +55,52 @@ public class JobScopeTests
 
         result.Should().Equal(new NewUrl(7, "https://a.example:8080/p", "https://a.example:8080/p", "a.example:8080", 1));
     }
+
+    [Fact]
+    public void FilterDropsPathsThatAnExcludeRuleCovers()
+    {
+        var parent = Parent() with { PathRules = [new PathRule(PathRuleKind.Exclude, "/blog/2016/")] };
+
+        var result = JobScope.Filter(parent, ["https://a.example/blog/2016/old", "https://a.example/blog/2026/new"]);
+
+        result.Select(url => url.Url).Should().Equal("https://a.example/blog/2026/new");
+    }
+
+    [Fact]
+    public void FilterLetsAnIncludeRuleBringBackAFolderInsideAnExcludedOne()
+    {
+        var parent = Parent() with
+        {
+            PathRules = [new PathRule(PathRuleKind.Exclude, "/blog/"), new PathRule(PathRuleKind.Include, "/blog/2026/")]
+        };
+
+        var result = JobScope.Filter(parent, ["https://a.example/blog/2016/old", "https://a.example/blog/2026/new"]);
+
+        result.Select(url => url.Url).Should().Equal("https://a.example/blog/2026/new");
+    }
+
+    [Fact]
+    public void FilterIgnoresTheQueryWhenItAppliesAPathRule()
+    {
+        var parent = Parent() with { PathRules = [new PathRule(PathRuleKind.Exclude, "/search", Exact: true)] };
+
+        JobScope.Filter(parent, ["https://a.example/search?q=1", "https://a.example/searching"]).Should().ContainSingle()
+            .Which.Url.Should().Be("https://a.example/searching");
+    }
+
+    [Fact]
+    public void FilterFollowsNoLinksWhenOnlyTheSitemapIsWanted()
+    {
+        var parent = Parent() with { FollowLinkedPages = false };
+
+        JobScope.Filter(parent, ["https://a.example/p"]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void FilterAtDepthStillFollowsRedirectsWhenLinksAreOff()
+    {
+        var parent = Parent() with { FollowLinkedPages = false };
+
+        JobScope.FilterAtDepth(parent, ["https://a.example/p"], 0).Should().HaveCount(1);
+    }
 }

@@ -91,7 +91,7 @@ public class CrawlJobTests(PostgresFixture postgres, InfrastructureFixture infra
         await using var site = await StubSite.Start();
         await using var provider = Build();
         var service = provider.GetRequiredService<CrawlJobService>();
-        var job = CrawlJob.Create(new NewCrawlJob(null, [$"{site.BaseUrl}/"], null, null, false), _time.GetUtcNow()).Value;
+        var job = CrawlJob.Create(TestData.NewJob([$"{site.BaseUrl}/"]), _time.GetUtcNow()).Value;
         var jobId = await provider.GetRequiredService<ICrawlJobRepository>().Insert(job, default);
         (await service.Start(jobId, default)).IsSuccess.Should().BeTrue();
 

@@ -10,7 +10,8 @@ namespace SamoBot.Adapters.Postgres;
 public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : ICrawlJobRepository
 {
     private const string Columns = """
-        "Id", "OwnerUserId", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering",
+        "Id", "OwnerUserId", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "RenderMode", "JsNeeded",
+        "SeedFromSitemap", "FollowLinkedPages", "PathRules", "ReviewAfterPages", "PauseReason", "PauseDetail",
         "CreatedAt", "Status", "UpdatedAt", "StartedAt", "CompletedAt"
         """;
 
@@ -20,17 +21,21 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
 
     private const string InsertSql = $"""
         INSERT INTO "{TableNames.CrawlJobs}"
-            ("OwnerUserId", "Status", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "UseJsRendering",
+            ("OwnerUserId", "Status", "SeedUrls", "AllowedHosts", "MaxDepth", "MaxUrls", "RenderMode", "JsNeeded",
+             "SeedFromSitemap", "FollowLinkedPages", "PathRules", "ReviewAfterPages", "PauseReason", "PauseDetail",
              "CreatedAt", "UpdatedAt")
         VALUES
-            (@OwnerUserId, @Status, @SeedUrls, @AllowedHosts, @MaxDepth, @MaxUrls, @UseJsRendering,
+            (@OwnerUserId, @Status, @SeedUrls, @AllowedHosts, @MaxDepth, @MaxUrls, @RenderMode, @JsNeeded,
+             @SeedFromSitemap, @FollowLinkedPages, @PathRules, @ReviewAfterPages, @PauseReason, @PauseDetail,
              @CreatedAt, @UpdatedAt)
         RETURNING "Id"
         """;
 
     private const string SaveSql = $"""
         UPDATE "{TableNames.CrawlJobs}"
-        SET "Status" = @Status, "UpdatedAt" = @UpdatedAt, "StartedAt" = @StartedAt, "CompletedAt" = @CompletedAt
+        SET "Status" = @Status, "UpdatedAt" = @UpdatedAt, "StartedAt" = @StartedAt, "CompletedAt" = @CompletedAt,
+            "PathRules" = @PathRules, "ReviewAfterPages" = @ReviewAfterPages,
+            "PauseReason" = @PauseReason, "PauseDetail" = @PauseDetail
         WHERE "Id" = @Id
         """;
 
@@ -93,7 +98,14 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
         AllowedHosts = JsonSerializer.Serialize(job.AllowedHosts, JsonDefaults.Options),
         job.MaxDepth,
         job.MaxUrls,
-        job.UseJsRendering,
+        RenderMode = job.RenderMode.ToString(),
+        job.JsNeeded,
+        job.SeedFromSitemap,
+        job.FollowLinkedPages,
+        PathRules = JsonSerializer.Serialize(job.PathRules, JsonDefaults.Options),
+        job.ReviewAfterPages,
+        job.PauseReason,
+        job.PauseDetail,
         job.CreatedAt,
         job.UpdatedAt,
         job.StartedAt,

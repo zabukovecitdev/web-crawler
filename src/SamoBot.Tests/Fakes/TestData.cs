@@ -6,6 +6,15 @@ public static class TestData
 {
     public static readonly DateTimeOffset Now = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
+    public static NewCrawlJob NewJob(
+        IReadOnlyList<string> seeds,
+        int? maxDepth = null,
+        int? maxUrls = null,
+        RenderMode mode = RenderMode.Never,
+        IReadOnlyList<PathRule>? rules = null,
+        string? owner = null) =>
+        new(owner, seeds, maxDepth, maxUrls, mode, false, rules ?? [], false, true, null);
+
     public static ClaimedUrl Url(
         string url = "https://a.example/x",
         int failCount = 0,

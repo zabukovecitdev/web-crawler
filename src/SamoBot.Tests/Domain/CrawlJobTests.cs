@@ -1,5 +1,6 @@
 using FluentAssertions;
 using SamoBot.Core.Domain;
+using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Domain;
 
@@ -158,7 +159,7 @@ public class CrawlJobTests
 
     [Fact]
     public void CreateWithoutAValidSeedSaysSo() =>
-        CrawlJob.Create(new NewCrawlJob(null, ["", "not a url"], null, null, false), Now).Errors[0].Message
+        CrawlJob.Create(TestData.NewJob(["", "not a url"]), Now).Errors[0].Message
             .Should().Be("At least one valid seed URL is required.");
 
     [Fact]
@@ -170,4 +171,91 @@ public class CrawlJobTests
         cancelled.Reopen(Now, wholeJob: false).Errors[0].Message.Should().Be(
             "This crawl was cancelled. Start a new crawl for this link, or recrawl the whole job.");
     }
+
+    private static CrawlJob NewJob(IReadOnlyList<PathRule>? rules = null, bool fromSitemap = false, bool followLinked = true, int? review = null) =>
+        CrawlJob.Create(
+            new NewCrawlJob(null, ["https://a.example/guide/install"], null, null, RenderMode.Auto, true, rules ?? [], fromSitemap, followLinked, review),
+            Now).Value;
+
+    [Fact]
+    public void CreateKeepsTheRenderModeAndPinsTheStartPage()
+    {
+        var job = NewJob([new PathRule(PathRuleKind.Exclude, "/guide/install", true)]);
+
+        (job.RenderMode, job.JsNeeded, job.NeedsBrowser).Should().Be((RenderMode.Auto, true, true));
+        job.PathRules.Should().Equal(new PathRule(PathRuleKind.Include, "/guide/install", true));
+    }
+
+    [Fact]
+    public void WithoutASitemapLinksAreAlwaysFollowedAndTheReviewIsKept()
+    {
+        var job = NewJob(fromSitemap: false, followLinked: false, review: 100);
+
+        (job.FollowLinkedPages, job.ReviewAfterPages).Should().Be((true, 100));
+    }
+
+    [Fact]
+    public void WithASitemapTheLinkedPagesCanBeTurnedOffAndThereIsNoReview()
+    {
+        var job = NewJob(fromSitemap: true, followLinked: false, review: 100);
+
+        (job.FollowLinkedPages, job.ReviewAfterPages).Should().Be((false, null));
+    }
+
+    [Fact]
+    public void ChangingTheFoldersOfARunningJobKeepsTheStartPage()
+    {
+        var job = NewJob();
+        job.Start(Now);
+
+        var result = job.ChangePathRules([new PathRule(PathRuleKind.Exclude, "/")], Now);
+
+        result.IsSuccess.Should().BeTrue();
+        job.PathRules.Should().Contain(new PathRule(PathRuleKind.Include, "/guide/install", true));
+        job.PathRules.Should().Contain(new PathRule(PathRuleKind.Exclude, "/"));
+    }
+
+    [Fact]
+    public void TheFoldersOfAFinishedJobCannotBeChanged()
+    {
+        var job = JobIn(CrawlJobStatus.Completed);
+
+        job.ChangePathRules([], Now).Errors[0].Message.Should().Be("The folders of a Completed crawl cannot be changed.");
+    }
+
+    [Fact]
+    public void PauseForRecordsTheReasonAndStartClearsIt()
+    {
+        var job = JobIn(CrawlJobStatus.Running);
+
+        job.PauseFor(PauseReasons.BrowserUnavailable, null, Now).IsSuccess.Should().BeTrue();
+
+        job.IsPausedFor(PauseReasons.BrowserUnavailable).Should().BeTrue();
+        job.Start(Now);
+        (job.Status, job.PauseReason).Should().Be((CrawlJobStatus.Running, null));
+    }
+
+    [Fact]
+    public void ResumingAfterTheReviewTurnsTheReviewOff()
+    {
+        var job = NewJob(review: 100);
+        job.Start(Now);
+        job.PauseFor(PauseReasons.Review, null, Now);
+
+        job.Start(Now);
+
+        job.ReviewAfterPages.Should().BeNull();
+    }
+
+    [Fact]
+    public void APauseByTheUserHasNoReason()
+    {
+        var job = JobIn(CrawlJobStatus.Paused);
+
+        (job.Status, job.PauseReason).Should().Be((CrawlJobStatus.Paused, null));
+    }
+
+    [Fact]
+    public void OnlyARunningJobCanBePausedForAReason() =>
+        JobIn(CrawlJobStatus.Pending).PauseFor(PauseReasons.Review, null, Now).IsFailed.Should().BeTrue();
 }

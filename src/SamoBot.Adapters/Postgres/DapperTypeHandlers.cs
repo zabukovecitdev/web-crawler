@@ -24,6 +24,7 @@ internal static class DapperTypeHandlers
             SqlMapper.AddTypeHandler(new JsonStringListHandler());
             SqlMapper.AddTypeHandler(new ResponseHeadersHandler());
             SqlMapper.AddTypeHandler(new PagePolicyHandler());
+            SqlMapper.AddTypeHandler(new PathRuleListHandler());
             _registered = true;
         }
     }
@@ -35,6 +36,15 @@ internal static class DapperTypeHandlers
 
         public override IReadOnlyList<string> Parse(object value) =>
             JsonSerializer.Deserialize<List<string>>(value.ToString() ?? "[]", JsonDefaults.Options) ?? [];
+    }
+
+    private sealed class PathRuleListHandler : SqlMapper.TypeHandler<IReadOnlyList<PathRule>>
+    {
+        public override void SetValue(IDbDataParameter parameter, IReadOnlyList<PathRule>? value) =>
+            parameter.Value = JsonSerializer.Serialize(value ?? [], JsonDefaults.Options);
+
+        public override IReadOnlyList<PathRule> Parse(object value) =>
+            JsonSerializer.Deserialize<List<PathRule>>(value.ToString() ?? "[]", JsonDefaults.Options) ?? [];
     }
 
     private sealed class ResponseHeadersHandler : SqlMapper.TypeHandler<ResponseHeaders>

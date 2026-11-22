@@ -49,6 +49,12 @@ public static class PostgresTestData
             """,
             new { urlId, fetchedAt = TestData.Now, objectName, parsedAt = parsed ? TestData.Now : (DateTimeOffset?)null });
 
+    public static async Task Execute(NpgsqlDataSource dataSource, string sql, object? parameters = null)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await connection.ExecuteAsync(sql, parameters);
+    }
+
     public static Task<T> Scalar<T>(NpgsqlDataSource dataSource, string sql, object? parameters = null) =>
         Run(dataSource, async connection => (await connection.ExecuteScalarAsync<T>(sql, parameters))!);
 

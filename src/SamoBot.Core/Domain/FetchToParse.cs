@@ -12,6 +12,9 @@ public sealed record FetchToParse
     public string? ContentType { get; init; }
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
     public int? MaxDepth { get; init; }
+    public IReadOnlyList<PathRule> PathRules { get; init; } = [];
+    public bool FollowLinkedPages { get; init; } = true;
+    public bool CanEscalate { get; init; }
 
     public ResponseHeaders ResponseHeaders { get; init; } = ResponseHeaders.None;
 }

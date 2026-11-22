@@ -18,7 +18,7 @@ public class CrawlJobServiceTests
         _service = new CrawlJobService(_jobs, _frontier, _events, new FakeTimeProvider(TestData.Now));
     }
 
-    private static NewCrawlJob Request(params string[] seeds) => new(null, seeds, 2, 100, false);
+    private static NewCrawlJob Request(params string[] seeds) => TestData.NewJob(seeds, 2, 100);
 
     private CrawlJob AddJob(CrawlJobStatus status = CrawlJobStatus.Pending)
     {

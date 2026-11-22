@@ -1,6 +1,7 @@
 using FluentResults;
 using SamoBot.Core.Domain;
 using SamoBot.Core.Ports;
+using SamoBot.Core.Scope;
 
 namespace SamoBot.Core.Jobs;
 
@@ -32,7 +33,7 @@ public sealed class CrawlJobService(
 
     private async Task<Result<Inserted>> Insert(NewCrawlJob request, CancellationToken ct)
     {
-        var problems = SeedUrlValidator.Validate(request.SeedUrls);
+        var problems = SeedUrlValidator.Validate(request.SeedUrls).Concat(PathRuleValidator.Validate(request.PathRules)).ToList();
         if (problems.Count > 0)
         {
             return Result.Fail<Inserted>(problems.Select(problem => new Error(problem)));

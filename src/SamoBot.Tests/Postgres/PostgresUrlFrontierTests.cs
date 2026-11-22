@@ -254,6 +254,23 @@ public class PostgresUrlFrontierTests(PostgresFixture postgres) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AddSeedsLeavesOutThePathsThatTheRulesOfTheJobExclude()
+    {
+        var job = await PostgresTestData.InsertJob(postgres.DataSource);
+        await PostgresTestData.Execute(
+            postgres.DataSource,
+            """UPDATE "CrawlJobs" SET "PathRules" = '[{"kind":"Exclude","prefix":"/blog/"},{"kind":"Include","prefix":"/blog/2026/"},{"kind":"Exclude","prefix":"/x","exact":true}]' WHERE "Id" = @job""",
+            new { job });
+        var paths = new[] { "/", "/blog/2016/a", "/blog/2026/b", "/blog", "/x", "/x/y", "/q?blog=1" };
+        var seeds = paths.Select(path => new NewUrl(job, $"https://a.example{path}", $"https://a.example{path}", "a.example", 0)).ToList();
+
+        await Frontier().AddSeeds(job, seeds, default);
+
+        var stored = await PostgresTestData.Rows<string>(postgres.DataSource, """SELECT "Url" FROM "DiscoveredUrls" WHERE "CrawlJobId" = @job ORDER BY "Url" """, new { job });
+        stored.Should().Equal("https://a.example/", "https://a.example/blog/2026/b", "https://a.example/q?blog=1", "https://a.example/x/y");
+    }
+
+    [Fact]
     public async Task AddSeedsStopsAtTheMaximumNumberOfUrlsOfTheJob()
     {
         var job = await PostgresTestData.InsertJob(postgres.DataSource, maxUrls: 2);

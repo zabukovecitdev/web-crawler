@@ -17,7 +17,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
     private PostgresCrawlJobRepository Repository() => new(postgres.DataSource);
 
     private static CrawlJob NewJob() => CrawlJob.Create(
-        new NewCrawlJob("owner-1", ["https://a.example/", "https://b.example/x"], 3, 100, true),
+        TestData.NewJob(["https://a.example/", "https://b.example/x"], 3, 100, RenderMode.Always, owner: "owner-1"),
         TestData.Now).Value;
 
     [Fact]
@@ -32,7 +32,7 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
         job.OwnerUserId.Should().Be("owner-1");
         job.SeedUrls.Should().Equal("https://a.example/", "https://b.example/x");
         job.AllowedHosts.Should().Equal("a.example", "b.example");
-        (job.MaxDepth, job.MaxUrls, job.UseJsRendering).Should().Be((3, 100, true));
+        (job.MaxDepth, job.MaxUrls, job.RenderMode).Should().Be((3, 100, RenderMode.Always));
         job.Status.Should().Be(CrawlJobStatus.Pending);
         job.CreatedAt.Should().Be(TestData.Now);
     }
@@ -50,6 +50,32 @@ public class PostgresCrawlJobRepositoryTests(PostgresFixture postgres) : IAsyncL
         reloaded.Status.Should().Be(CrawlJobStatus.Running);
         reloaded.StartedAt.Should().Be(TestData.Now.AddMinutes(5));
         reloaded.UpdatedAt.Should().Be(TestData.Now.AddMinutes(5));
+    }
+
+    [Fact]
+    public async Task TheRenderModeThePathRulesAndThePauseReasonSurviveARoundTrip()
+    {
+        var rules = new[] { new PathRule(PathRuleKind.Exclude, "/blog/2016/"), new PathRule(PathRuleKind.Include, "/a", true) };
+        var created = CrawlJob.Create(new NewCrawlJob(null, ["https://a.example/start"], null, null, RenderMode.Auto, true, rules, true, false, null), TestData.Now).Value;
+        var id = await Repository().Insert(created, default);
+        var job = (await Repository().Find(id, default))!;
+        job.Start(TestData.Now);
+        job.PauseFor(PauseReasons.BrowserUnavailable, "detail", TestData.Now);
+        await Repository().Save(job, default);
+
+        var reloaded = (await Repository().Find(id, default))!;
+
+        (reloaded.RenderMode, reloaded.JsNeeded, reloaded.SeedFromSitemap, reloaded.FollowLinkedPages).Should().Be((RenderMode.Auto, true, true, false));
+        reloaded.PathRules.Should().Contain(rules).And.Contain(new PathRule(PathRuleKind.Include, "/start", true));
+        (reloaded.PauseReason, reloaded.PauseDetail).Should().Be((PauseReasons.BrowserUnavailable, "detail"));
+    }
+
+    [Fact]
+    public async Task AJobInsertedWithoutAModeDefaultsToAuto()
+    {
+        var id = await PostgresTestData.InsertJob(postgres.DataSource);
+
+        (await Repository().Find(id, default))!.RenderMode.Should().Be(RenderMode.Auto);
     }
 
     [Fact]

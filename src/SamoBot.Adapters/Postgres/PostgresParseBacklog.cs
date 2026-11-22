@@ -28,7 +28,8 @@ public sealed class PostgresParseBacklog(NpgsqlDataSource dataSource, TimeProvid
             RETURNING f."Id", f."DiscoveredUrlId", f."ObjectName", f."ContentType", f."ResponseHeaders"
         )
         SELECT l."Id" AS "FetchId", u."Id" AS "UrlId", u."CrawlJobId", u."Url", u."Depth", l."ObjectName", l."ContentType",
-               j."AllowedHosts", j."MaxDepth", l."ResponseHeaders"
+               j."AllowedHosts", j."MaxDepth", j."PathRules", j."FollowLinkedPages",
+               (j."RenderMode" = 'Auto' AND NOT u."UseJsRendering") AS "CanEscalate", l."ResponseHeaders"
         FROM leased l
         JOIN "{TableNames.DiscoveredUrls}" u ON u."Id" = l."DiscoveredUrlId"
         JOIN "{TableNames.CrawlJobs}" j ON j."Id" = u."CrawlJobId"

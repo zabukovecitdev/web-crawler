@@ -16,15 +16,22 @@ public sealed partial class BrowserFetcher(
     TimeProvider timeProvider,
     ILogger<BrowserFetcher> logger) : IFetcher, IAsyncDisposable
 {
+    public const string BrowserUnavailableError = "browser-unavailable";
+
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
-    public bool Supports(ClaimedUrl url) => url.UseJsRendering && options.Value.IsAvailable;
+    public bool Supports(ClaimedUrl url) => url.UseJsRendering;
 
     public async Task<FetchResponse> Fetch(ClaimedUrl url, CancellationToken ct)
     {
         var started = timeProvider.GetTimestamp();
+        if (!options.Value.IsAvailable)
+        {
+            return Failure(BrowserUnavailableError, started);
+        }
+
         try
         {
             var browser = await EnsureBrowser(ct);

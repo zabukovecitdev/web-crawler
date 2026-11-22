@@ -15,7 +15,7 @@ public class ApiJsonContractTests
     [Fact]
     public void CrawlJobMatchesTheDtoTypeWithARealSeedArray()
     {
-        var job = CrawlJob.Create(new NewCrawlJob("u1", ["https://a.example/", "https://b.example/x"], 2, 10, false), TestData.Now).Value;
+        var job = CrawlJob.Create(TestData.NewJob(["https://a.example/", "https://b.example/x"], 2, 10, owner: "u1"), TestData.Now).Value;
 
         var json = Serialize(CrawlJobDto.From(job));
 
@@ -24,6 +24,7 @@ public class ApiJsonContractTests
         json.GetProperty("seedUrls").EnumerateArray().Select(e => e.GetString()).Should().Equal("https://a.example/", "https://b.example/x");
         json.EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
             "id", "status", "host", "seedUrls", "maxDepth", "maxUrls", "useJsRendering",
+            "renderMode", "jsNeeded", "pathRules", "seedFromSitemap", "followLinkedPages", "reviewAfterPages", "pauseReason", "pauseDetail",
             "createdAt", "startedAt", "completedAt", "links");
         json.GetProperty("links").EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo(
             "total", "queued", "fetching", "retrying", "parsing", "indexing", "indexed", "notIndexed", "skipped", "failed", "problems");
