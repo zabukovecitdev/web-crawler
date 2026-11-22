@@ -56,5 +56,7 @@ modifiers such as `bg-primary/80` keep working.
   `DEV_API_TARGET` with the `X-Api-Key` header. The key stays in the dev server: it has no `VITE_` prefix, so it never reaches the
   browser or the build. Leave `VITE_API_BASE` empty so the app calls the dev server.
 
+**Plan and run maps (`features/plan`).** Tick state, partly-ticked folders, totals, status words and the check texts are pure functions with tests (`path-rules`, `plan-totals`, `row-view`, `run-status`, `check-rows`). Folders load lazily: `useTreeStore` asks for `/` and for every opened folder whose children did not come with an earlier answer, and polls the running job every 5 s. The tick box is a real button with `aria-checked` (`mixed` for a partly ticked folder). The mock browser can be switched with `window.__browserMock.set(false)`.
+
 **Mocks.** Mock data comes from the design files (`docs/design/*.dc.html`): Live, Site, Main, Analytics and Search. `docs.example.com` is
 crawled live by job 42. `window.__crawlMock.drop(8000)` simulates an 8-second connection drop to test the resync by hand.

@@ -48,7 +48,10 @@ Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard i
 
 ### JavaScript rendering
 
-Pages that need JavaScript can be rendered with headless Chrome. It is off by default:
+Pages that need JavaScript can be rendered with headless Chrome. It is off by default. A crawl has a render mode: `Auto` (default:
+HTTP, and the browser for a site or a page that turns out to be an empty app shell), `Always` or `Never`. A crawl that needs the
+browser is refused with `409 browser-unavailable` while the service does not answer, and a running one pauses itself and goes on
+when it is back (ADR 0016).
 
 ```bash
 CHROME_RENDERING_ENABLED=true docker compose --profile js up --build
@@ -64,6 +67,16 @@ iptables -I DOCKER-USER -s 172.31.250.0/24 -m conntrack --ctstate NEW \
 ```
 
 On a cloud deployment use the provider's egress controls (security group or network policy) for the same ranges, including the metadata address 169.254.169.254. This setup has not been verified end to end here (no Docker available); run `docker compose --profile js up` once and crawl a JavaScript page before relying on it.
+
+### Planning a crawl
+
+"Request crawl" asks only for a start URL. `POST /api/v1/site-checks` follows the redirect, reads robots.txt, reads (or queues) the
+sitemap, probes the browser service and detects whether the start page needs JavaScript. The plan page (`/crawls/new?url=...`)
+then shows the sitemap as a tree of folders with tick boxes, a summary ("1,843 pages ticked of 1,893 in the sitemap, about 31
+min"), the render mode and the options for pages that are not in the sitemap. There is no page limit and no depth: the crawl
+stores include and exclude path rules, stays on one host, and the running crawl shows the same tree with progress per folder, where
+a folder can be unticked while it runs. A site without a sitemap starts from the start page and can pause after 100 pages for a
+review. The reasons are in [ADR 0016](docs/adr/0016-path-rules-render-mode-and-browser-gate.md).
 
 ### Dashboard sign-in (Google)
 
