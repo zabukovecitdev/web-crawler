@@ -12,5 +12,7 @@ public interface ICrawlJobRepository
 
     Task Save(CrawlJob job, CancellationToken ct);
 
+    Task SavePathRules(CrawlJob job, CancellationToken ct);
+
     Task<IReadOnlyList<int>> CompleteFinishedJobs(DateTimeOffset now, CancellationToken ct);
 }

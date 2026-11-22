@@ -36,3 +36,8 @@ public sealed class SiteCheckRequest
 {
     public string Url { get; set; } = string.Empty;
 }
+
+public sealed class PathRulesRequest
+{
+    public List<PathRuleRequest> Rules { get; set; } = [];
+}

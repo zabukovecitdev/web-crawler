@@ -11,6 +11,7 @@ public sealed class CrawlJobService(
     IUrlFrontier frontier,
     ICrawlEventPublisher events,
     BrowserGate browser,
+    ISitemapSeeder sitemapSeeds,
     TimeProvider timeProvider)
 {
     public async Task<Result<CrawlJob>> Create(NewCrawlJob request, CancellationToken ct)
@@ -64,6 +65,7 @@ public sealed class CrawlJobService(
         }
 
         var job = loaded.Value;
+        var firstStart = job.StartedAt is null;
         var allowed = await browser.Ensure(job, ct);
         var started = allowed.IsFailed ? allowed : job.Start(timeProvider.GetUtcNow());
         if (started.IsFailed)
@@ -72,8 +74,9 @@ public sealed class CrawlJobService(
         }
 
         await frontier.AddSeeds(job.Id, job.ToSeedUrls(), ct);
+        var fromSitemap = firstStart && job.SeedFromSitemap ? await sitemapSeeds.SeedFromSitemap(job.Id, job.AllowedHosts[0], ct) : 0;
         await jobs.Save(job, ct);
-        await events.Publish(id, CrawlEventTypes.JobStarted, new { }, ct);
+        await events.Publish(id, CrawlEventTypes.JobStarted, new { sitemapSeeds = fromSitemap }, ct);
         return Result.Ok();
     }
 

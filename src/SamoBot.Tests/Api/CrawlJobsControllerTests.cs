@@ -20,7 +20,7 @@ public class CrawlJobsControllerTests
 
     public CrawlJobsControllerTests()
     {
-        var service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), Gate(_browser), new FakeTimeProvider(TestData.Now));
+        var service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), Gate(_browser), new FakeSitemapSeeder(), new FakeTimeProvider(TestData.Now));
         _controller = new CrawlJobsController(service, _jobs, new FakeJobLinkReader())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }

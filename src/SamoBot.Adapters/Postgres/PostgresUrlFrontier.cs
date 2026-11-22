@@ -82,10 +82,11 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
             "LastCrawlAt" = NULL, "LastFetchId" = NULL, "StatusUpdatedAt" = @Now
         WHERE "CrawlJobId" = @JobId
           AND "Status" <> 'InFlight'
+          AND NOT ("Status" = 'Disabled' AND "FailReason" = 'unselected')
           AND (@UrlId::int IS NULL OR "Id" = @UrlId)
           AND (NOT @FailedOnly
                OR ("Status" = 'Idle' AND "FailCount" > 0)
-               OR ("Status" = 'Disabled' AND "FailReason" NOT IN ('redirect', 'robots', 'blocked-address')))
+               OR ("Status" = 'Disabled' AND "FailReason" NOT IN ('redirect', 'robots', 'blocked-address', 'unselected')))
         """;
 
     public async Task<int> Requeue(int crawlJobId, RequeueScope scope, CancellationToken ct)

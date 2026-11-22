@@ -49,6 +49,7 @@ public static class LinkReasons
     public static string Skipped(JobLinkFacts link) => link.FailReason switch
     {
         Robots => "robots.txt of the site disallows this URL, so it was not requested.",
+        UrlFailReasons.Unselected => "You unticked its folder before it was fetched, so it was not requested.",
         Blocked.Reason => "The host points at a private or reserved address, which the crawler never requests.",
         Redirected.Reason => $"The URL redirects ({Code(link)}). The target is crawled as its own link.",
         _ => NotStored(link)

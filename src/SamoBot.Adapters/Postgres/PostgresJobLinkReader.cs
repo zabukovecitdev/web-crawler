@@ -13,7 +13,7 @@ public sealed class PostgresJobLinkReader(NpgsqlDataSource dataSource, TimeProvi
             WHEN u."Status" = 'InFlight' THEN 'Fetching'
             WHEN u."Status" = 'Idle' AND u."FailCount" > 0 THEN 'Retrying'
             WHEN u."Status" = 'Idle' AND u."LastFetchId" IS NULL THEN 'Queued'
-            WHEN u."Status" = 'Disabled' AND u."FailReason" IN ('robots', 'blocked-address', 'redirect') THEN 'Skipped'
+            WHEN u."Status" = 'Disabled' AND u."FailReason" IN ('robots', 'blocked-address', 'redirect', 'unselected') THEN 'Skipped'
             WHEN u."Status" = 'Disabled' AND u."FailReason" IS NOT NULL THEN 'Failed'
             WHEN f."Id" IS NULL THEN 'Queued'
             WHEN f."StatusCode" NOT BETWEEN 200 AND 299 THEN 'Failed'

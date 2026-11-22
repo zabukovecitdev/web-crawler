@@ -16,6 +16,20 @@ public sealed class PostgresSitemapPlanReader(NpgsqlDataSource dataSource) : ISi
         LEFT JOIN "{TableNames.SitemapRequests}" r ON r."Host" = @Host
         """;
 
+    private static readonly string FoldersSql = FolderGroupSql.Group(
+        $"""SELECT {PathRuleSql.PathOf("s.\"NormalizedLoc\"")} AS path, s."LastModified" AS modified FROM "{TableNames.SitemapUrls}" s WHERE s."Host" = @Host""",
+        """
+        count(*)::int AS "Pages", 0 AS "Done", 0 AS "Failed", 0 AS "Skipped", 0 AS "Stopped", 0 AS "Fetching", 0 AS "Queued",
+        min(modified) AS "OldestModified", max(modified) AS "NewestModified"
+        """);
+
+    public async Task<IReadOnlyList<FolderGroup>> Folders(string host, string parent, CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        var rows = await connection.QueryAsync<FolderRow>(new CommandDefinition(FoldersSql, new { Host = host, Parent = parent }, cancellationToken: ct));
+        return rows.Select(row => row.ToGroup()).ToList();
+    }
+
     public async Task<SitemapPlanStatus> Status(string host, CancellationToken ct)
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);

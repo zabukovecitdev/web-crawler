@@ -17,7 +17,7 @@ public class CrawlJobBrowserGateTests
     public CrawlJobBrowserGateTests()
     {
         var time = new FakeTimeProvider(TestData.Now);
-        _service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), new BrowserGate(new BrowserAvailability(_browser, time)), time);
+        _service = new CrawlJobService(_jobs, _frontier, new FakeEventPublisher(), new BrowserGate(new BrowserAvailability(_browser, time)), new FakeSitemapSeeder(), time);
     }
 
     private static NewCrawlJob Request(RenderMode mode, bool jsNeeded = false) =>

@@ -31,6 +31,14 @@ public sealed class FakeCrawlJobRepository : ICrawlJobRepository
         return Task.CompletedTask;
     }
 
+    public List<CrawlJob> SavedRules { get; } = [];
+
+    public Task SavePathRules(CrawlJob job, CancellationToken ct)
+    {
+        SavedRules.Add(job);
+        return Task.CompletedTask;
+    }
+
     public Task<IReadOnlyList<int>> CompleteFinishedJobs(DateTimeOffset now, CancellationToken ct) =>
         Task.FromResult(FinishedJobIds);
 }

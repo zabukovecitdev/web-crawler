@@ -62,6 +62,7 @@ public class LinkStatusDescriberTests
     [Theory]
     [InlineData("robots", "robots.txt")]
     [InlineData("blocked-address", "private or reserved address")]
+    [InlineData("unselected", "unticked its folder")]
     public void ALinkThatWasNeverRequestedHasASkippedFetch(string failReason, string expected)
     {
         var link = Describe(LinkState.Skipped, failReason);

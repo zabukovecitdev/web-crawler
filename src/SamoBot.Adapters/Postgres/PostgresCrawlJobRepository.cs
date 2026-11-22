@@ -34,9 +34,12 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
     private const string SaveSql = $"""
         UPDATE "{TableNames.CrawlJobs}"
         SET "Status" = @Status, "UpdatedAt" = @UpdatedAt, "StartedAt" = @StartedAt, "CompletedAt" = @CompletedAt,
-            "PathRules" = @PathRules, "ReviewAfterPages" = @ReviewAfterPages,
-            "PauseReason" = @PauseReason, "PauseDetail" = @PauseDetail
+            "ReviewAfterPages" = @ReviewAfterPages, "PauseReason" = @PauseReason, "PauseDetail" = @PauseDetail
         WHERE "Id" = @Id
+        """;
+
+    private const string SavePathRulesSql = $"""
+        UPDATE "{TableNames.CrawlJobs}" SET "PathRules" = @PathRules, "UpdatedAt" = @UpdatedAt WHERE "Id" = @Id
         """;
 
     private const string CompleteSql = $"""
@@ -80,6 +83,12 @@ public sealed class PostgresCrawlJobRepository(NpgsqlDataSource dataSource) : IC
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
         await connection.ExecuteAsync(new CommandDefinition(SaveSql, Parameters(job), cancellationToken: ct));
+    }
+
+    public async Task SavePathRules(CrawlJob job, CancellationToken ct)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(SavePathRulesSql, Parameters(job), cancellationToken: ct));
     }
 
     public async Task<IReadOnlyList<int>> CompleteFinishedJobs(DateTimeOffset now, CancellationToken ct)

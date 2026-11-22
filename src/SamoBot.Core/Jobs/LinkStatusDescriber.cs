@@ -46,5 +46,5 @@ public static class LinkStatusDescriber
     }
 
     private static bool WasRequested(JobLinkFacts link) =>
-        link.State != LinkState.Skipped || link.FailReason is not (LinkReasons.Robots or Blocked.Reason);
+        link.State != LinkState.Skipped || link.FailReason is not (LinkReasons.Robots or Blocked.Reason or UrlFailReasons.Unselected);
 }

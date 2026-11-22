@@ -35,7 +35,7 @@ public class SiteCheckControllerTests
         var store = new FakeSitemapStore();
         var planner = new SitemapPlanner(new FakeSitemapPlanReader(new SitemapPlanStatus(0, 0, null, null, 0)), store, _time);
 
-        var result = await new HostPlanController(planner).Sitemap("A.Example");
+        var result = await new HostPlanSitemapController(planner).Sitemap("A.Example");
 
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeOfType<SitemapPlanDto>().Which.State.Should().Be(SitemapPlanState.Pending);
         store.Enqueued.Should().Equal("a.example");
@@ -46,6 +46,6 @@ public class SiteCheckControllerTests
     {
         var planner = new SitemapPlanner(new FakeSitemapPlanReader(new SitemapPlanStatus(0, 0, null, null, 0)), new FakeSitemapStore(), _time);
 
-        (await new HostPlanController(planner).Sitemap("a b/c")).Should().BeOfType<BadRequestObjectResult>();
+        (await new HostPlanSitemapController(planner).Sitemap("a b/c")).Should().BeOfType<BadRequestObjectResult>();
     }
 }

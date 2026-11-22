@@ -10,3 +10,5 @@ public enum PathRuleKind
 }
 
 public sealed record PathRule(PathRuleKind Kind, string Prefix, bool Exact = false);
+
+public sealed record PathRuleEffect(int Stopped, int Resumed);

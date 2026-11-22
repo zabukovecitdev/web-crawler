@@ -13,11 +13,12 @@ public class CrawlJobServiceTests
     private readonly FakeUrlFrontier _frontier = new();
     private readonly FakeEventPublisher _events = new();
     private readonly FakeBrowserProbe _browser = new();
+    private readonly FakeSitemapSeeder _seeder = new(1893);
     private readonly CrawlJobService _service;
 
     public CrawlJobServiceTests()
     {
-        _service = new CrawlJobService(_jobs, _frontier, _events, new BrowserGate(new BrowserAvailability(_browser, new FakeTimeProvider(TestData.Now))), new FakeTimeProvider(TestData.Now));
+        _service = new CrawlJobService(_jobs, _frontier, _events, new BrowserGate(new BrowserAvailability(_browser, new FakeTimeProvider(TestData.Now))), _seeder, new FakeTimeProvider(TestData.Now));
     }
 
     private static NewCrawlJob Request(params string[] seeds) => TestData.NewJob(seeds, 2, 100);

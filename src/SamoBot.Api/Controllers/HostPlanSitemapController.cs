@@ -8,7 +8,7 @@ namespace SamoBot.Api.Controllers;
 [ApiController]
 [Route("api/v1/hosts/{host}/plan")]
 [Authorize]
-public sealed class HostPlanController(SitemapPlanner planner) : ControllerBase
+public sealed class HostPlanSitemapController(SitemapPlanner planner) : ControllerBase
 {
     [HttpGet("sitemap")]
     [ProducesResponseType<SitemapPlanDto>(StatusCodes.Status200OK)]

@@ -45,6 +45,8 @@ public static class CoreServiceCollectionExtensions
 
     private static IServiceCollection AddJobs(this IServiceCollection services) => services
         .AddScoped<CrawlJobService>()
+        .AddScoped<PathRuleService>()
+        .AddScoped<JobTreeService>()
         .AddScoped<JobCompletionHandler>()
         .AddScoped<BrowserGuardHandler>()
         .AddScoped<ReviewGuardHandler>();
@@ -57,6 +59,7 @@ public static class CoreServiceCollectionExtensions
         .AddScoped<StartPageResolver>()
         .AddScoped<JsDetectionService>()
         .AddScoped<SitemapPlanner>()
+        .AddScoped<PlanTreeService>()
         .AddScoped<SiteCheckService>();
 
     private static IServiceCollection AddSitemaps(this IServiceCollection services) => services

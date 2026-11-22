@@ -22,7 +22,7 @@ public class CrawlJobsGateControllerTests
     {
         var time = new FakeTimeProvider(TestData.Now);
         var gate = new BrowserGate(new BrowserAvailability(_browser, time));
-        var service = new CrawlJobService(_jobs, new FakeUrlFrontier(), new FakeEventPublisher(), gate, time);
+        var service = new CrawlJobService(_jobs, new FakeUrlFrontier(), new FakeEventPublisher(), gate, new FakeSitemapSeeder(), time);
         _controller = new CrawlJobsController(service, _jobs, new FakeJobLinkReader())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
