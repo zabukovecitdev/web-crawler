@@ -14,7 +14,8 @@ Status: Accepted
   breaking change.
 - A crawl event is flat JSON, `{ crawlJobId, eventType, at, ...fields }`, plus `id` once stored (`CrawlEventEnvelope`). The
   SignalR push and the events endpoint use this one shape. The reserved names win over a payload field of the same name. The
-  hub is `/hubs/crawl-job`, the method is `JoinJob(jobId)` and the client event is `CrawlEvent`.
+  hub is `/hubs/crawl-job`, the methods are `JoinJob(jobId)` and `LeaveJob(jobId)`, the group of a job is `crawlJob:{id}` and the
+  client event is `CrawlEvent`.
 - Without `after`, the events endpoint returns the newest events, oldest first.
 - The page id of the dashboard is the discovered URL id. A site is a host: its row aggregates every job that touched the host.
 - Host keys are `Uri.Authority` values, so they round-trip in the `{host}` route value.

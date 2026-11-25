@@ -20,5 +20,6 @@ Each record names the code it is about, so `grep` for a symbol finds its reasons
 | [0013](0013-background-loops.md) | Background loops and shutdown |
 | [0014](0014-testing.md) | Testing |
 | [0015](0015-dashboard-frontend.md) | Dashboard frontend |
+| [0016](0016-content-processing-pipeline.md) | Content processing pipeline (proposed) |
 
 New record: copy the shape of an existing one (Status, Context, Decision, Consequences) and add a row above.

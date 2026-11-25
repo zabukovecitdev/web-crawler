@@ -16,5 +16,5 @@ Status: Accepted
 - Session tests keep using the session, because the cookie slides (8 h) while the 24 h limit counts from sign-in.
 - `ReverseMarkdownConverterPerformanceTests` guards that a page at the size cap converts fast enough to convert on demand.
   It is timing-based, so it is an integration test. The fastest of three runs counts: a slow machine or a GC pause hits one
-  run, a slow algorithm hits all of them. The plan said 2 s. On a 4-core CI-like machine that also runs the Docker tests, the
+  run, a slow algorithm hits all of them. The first budget was 2 s. On a 4-core CI-like machine that also runs the Docker tests, the
   fastest run is about 1.2 s alone and 2.1 s under that load, so the budget is 3 s.

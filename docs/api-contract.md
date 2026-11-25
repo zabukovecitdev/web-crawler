@@ -1,14 +1,14 @@
 # Dashboard API contract
 
-Source of truth for shapes: `src/frontend/src/types/api.ts`. The C# records in `SamoBot.Api/Contracts` must serialize to exactly those shapes (camelCase, enums as strings, ISO 8601 dates). Change a shape only through the lead.
+Source of truth for shapes: `src/frontend/src/types/api.ts`. The C# records in `SamoBot.Api/Contracts` must serialize to exactly those shapes (camelCase, enums as strings, ISO 8601 dates). Change a shape on both sides in the same change (ADR 0012).
 
-Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keeps working for the MCP server and scripts. Every endpoint below needs either. Errors: `400` with `ProblemDetails`, `401` when not signed in, `404` when missing.
+Auth: a cookie session (`POST /api/v1/auth/google`). The `X-Api-Key` scheme keeps working for scripts and for the Vite dev server proxy (`DEV_API_KEY`). The MCP server does not call this API; it reads Meilisearch directly. Every endpoint below needs either. Errors: `400` with `ProblemDetails`, `401` when not signed in, `404` when missing.
 
 Transport notes:
 - Sessions last at most 24 hours from sign-in and the account is checked against the allowlist on every request, so removing an account signs it out on the next call (`401`).
 - Rate limits (token buckets, per signed-in user, otherwise per client address): 300 requests per minute per signed-in user (`RateLimiting:PermitsPerMinute`), 120 per anonymous address, 10 per minute on `POST /api/v1/auth/google`, 10 per minute for an `X-Api-Key` that does not match. The hub is limited like any path (the requests that open a connection). Over a limit the answer is `429` with `Retry-After` (seconds) and a body with `title`, `status` and `detail`.
 - Every cookie-authenticated `POST`, `PUT`, `PATCH` and `DELETE` needs `X-Requested-With: samobot`. That includes the SignalR negotiate request: the client sends the header through the `headers` option of `withUrl`.
-- The hub (`/hubs/*`) and `POST /api/v1/auth/google` check the `Origin` header when a browser sends one. It must be the API's own origin or one of `Cors:Origins`, otherwise `403`. Calls without `Origin` (scripts, the MCP server) pass.
+- The hub (`/hubs/*`) and `POST /api/v1/auth/google` check the `Origin` header when a browser sends one. It must be the API's own origin or one of `Cors:Origins`, otherwise `403`. Calls without `Origin` (scripts) pass.
 - Cross-origin browsers can read the response headers `X-Content-Truncated` and `X-Content-Stored-Bytes` (exposed by CORS).
 
 | Method and path | Request | Response |
@@ -31,6 +31,7 @@ Transport notes:
 | `GET /api/v1/crawl-jobs/{id}` | | `CrawlJobDto` |
 | `POST /api/v1/crawl-jobs` | `CreateCrawlJobRequest` | `201 CrawlJobDto` |
 | `POST /api/v1/crawl-jobs/{id}/actions` | `{ action: CrawlJobAction }` (`start`, `pause`, `cancel`, `recrawl`, `retry-failed`, `reprocess`) | `204`; `409` with the reason when the action is not allowed. `recrawl` queues every link of the job again, `retry-failed` only the failed and retrying ones; both make a finished job run again. `reprocess` is allowed only for a `Completed` job: the job is `Running` again, URLs whose body was skipped for a type that is stored now are fetched again, and the stored pages are parsed and indexed again (nothing stored is fetched again) |
+| `GET /api/v1/crawl-jobs/{id}/pages?limit&offset` | | `{ total, items: JobPage[] }`: the URLs of the job; `limit` 1 to 200 (default 50), `offset` up to 100000, otherwise `400`; `404` for an unknown job |
 | `GET /api/v1/crawl-jobs/{id}/links?filter=all\|problems\|notIndexed\|pending\|indexed&query&limit&offset` | | `Page<JobLinkDto>`: each link with its `state`, a `reason` sentence and the status of its steps (`fetch`, `store`, `parse`, `index`) |
 | `POST /api/v1/crawl-jobs/{id}/links/{linkId}/recrawl` | | `204`; `409` when the link is in flight, not part of the job, or the job was cancelled |
 | `GET /api/v1/crawl-jobs/{id}/progress` | | `CrawlProgress` |

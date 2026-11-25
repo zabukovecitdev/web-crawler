@@ -4,6 +4,10 @@ Status: Accepted
 
 ## Decision
 
+**Stack.** React with Vite and TypeScript, React Router, Tailwind CSS 3 with shadcn/ui components on Radix primitives
+(`components.json`, `src/components/ui`), Recharts for charts and sonner for toasts. Server state lives in TanStack Query. There
+is no global client store.
+
 **Accessibility.** Colour is never the only signal. An HTTP status shows a tone, a word and a text mark (`httpStatusLook`). A
 status LED is only a mark, so a word always goes next to it. The badge tones are always paired with a word, and with a dot where
 they mean "live". The response bar's legend repeats every number in words. The stat counters announce changes politely. The

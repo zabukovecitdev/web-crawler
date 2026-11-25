@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 A slow or hostile server can stall a request at every step: DNS, connect, headers or a body sent one byte at a time. The
-README section "Timeouts" lists the settings. These are the decisions behind them.
+section "Timeouts" of [architecture.md](../architecture.md#timeouts) lists the settings. These are the decisions behind them.
 
 ## Decision
 
@@ -25,7 +25,8 @@ README section "Timeouts" lists the settings. These are the decisions behind the
 - **Robots.txt (`HttpRobotsSource`).** The host key can include a non-default port, so the source tries https first and
   then http, each under its own deadline (`Crawler:RobotsTimeoutSeconds`). A found file gives its rules. A missing file (4xx,
   or a redirect that never ends) allows everything. A server error, a network error or a timeout blocks the host for a
-  short time. A host or redirect hop with only disallowed addresses throws `BlockedAddressException`.
+  short time. A host or redirect hop with only disallowed addresses throws `BlockedAddressException`. A found or missing
+  file is kept for 24 hours, a block for 1 hour. The body is read up to 512 KB.
 
 | Setting (`Crawler:`) | Default | Covers | 0 |
 |---|---|---|---|
