@@ -108,6 +108,6 @@ The result is a list of up to five matches, each with the page title and its can
 
 ## Packaging
 
-The project file still has the packaging properties of the C# MCP server template (`PackAsTool`, `PackageId`
-`SampleMcpServer`, self-contained single-file builds for six runtimes), and `.mcp/server.json` still holds template placeholders.
-The server is not published as a package. Run it from source as above.
+The project file can pack the server as a .NET tool with the package ID `SamoBot.Mcp` (`PackAsTool`, self-contained
+single-file builds for six runtimes), and `.mcp/server.json` describes it for an MCP registry. The server is not published
+as a package yet. Run it from source as above.
