@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 Several workers claim URLs from one PostgreSQL frontier. Each host must see at most one request at a time and a polite
-delay between requests. The README sections "The claim pattern" and "Politeness (adaptive delay)" give an overview.
+delay between requests. The sections "The claim pattern" and "Politeness (adaptive delay)" of [architecture.md](../architecture.md) give an overview.
 
 ## Decision
 

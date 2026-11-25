@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 Sites say what a crawler may do in robots.txt, robots meta tags, the X-Robots-Tag header, rel values, canonical links and
-meta refresh. The README section "Crawl directives" lists the extension points. These are the decisions behind them.
+meta refresh. The section "Crawl directives" of [architecture.md](../architecture.md#crawl-directives-what-sites-allow) lists the extension points. These are the decisions behind them.
 
 ## Decision
 

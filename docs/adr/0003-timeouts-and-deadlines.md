@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 A slow or hostile server can stall a request at every step: DNS, connect, headers or a body sent one byte at a time. The
-README section "Timeouts" lists the settings. These are the decisions behind them.
+section "Timeouts" of [architecture.md](../architecture.md#timeouts) lists the settings. These are the decisions behind them.
 
 ## Decision
 

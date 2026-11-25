@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 The crawler fetches URLs that users and web pages supply. Without a check, a crawl could reach loopback, the private network
-or a cloud metadata service. The README section "Network safety (SSRF)" gives an overview. These are the decisions behind it.
+or a cloud metadata service. The section "Network safety (SSRF)" of [architecture.md](../architecture.md#network-safety-ssrf) gives an overview. These are the decisions behind it.
 
 ## Decision
 
