@@ -80,7 +80,7 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Optional JavaScript rendering: docker compose --profile js up (see README, "JavaScript rendering").
+  # Optional JavaScript rendering: docker compose --profile js up (see docs/operations.md, "JavaScript rendering").
   # Chrome sits on its own networks, never on the default network, so it cannot reach the database,
   # storage, search or the API. Only the worker shares the internal "browser" network with it.
   chrome:
