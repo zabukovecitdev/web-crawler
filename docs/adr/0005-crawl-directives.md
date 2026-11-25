@@ -49,7 +49,9 @@ interface it implements. `ParsePageHandler` decides nothing itself.
 
 **Sources.** `<meta name="robots">` applies to every crawler and `<meta name="samobot">` to this one, matched without regard to
 case. The X-Robots-Tag value may target one crawler, and values for other crawlers are ignored. `ParsedPage.MetaTags` keeps every
-meta tag as written. Interpreting them is the job of the sources.
+meta tag as written. Interpreting them is the job of the sources. The crawler's name is `SamoBot` (`RobotsGate.UserAgent`,
+`CrawlerIdentity.Name`): robots.txt groups, `<meta name="samobot">` and X-Robots-Tag scopes match it. Requests send the
+`User-Agent` `SamoBot/1.0 (+https://github.com/zabukovecitdev/web-crawler)` (`HttpFetcher.UserAgent`).
 
 **Links (`LinkSelector`, `RelLinkRule`, `NoFollowRule`).**
 - Links are queued one level deeper when the policy allows following and every `ILinkFollowRule` allows the link.

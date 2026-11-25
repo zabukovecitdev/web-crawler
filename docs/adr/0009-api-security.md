@@ -10,6 +10,11 @@ Status: Accepted
 - In Production a configured API key must be long and must not be a well-known placeholder. An empty key is valid and disables
   the API key.
 
+**Google sign-in (`GoogleTokenValidator`, `AuthController`).** The dashboard gets an ID token from Google Identity Services and
+posts it to `POST /api/v1/auth/google`. `GoogleJsonWebSignature` checks its signature and that its audience is `Google:ClientId`.
+Without a client ID every Google sign-in is refused. An email that Google has not verified is refused too. The API then issues
+its own HttpOnly cookie, which works for REST and for SignalR without a token in a query string.
+
 **Who may sign in (`AuthOptions`, `EmailAllowlist`, `SessionValidation`, `SessionPrincipal`).**
 - When both allow lists are empty, nobody may sign in (fail closed).
 - The lists follow configuration reloads, so removing an entry also affects sessions that are already signed in.

@@ -36,6 +36,21 @@ delay between requests. The README sections "The claim pattern" and "Politeness 
 - An outcome with no pacing change (a blocked address, a robots disallow) still releases the hold, with the base delay. A
   robots disallow made no request, so the host keeps its pacing state.
 
+**URL outcomes (`OutcomeClassifier`, `CrawlOutcome`, `BackoffPolicy`).**
+- `OutcomeClassifier` is the only place that maps a fetch result to an outcome. Each `CrawlOutcome` type builds its own
+  `UrlUpdate`, so `IUrlFrontier.Complete` writes the update without a branch on the outcome type.
+- The URL retry rules are separate from the host pacing below. Pacing only decides when the host is claimed again.
+
+| Fetch result | Outcome | URL state afterwards |
+|---|---|---|
+| robots.txt disallows the URL (no request is made, `FetchRecorder`) | `Disabled("robots")` | Disabled, reason `robots` |
+| every address of the host is denied | `Blocked` | Disabled, reason `blocked-address` |
+| 200 to 299 | `Succeeded` | Idle, due again after `RecrawlInterval` (1 day), failure count 0 |
+| 301, 302, 303, 307 or 308 with a `Location` | `Redirected` | Disabled, reason `redirect`; an http or https target is queued at the same depth |
+| 0 (network error or timeout), 429, 500 to 599 | `RetryLater` | Idle, failure count + 1, due after `BackoffPolicy.DelayFor(failCount)`: 1 minute x 2^n, at most 1 hour |
+| the same, when it is failure number `MaxFailures` (5) in a row | `Disabled("max-failures")` | Disabled, reason `max-failures` |
+| any other status | `Disabled("http-<status>")` | Disabled, reason `http-<status>` |
+
 **Politeness (`PolitenessPolicy`).** The policy is pure: numbers come in, and the new state and the delay go out.
 - The base delay (robots.txt `Crawl-delay` or the default) is always the minimum. A crawl delay in the stored robots rules
   also sets the delay of the host (`PostgresRobotsStore`).
