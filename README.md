@@ -22,6 +22,7 @@ makes that search available to AI assistants.
    |  parse loop <-- RustFS, adds links to the frontier   |
    |  index loop --> Meilisearch                          |
    |  completion loop (marks finished jobs)               |
+   |  sitemap loop (sitemaps of finished jobs' hosts)     |
    +------------------------------------------------------+
 ```
 
@@ -75,7 +76,8 @@ Support for a new directive is one class registered in `AddCrawlDirectives`. See
 ## Projects
 
 `Core` (domain, use cases, port interfaces, no I/O packages), `Adapters` (PostgreSQL, HTTP, browser, S3 storage, Meilisearch,
-HTML), `Worker`, `Api`, `Migrations`, `SamoBot.Mcp` (search server for AI tools). The dashboard is in `src/frontend/`.
+HTML), `Worker`, `Api`, `Migrations`, `SamoBot.Mcp` (search server for AI tools), `Analyzers` (the no-comments analyzer) and
+`Tests`. The dashboard is in `src/frontend/`.
 
 The compiler enforces the dependency rule: `Core` references no project.
 

@@ -25,7 +25,8 @@ worker, the API (port 5080) and the dashboard (http://localhost:8081).
 | `worker` | | The crawl, parse, index, job completion and sitemap loops |
 | `chrome` | | Only with the profile `js` (see [JavaScript rendering](#javascript-rendering)) |
 
-Send the key in the header `X-Api-Key` (MCP server and scripts). The dashboard is in `src/frontend/`. The page screen has a
+Scripts send the key in the header `X-Api-Key`. The [MCP server](../src/SamoBot.Mcp/README.md) does not call the API: it reads
+Meilisearch directly and needs no API key. The dashboard is in `src/frontend/`. The page screen has a
 Markdown tab: `GET /api/v1/pages/{id}/markdown` turns the stored HTML into clean Markdown (headings, text, lists, tables, links,
 images) on demand, for reading or as input for an LLM.
 

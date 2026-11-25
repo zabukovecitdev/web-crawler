@@ -30,7 +30,7 @@ Decisions: [ADR 0004](adr/0004-frontier-pacing-and-politeness.md), [ADR 0010](ad
 Seed URLs are checked as text (`SeedUrlValidator`). The real defence runs at connect time, because a public name can
 resolve to a private address (DNS rebinding) and a redirect can point at one.
 
-- **Connect check:** the clients of the fetcher and of robots.txt use `SafeConnect`, a `SocketsHttpHandler.ConnectCallback`.
+- **Connect check:** the clients of the fetcher, of robots.txt and of sitemaps use `SafeConnect`, a `SocketsHttpHandler.ConnectCallback`.
   It resolves all addresses, drops those that `IpAddressPolicy` denies (private, loopback, link-local and metadata,
   CGNAT, multicast, reserved, documentation, and IPv6 forms that embed such an IPv4 address) and connects to the first
   allowed one. No allowed address gives `BlockedAddressException`. Every redirect hop opens its own connection, so every
