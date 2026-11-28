@@ -41,13 +41,45 @@ is at most 253 ASCII characters plus a port, so the largest key of `UQ_SitemapUr
 **Large tables.**
 - An index on a large table is built `CONCURRENTLY` (migrations 015 and 022), so crawling keeps writing. That needs
   `TransactionBehavior.None` and exactly one statement per `Execute.Sql`. A failed concurrent build leaves an INVALID index
-  that `IF NOT EXISTS` then skips. Fix it with `DROP INDEX CONCURRENTLY <name>` and run the migrations again.
+  that `IF NOT EXISTS` then skips. Migration 030 (`RepairConcurrentIndexes`) rebuilds each of these indexes that is missing,
+  INVALID, or has an old definition (development databases that ran the first, non-concurrent 015 had
+  `("Host", "LastCrawlAt" DESC)`). It leaves healthy ones alone. A valid but outdated index keeps serving queries until its
+  replacement is built under a temporary name and renamed. An INVALID one is dropped first. The lookup is limited to the
+  `public` schema and the expected table, and the builds have no command timeout. A concurrent build that fails after 030 still needs
+  `DROP INDEX CONCURRENTLY <name>` and a new repair migration that lists the index.
 - The `DiscoveredUrls (Host, NormalizedUrl)` index was moved from 016 to 022 for that reason. A database that ran the old
   016 already has it, and `IF NOT EXISTS` skips it.
 - New columns are added with a constant default or NULL, so PostgreSQL does not rewrite the table (migration 024).
 - Migration 018 is intentionally empty. Migration 021 replaced its full-table UPDATE with a narrower one that re-sends one
   document per URL.
+- **Readers handle one shape (migration 029).**
+  - Every parsed document has a policy (`ParsedDocuments.Policy` is NOT NULL). For a document parsed before migration 026, the
+    policy is built from the flags of its old robots JSON (`noIndex`, `noFollow`, `noArchive`, `noSnippet`, `none`), and the
+    old meta text becomes the one entry of `directives`. A missing or unreadable policy becomes the default policy.
+  - The index mark is cleared only for the newest document of a URL whose rebuilt policy changes the index (noindex,
+    nosnippet). Re-indexing an older document would overwrite the newer one in the search index.
+  - The column `RobotsDirectives` is no longer read but still exists. Code from before 029 writes it during a rolling deploy,
+    so it is dropped in a later release (issue #51).
+  - `FetchCompleted` events from before live telemetry (no `contentStatus`) were deleted: no dashboard ever showed them.
+    The other old events got `pageId` and `host` from `DiscoveredUrls` (the lowest id wins when one job holds the same raw URL
+    twice). The few whose URL no longer exists were deleted. `Down` refuses, because deleted events cannot be rebuilt.
+  - A page that was fetched but not parsed yet still has no policy, and its stored copy may be shown
+    (`PagePolicy.Default`). That is a state, not legacy data.
+  - The links of pages parsed before migration 025 come only from parsing again, through the `reprocess` action of their
+    job. The migration does not reopen finished jobs, because that would start crawling after a deploy.
 - Migration 026 stores `UrlFetches.ResponseHeaders` (the headers the directive sources read) and `ParsedDocuments.Policy`.
+
+**Released migrations.**
+- A released migration's `Up` never changes its effect on a database. A schema or data fix is a new, forward migration
+  (030 repairs the drift of 015). Tidying a released `Up` is allowed only when a fresh database ends up identical: 009 lost
+  its guards for "a previous partial migration run", which cannot happen, because FluentMigrator runs each migration with the
+  default `TransactionBehavior` in a transaction. Migrations with `TransactionBehavior.None` (015, 022, 030) can stop part way,
+  so they keep their `IF NOT EXISTS` guards or check the catalog.
+- A `Down` that cannot restore what `Up` removed throws `NotSupportedException` and says to restore a backup, instead of
+  pretending to roll back: 005 (dropped the fetch columns with their data), 014 (dropped `IndexJobs`, and the old unique
+  key on `NormalizedUrl` no longer holds) and 029 (deleted events). Rolling back past them means restoring a backup.
+- A migration is tested on a scratch database: migrate to the version before it, insert the old shape, migrate, assert
+  (`ScratchDatabase`).
 
 **Read models.**
 - The analytics SQL reads `UrlFetches` in a `FetchedAt` window (`IX_UrlFetches_FetchedAt`) and joins `DiscoveredUrls` by primary

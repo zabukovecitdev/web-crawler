@@ -36,7 +36,7 @@ public class PageMappingTests
             Images = """[{"src":"a"},{"src":"b"}]""",
             JsonLdData = "[\"{}\"]",
             OpenGraphData = """{"og:title":"T"}""",
-            RobotsDirectives = """{"content":"noindex"}"""
+            Policy = """{"directives":["noindex (meta robots)"]}"""
         };
 
         var parsed = ParsedPageMapper.Map(row, new LinkCounts(4, 3));
@@ -46,19 +46,23 @@ public class PageMappingTests
         parsed.ImageCount.Should().Be(2);
         parsed.JsonLdBlocks.Should().Be(1);
         parsed.OpenGraph.Should().ContainKey("og:title");
-        parsed.RobotsDirectives.Should().Be("noindex");
-        ParsedPageMapper.Map(new PageRow { Headings = "not json" }, new LinkCounts(0, 0)).Headings.Should().BeEmpty();
+        parsed.RobotsDirectives.Should().Be("noindex (meta robots)");
+        ParsedPageMapper.Map(new PageRow { Headings = "not json", Policy = "{}" }, new LinkCounts(0, 0)).Headings.Should().BeEmpty();
     }
 
     [Fact]
-    public void TheDirectivesOfAStoredPolicyAreShownInsteadOfTheOldRobotsContent()
+    public void TheDirectivesOfTheStoredPolicyAreShownWithTheirSource()
     {
-        var row = new PageRow
-        {
-            RobotsDirectives = """{"content":"old"}""",
-            Policy = """{"index":false,"directives":["noindex (meta robots)","nofollow (X-Robots-Tag)"]}"""
-        };
+        var row = new PageRow { Policy = """{"index":false,"directives":["noindex (meta robots)","nofollow (X-Robots-Tag)"]}""" };
 
         ParsedPageMapper.Map(row, new LinkCounts(0, 0)).RobotsDirectives.Should().Be("noindex (meta robots), nofollow (X-Robots-Tag)");
+    }
+
+    [Fact]
+    public void AParsedDocumentWithoutAPolicyIsAnError()
+    {
+        var map = () => ParsedPageMapper.Map(new PageRow { Id = 7 }, new LinkCounts(0, 0));
+
+        map.Should().Throw<InvalidOperationException>().WithMessage("*page 7*");
     }
 }

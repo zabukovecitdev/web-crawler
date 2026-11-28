@@ -1,9 +1,13 @@
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
 using SamoBot.Api.Authentication;
 using SamoBot.Api.Contracts;
 using SamoBot.Api.Hosting;
+using SamoBot.Tests.Fakes;
 
 namespace SamoBot.Tests.Api;
 
@@ -99,10 +103,12 @@ public class RateLimitingTests
         (await host.Client.SendAsync(signedIn)).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact]
-    public async Task SignedInUsersAreLimitedPerUserAtTheConfiguredRate()
+    [Theory]
+    [InlineData("UserPermitsPerMinute")]
+    [InlineData("PermitsPerMinute")]
+    public async Task SignedInUsersAreLimitedPerUserAtTheConfiguredRate(string key)
     {
-        await using var host = await StartAsync(new() { ["RateLimiting:PermitsPerMinute"] = "5" });
+        await using var host = await StartAsync(new() { [$"RateLimiting:{key}"] = "5" });
 
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i <= Burst; i++)
@@ -202,7 +208,7 @@ public class RateLimitingTests
     }
 
     [Theory]
-    [InlineData("PermitsPerMinute")]
+    [InlineData("UserPermitsPerMinute")]
     [InlineData("AnonymousPermitsPerMinute")]
     [InlineData("SignInPermitsPerMinute")]
     [InlineData("ApiKeyFailuresPerMinute")]
@@ -211,5 +217,69 @@ public class RateLimitingTests
         var start = () => StartAsync(new() { [$"RateLimiting:{key}"] = "0" });
 
         (await start.Should().ThrowAsync<InvalidOperationException>()).WithMessage($"*{key}*");
+    }
+
+    [Theory]
+    [InlineData(null, "7", 7, LegacyKeyUse.Used)]
+    [InlineData("", "7", 7, LegacyKeyUse.Used)]
+    [InlineData("9", "7", 9, LegacyKeyUse.Ignored)]
+    [InlineData(" ", null, 300, LegacyKeyUse.NotSet)]
+    [InlineData(null, null, 300, LegacyKeyUse.NotSet)]
+    public void TheDeprecatedUserKeyCountsOnlyWhileTheNewOneIsBlank(string? userKey, string? legacyKey, int expected, LegacyKeyUse use)
+    {
+        var options = RateLimitOptions.From(Section(userKey, legacyKey));
+
+        options.UserPermitsPerMinute.Should().Be(expected);
+        options.LegacyUserKey.Should().Be(use);
+    }
+
+    [Fact]
+    public void AnInvalidDeprecatedKeyIsReportedUnderItsOwnName()
+    {
+        var validate = () => RateLimitOptions.From(Section(null, "0")).Validate();
+
+        validate.Should().Throw<InvalidOperationException>().WithMessage("RateLimiting:PermitsPerMinute (deprecated) must be at least 1.");
+    }
+
+    [Fact]
+    public void ANonNumericLimitStopsTheStartup()
+    {
+        var read = () => RateLimitOptions.From(Section("lots", null));
+
+        read.Should().Throw<InvalidOperationException>().WithMessage("*UserPermitsPerMinute*whole number*");
+    }
+
+    [Theory]
+    [InlineData(null, "7", "Rename it")]
+    [InlineData("9", "7", "Remove the deprecated key")]
+    [InlineData("9", null, null)]
+    public void StartupWarnsWhileTheDeprecatedKeyIsConfigured(string? userKey, string? legacyKey, string? warning)
+    {
+        var logs = new CapturingLoggerProvider();
+        var services = new ServiceCollection()
+            .AddLogging(logging => logging.AddProvider(logs))
+            .AddSingleton(RateLimitOptions.From(Section(userKey, legacyKey)))
+            .BuildServiceProvider();
+
+        services.LogIfLegacyRateLimitKey();
+
+        if (warning is null)
+        {
+            logs.Messages.Should().BeEmpty();
+        }
+        else
+        {
+            logs.Messages.Should().ContainSingle().Which.Should().Contain(warning);
+        }
+    }
+
+    private static IConfigurationSection Section(string? userKey, string? legacyKey)
+    {
+        var settings = new Dictionary<string, string?>
+        {
+            ["RateLimiting:UserPermitsPerMinute"] = userKey,
+            ["RateLimiting:PermitsPerMinute"] = legacyKey
+        }.Where(setting => setting.Value is not null);
+        return new ConfigurationBuilder().AddInMemoryCollection(settings).Build().GetSection(RateLimitOptions.SectionName);
     }
 }

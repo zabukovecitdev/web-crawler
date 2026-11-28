@@ -103,12 +103,14 @@ public sealed partial class BrowserFetcher(
             return FetchResponse.BlockedAddress();
         }
 
-        var html = await page.ContentAsync();
+        var html = Encoding.UTF8.GetBytes(await page.ContentAsync());
+        var truncated = html.Length > HttpFetcher.MaxBodyBytes;
         return new FetchResponse
         {
             StatusCode = response?.Status ?? 0,
             ContentType = "text/html; charset=utf-8",
-            Content = Encoding.UTF8.GetBytes(html),
+            Content = truncated ? html[..HttpFetcher.MaxBodyBytes] : html,
+            BodyTruncated = truncated,
             ResponseTimeMs = (long)timeProvider.GetElapsedTime(started).TotalMilliseconds,
             ResponseHeaders = response is null
                 ? ResponseHeaders.None

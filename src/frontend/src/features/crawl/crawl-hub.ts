@@ -1,11 +1,11 @@
 import { HttpError, HubConnectionBuilder, HubConnectionState, type HubConnection } from '@microsoft/signalr'
 import { apiBase } from '@/lib/config'
-import type { LiveEvent } from './crawl-api'
+import type { CrawlEvent } from '@/types/api'
 
 export type ConnectionState = 'connecting' | 'live' | 'reconnecting' | 'offline'
 
 export type HubHandlers = {
-  onEvent: (event: LiveEvent) => void
+  onEvent: (event: CrawlEvent) => void
   onState: (state: ConnectionState) => void
   onUnauthorized: () => void
 }
@@ -86,7 +86,7 @@ function start(s: Session): void {
 }
 
 function wire(s: Session): void {
-  s.connection.on('CrawlEvent', (event: LiveEvent) => s.handlers.onEvent(event))
+  s.connection.on('CrawlEvent', (event: CrawlEvent) => s.handlers.onEvent(event))
   s.connection.onreconnecting(() => emit(s, 'reconnecting'))
   s.connection.onreconnected(() => join(s))
   s.connection.onclose(() => {

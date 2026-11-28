@@ -49,8 +49,8 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
         PostgresTestData.Scalar<int>(
             postgres.DataSource,
             """
-            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Language", "BodyText", "Headings", "Images", "OpenGraphData", "IndexedAt")
-            VALUES (@fetchId, @title, 'en', 'a b c', '[{"level":2,"text":"Sub"}]', '[{"src":"x"}]', '{"og:title":"T"}', @indexedAt)
+            INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Language", "BodyText", "Headings", "Images", "OpenGraphData", "IndexedAt", "Policy")
+            VALUES (@fetchId, @title, 'en', 'a b c', '[{"level":2,"text":"Sub"}]', '[{"src":"x"}]', '{"og:title":"T"}', @indexedAt, '{}')
             RETURNING "Id"
             """,
             new { fetchId, title, indexedAt = indexed ? TestData.Now : (DateTimeOffset?)null });
@@ -216,7 +216,7 @@ public class PostgresReadModelTests(PostgresFixture postgres) : IAsyncLifetime
             """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Policy") VALUES (@id, 'A', '{"archive":false}') RETURNING "Id" """,
             new { id = noArchiveFetch });
 
-        (await Pages.FindStoredCopy(stored, default)).Should().Be(new StoredCopy("bodies/s", new Uri("https://a.example/s"), PagePolicy.Default, "text/html"));
+        (await Pages.FindStoredCopy(stored, default)).Should().Be(new StoredCopy("bodies/s", new Uri("https://a.example/s"), PagePolicy.Default, "text/html", false));
         (await Pages.FindStoredCopy(noArchive, default))!.Policy.Archive.Should().BeFalse();
         (await Pages.FindStoredCopy(notStored, default)).Should().BeNull();
         storedFetch.Should().BePositive();

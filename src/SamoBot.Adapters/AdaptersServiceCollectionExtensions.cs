@@ -88,6 +88,7 @@ public static class AdaptersServiceCollectionExtensions
         });
 
         services.AddSingleton<MeilisearchSettings>();
+        services.AddHostedService<RetiredIndexCleanup>();
         services.AddSingleton<ISearchPages, MeilisearchPageSearch>();
         services.AddSingleton<MeilisearchIndex>();
         services.AddSingleton<ISearchIndex>(provider => provider.GetRequiredService<MeilisearchIndex>());

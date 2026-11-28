@@ -14,7 +14,7 @@ public class ObjectNameGeneratorTests
     {
         const string url = "https://Example.com/a/b?x=1";
 
-        ObjectNameGenerator.GenerateHierarchical(url, "text/html").Should().Be($"example.com/a/b/{Hash(url)}.html");
+        ObjectNameGenerator.GenerateHierarchical(url, "html").Should().Be($"example.com/a/b/{Hash(url)}.html");
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class ObjectNameGeneratorTests
     {
         const string url = "https://example.com/";
 
-        ObjectNameGenerator.GenerateHierarchical(url, "text/html").Should().Be($"example.com/index/{Hash(url)}.html");
+        ObjectNameGenerator.GenerateHierarchical(url, "html").Should().Be($"example.com/index/{Hash(url)}.html");
     }
 
     [Fact]
@@ -30,23 +30,18 @@ public class ObjectNameGeneratorTests
     {
         const string url = "https://example.com/a b/ü";
 
-        ObjectNameGenerator.GenerateHierarchical(url).Should().StartWith("example.com/a_20b/_C3_BC/");
+        ObjectNameGenerator.GenerateHierarchical(url, "html").Should().StartWith("example.com/a_20b/_C3_BC/");
     }
 
-    [Theory]
-    [InlineData("application/pdf", "https://example.com/x", "pdf")]
-    [InlineData("text/plain; charset=utf-8", "https://example.com/x", "txt")]
-    [InlineData("text/markdown; charset=utf-8", "https://example.com/x", "md")]
-    [InlineData(null, "https://example.com/file.PDF", "pdf")]
-    [InlineData("application/unknown", "https://example.com/x", "html")]
-    public void GenerateHierarchicalChoosesTheExtensionFromTheMediaTypeThenThePath(string? contentType, string url, string extension)
+    [Fact]
+    public void GenerateHierarchicalUsesTheGivenExtensionWhateverThePathSays()
     {
-        ObjectNameGenerator.GenerateHierarchical(url, contentType).Should().EndWith($".{extension}");
+        ObjectNameGenerator.GenerateHierarchical("https://example.com/file.PDF", "md").Should().EndWith(".md");
     }
 
     [Fact]
     public void GenerateHierarchicalForAnInvalidUrlUsesTheHashOnly()
     {
-        ObjectNameGenerator.GenerateHierarchical("not a url", "text/html").Should().Be($"{Hash("not a url")}.html");
+        ObjectNameGenerator.GenerateHierarchical("not a url", "html").Should().Be($"{Hash("not a url")}.html");
     }
 }

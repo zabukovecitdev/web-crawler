@@ -15,10 +15,17 @@ Status: Accepted
 - **Settings once per process (`MeilisearchSettings`).** The settings are applied before the first read or write. Applying the
   same settings again is a no-op for Meilisearch, so every service that touches the index may call `Ensure`. A failure is
   retried on the next call.
+- **Retired indexes (`RetiredIndexCleanup`).** `RetiredIndexes` lists indexes the crawler no longer uses (`parsed_documents`,
+  replaced by `pages` in migration 021). A hosted service deletes them once at startup, in the background and outside
+  `MeilisearchSettings.Ensure`, so neither a slow delete nor a failed one holds up search or indexing. It never deletes the
+  configured index. It waits up to 10 minutes for the delete task. A missing index is fine. A failure or an unreachable server
+  is logged and tried again on the next start.
 - **Filters (`MeilisearchPageSearch`).** The host filter value is a quoted string, so a backslash or a quote in a host cannot
   end it early. The host list ignores the host filter, so the dashboard can still offer the other hosts.
 - **Snippets (`SnippetFormatter`).** The engine wraps matches in two private-use characters. The formatter encodes everything
   else, then swaps those characters for `<mark>` tags, so a snippet is encoded text plus mark tags only. The site's
   `max-snippet` limits the visible characters, and the markers do not count. 0 (nosnippet) gives an empty snippet.
   `SearchHitDto.Snippet` keeps that contract over the API.
+- `snippetMaxLength` -1 means no limit. A hit without the field reads as -1 (`IndexedHit`) rather than failing, so a
+  single document left over in the index cannot break search.
 - The property names of `SearchHit` are the field names of the Meilisearch index.

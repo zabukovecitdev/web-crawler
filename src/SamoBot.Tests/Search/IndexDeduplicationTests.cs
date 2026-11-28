@@ -1,6 +1,7 @@
 using System.Globalization;
 using FluentAssertions;
 using SamoBot.Adapters.Search;
+using SamoBot.Core.Directives;
 using SamoBot.Core.Domain;
 
 namespace SamoBot.Tests.Search;
@@ -8,7 +9,7 @@ namespace SamoBot.Tests.Search;
 public class IndexDeduplicationTests
 {
     private static PageToIndex Page(int pageId, int urlId, string title) =>
-        new() { PageId = pageId, UrlFetchId = pageId, DiscoveredUrlId = urlId, Title = title };
+        new() { PageId = pageId, UrlFetchId = pageId, DiscoveredUrlId = urlId, Title = title, Policy = PagePolicy.Default };
 
     [Fact]
     public void TheDocumentIdIsTheUrlId()

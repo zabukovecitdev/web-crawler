@@ -7,7 +7,7 @@ export type LogRow = {
   key: string
   at: string
   url: string
-  pagePath: string | null
+  pagePath: string
   statusCode: number
   responseTimeMs: number | null
   contentLength: number | null
@@ -27,17 +27,8 @@ export function rowOf(event: FetchCompletedEvent): LogRow {
   }
 }
 
-function hostOf(url: string): string | null {
-  try {
-    return new URL(url).host
-  } catch {
-    return null
-  }
-}
-
-export function pagePathOf(event: Pick<FetchCompletedEvent, 'pageId' | 'host' | 'url'>): string | null {
-  const host = event.host ?? hostOf(event.url)
-  return event.pageId && host ? `/sites/${encodeURIComponent(host)}/pages/${event.pageId}` : null
+export function pagePathOf(event: Pick<FetchCompletedEvent, 'pageId' | 'host'>): string {
+  return `/sites/${encodeURIComponent(event.host)}/pages/${event.pageId}`
 }
 
 export function mergeRows(existing: LogRow[], incoming: LogRow[]): LogRow[] {

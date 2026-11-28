@@ -1,5 +1,4 @@
 import type { CrawlEvent, CrawlJobStatus, CrawlProgress } from '@/types/api'
-import type { LiveEvent, StoredEvent } from './crawl-api'
 import { applyCompleted, applyJobEvent, type FetchCompletedEvent } from './crawl-counters'
 import { mergeRows, rowOf, type LogRow } from './crawl-rows'
 
@@ -15,8 +14,8 @@ export type CrawlState = {
 
 export type CrawlAction =
   | { type: 'snapshot'; progress: CrawlProgress }
-  | { type: 'history'; events: StoredEvent[] }
-  | { type: 'live'; event: LiveEvent }
+  | { type: 'history'; events: CrawlEvent[] }
+  | { type: 'live'; event: CrawlEvent }
 
 export const initialCrawlState: CrawlState = { progress: null, log: [], current: null, seen: [], lastEventId: 0 }
 
@@ -39,7 +38,7 @@ function remember(state: CrawlState, ids: number[]): Pick<CrawlState, 'seen' | '
   }
 }
 
-function reduceHistory(state: CrawlState, events: StoredEvent[]): CrawlState {
+function reduceHistory(state: CrawlState, events: CrawlEvent[]): CrawlState {
   const fresh = events.filter((event) => !state.seen.includes(event.id))
   const rows = fresh.flatMap((event) => (isCompleted(event) ? [rowOf(event)] : []))
   return { ...state, log: mergeRows(state.log, rows), ...remember(state, fresh.map((event) => event.id)) }
@@ -56,12 +55,8 @@ function applyLive(state: CrawlState, event: CrawlEvent): CrawlState {
   return { ...state, progress: state.progress ? applyJobEvent(state.progress, event.eventType) : null }
 }
 
-function reduceLive(state: CrawlState, event: LiveEvent): CrawlState {
-  const { id } = event
-  if (id === undefined) {
-    return applyLive(state, event)
-  }
-  return state.seen.includes(id) ? state : { ...applyLive(state, event), ...remember(state, [id]) }
+function reduceLive(state: CrawlState, event: CrawlEvent): CrawlState {
+  return state.seen.includes(event.id) ? state : { ...applyLive(state, event), ...remember(state, [event.id]) }
 }
 
 export function crawlReducer(state: CrawlState, action: CrawlAction): CrawlState {
