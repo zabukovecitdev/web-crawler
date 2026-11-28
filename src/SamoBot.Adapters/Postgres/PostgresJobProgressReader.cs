@@ -15,7 +15,7 @@ public sealed class PostgresJobProgressReader(NpgsqlDataSource dataSource) : IJo
         frontier AS (
             SELECT
                 count(*) FILTER (WHERE f."StatusCode" BETWEEN 200 AND 299)::int AS "Crawled",
-                count(*) FILTER (WHERE d."Status" = 'Idle' AND (d."LastFetchId" IS NULL OR d."FailCount" > 0))::int AS "Queued",
+                count(*) FILTER (WHERE d."Status" = 'Idle' AND (d."LastCrawlAt" IS NULL OR d."FailCount" > 0))::int AS "Queued",
                 count(*) FILTER (WHERE d."Status" = 'InFlight')::int AS "InFlight",
                 count(*) FILTER (WHERE d."Status" = 'Disabled' AND d."FailReason" IS NOT NULL
                                    AND d."FailReason" NOT IN ('redirect', 'robots', 'blocked-address'))::int AS "Failed"
