@@ -34,7 +34,7 @@ public sealed class FetchRecorder(
             return null;
         }
 
-        return await contentStore.Save(url.Url, response.Content!, response.ContentType, ct);
+        return await contentStore.Save(url.Url, response.Content!, response.StoredContentType, ct);
     }
 
     private static FetchRecord ToRecord(ClaimedUrl url, FetchResponse response, string? objectName, DateTimeOffset now) => new()
@@ -43,6 +43,7 @@ public sealed class FetchRecorder(
         StatusCode = response.StatusCode,
         ContentType = response.ContentType,
         ContentLength = response.Content?.Length,
+        BodyTruncated = response.BodyTruncated,
         ResponseTimeMs = response.ResponseTimeMs,
         ObjectName = objectName,
         FinalUrl = url.Url,

@@ -29,21 +29,7 @@ public class AddLastFetchIdToDiscoveredUrlsAndRemoveOldColumns : Migration
             .FromTable(TableNames.Database.DiscoveredUrls);
     }
 
-    public override void Down()
-    {
-        Alter.Table(TableNames.Database.DiscoveredUrls)
-            .AddColumn("LastStatusCode").AsInt16().Nullable()
-            .AddColumn("ContentType").AsString(255).Nullable()
-            .AddColumn("ContentLength").AsInt64().Nullable()
-            .AddColumn("ObjectName").AsString(2048).Nullable();
-
-        Delete.ForeignKey("FK_DiscoveredUrls_UrlFetches")
-            .OnTable(TableNames.Database.DiscoveredUrls);
-        
-        Delete.Index("IX_DiscoveredUrls_LastFetchId")
-            .OnTable(TableNames.Database.DiscoveredUrls);
-        
-        Delete.Column("LastFetchId")
-            .FromTable(TableNames.Database.DiscoveredUrls);
-    }
+    public override void Down() =>
+        throw new NotSupportedException(
+            "Migration 005 dropped the fetch columns of DiscoveredUrls with their data. Restore a database backup taken before it to go back.");
 }

@@ -1,5 +1,4 @@
 using FluentAssertions;
-using FluentResults;
 using SamoBot.Core.Common;
 
 namespace SamoBot.Tests;

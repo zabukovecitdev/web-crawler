@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { notifyUnauthorized } from '@/lib/api'
-import type { LiveEvent } from './crawl-api'
+import type { CrawlEvent } from '@/types/api'
 import { connectCrawlHub, type ConnectionState } from './crawl-hub'
 
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
 
 function connectMock(
   jobId: number,
-  onEvent: (event: LiveEvent) => void,
+  onEvent: (event: CrawlEvent) => void,
   onState: (state: ConnectionState) => void,
 ): () => void {
   let cancelled = false
@@ -30,7 +30,7 @@ function connectMock(
 
 export function useCrawlStream(
   jobId: number,
-  onEvent: (event: LiveEvent) => void,
+  onEvent: (event: CrawlEvent) => void,
   enabled: boolean = true,
 ): ConnectionState {
   const [state, setState] = useState<ConnectionState>('connecting')

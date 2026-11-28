@@ -12,7 +12,7 @@ Status: Accepted
   property name: `CrawlJobDto`, `CrawlProgress`, `SitemapDto`, `JobEvent`, `JobPage`. Change both sides together.
 - The dashboard reads the string values of `ContentStatus`, `CrawlEventTypes` and `LinkState` as they are. Renaming one is a
   breaking change.
-- A crawl event is flat JSON, `{ crawlJobId, eventType, at, ...fields }`, plus `id` once stored (`CrawlEventEnvelope`). The
+- A crawl event is flat JSON, `{ crawlJobId, eventType, at, ...fields }`, plus its stored `id` (`CrawlEventEnvelope`). The
   SignalR push and the events endpoint use this one shape. The reserved names win over a payload field of the same name. The
   hub is `/hubs/crawl-job`, the methods are `JoinJob(jobId)` and `LeaveJob(jobId)`, the group of a job is `crawlJob:{id}` and the
   client event is `CrawlEvent`.

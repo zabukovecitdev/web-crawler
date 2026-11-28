@@ -8,16 +8,19 @@ namespace SamoBot.Tests.Postgres;
 
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().WithImage("postgres:16").Build();
+    public const string ExistingDatabaseVariable = "SAMOBOT_TEST_POSTGRES";
+
+    private readonly string? _existing = Environment.GetEnvironmentVariable(ExistingDatabaseVariable);
+    private PostgreSqlContainer? _container;
 
     public NpgsqlDataSource DataSource { get; private set; } = null!;
 
-    public string ConnectionString => _container.GetConnectionString();
+    public string ConnectionString { get; private set; } = string.Empty;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
+        ConnectionString = string.IsNullOrWhiteSpace(_existing) ? await StartContainer() : _existing;
+        var connectionString = ConnectionString;
 
         using var provider = new ServiceCollection()
             .AddFluentMigratorCore()
@@ -34,7 +37,17 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await DataSource.DisposeAsync();
-        await _container.DisposeAsync();
+        if (_container is not null)
+        {
+            await _container.DisposeAsync();
+        }
+    }
+
+    private async Task<string> StartContainer()
+    {
+        _container = new PostgreSqlBuilder().WithImage("postgres:16").Build();
+        await _container.StartAsync();
+        return _container.GetConnectionString();
     }
 
     public async Task Reset()

@@ -30,11 +30,9 @@ internal static class ParsedPageMapper
         (Read<List<ParsedHeading>>(json) ?? []).Select(h => new PageHeading(h.Level, h.Text)).ToList();
 
     private static string Directives(PageRow row) =>
-        row.Policy is not null
-            ? string.Join(", ", PagePolicyJson.Read(row.Policy).Directives)
-            : Read<LegacyRobotsDirectives>(row.RobotsDirectives)?.Content ?? string.Empty;
-
-    private sealed record LegacyRobotsDirectives(string Content);
+        row.Policy is { } policy
+            ? string.Join(", ", PagePolicyJson.Read(policy).Directives)
+            : throw new InvalidOperationException($"The parsed document of page {row.Id} has no policy.");
 
     private static int ArrayLength(string? json) => Read<List<JsonElement>>(json)?.Count ?? 0;
 

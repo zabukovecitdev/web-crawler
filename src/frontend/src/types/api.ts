@@ -189,14 +189,15 @@ export type CrawlProgress = {
 export type ContentStatus = 'Stored' | 'Skipped' | 'NotStored' | 'Failed'
 
 export type CrawlEvent =
-  | { crawlJobId: number; eventType: 'JobCreated' | 'JobStarted' | 'JobPaused' | 'JobCancelled' | 'JobCompleted' | 'JobRecrawlRequested'; at: string }
-  | { crawlJobId: number; eventType: 'FetchStarted'; at: string; url: string; depth: number }
+  | { id: number; crawlJobId: number; eventType: 'JobCreated' | 'JobStarted' | 'JobPaused' | 'JobCancelled' | 'JobCompleted' | 'JobRecrawlRequested'; at: string }
+  | { id: number; crawlJobId: number; eventType: 'FetchStarted'; at: string; url: string; depth: number }
   | {
+      id: number
       crawlJobId: number
       eventType: 'FetchCompleted'
       at: string
-      pageId?: number
-      host?: string
+      pageId: number
+      host: string
       url: string
       depth: number
       statusCode: number

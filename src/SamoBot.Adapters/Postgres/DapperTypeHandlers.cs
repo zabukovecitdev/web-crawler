@@ -50,6 +50,6 @@ internal static class DapperTypeHandlers
         public override void SetValue(IDbDataParameter parameter, PagePolicy? value) =>
             parameter.Value = JsonSerializer.Serialize(value ?? PagePolicy.Default, JsonDefaults.Options);
 
-        public override PagePolicy Parse(object value) => PagePolicyJson.Read(value.ToString());
+        public override PagePolicy Parse(object value) => PagePolicyJson.Read((string)value);
     }
 }

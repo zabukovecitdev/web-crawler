@@ -54,7 +54,7 @@ public class AuthHardeningTests
     [Fact]
     public async Task TheCallAfterTheBurstIs429WithTheWaitInRetryAfter()
     {
-        var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "2" };
+        var settings = new Dictionary<string, string?> { ["RateLimiting:UserPermitsPerMinute"] = "2" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
         var statuses = new List<HttpStatusCode>();
@@ -74,7 +74,7 @@ public class AuthHardeningTests
     [Fact]
     public async Task TheHubPathIsLimitedLikeAnyOther()
     {
-        var settings = new Dictionary<string, string?> { ["RateLimiting:PermitsPerMinute"] = "1" };
+        var settings = new Dictionary<string, string?> { ["RateLimiting:UserPermitsPerMinute"] = "1" };
         await using var host = await AuthTestHost.StartAsync([], [], extraSettings: settings);
 
         var statuses = new List<HttpStatusCode>();

@@ -55,6 +55,28 @@ public class CrawlUrlHandlerTests
     }
 
     [Fact]
+    public async Task HandleRecordsThatTheBodyWasCutAtTheCap()
+    {
+        var handler = Handler(new FakeFetcher(response: TestData.Response(200) with { BodyTruncated = true }));
+
+        await handler.Handle(TestData.Url(), default);
+
+        _frontier.Completed.Single().Fetch!.BodyTruncated.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleStoresHtmlSentAsPlainTextAsHtml()
+    {
+        var response = TestData.Response(200, contentType: "text/plain") with { Content = "<!doctype html><html></html>"u8.ToArray() };
+        var handler = Handler(new FakeFetcher(response: response));
+
+        await handler.Handle(TestData.Url(), default);
+
+        _store.SavedContentTypes.Should().Equal("text/html");
+        _frontier.Completed.Single().Fetch!.ContentType.Should().Be("text/plain");
+    }
+
+    [Fact]
     public async Task HandleHtmlSuccessStoresContentCompletesAndPublishes()
     {
         var url = TestData.Url();

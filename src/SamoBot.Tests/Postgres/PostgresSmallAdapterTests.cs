@@ -23,7 +23,7 @@ public class PostgresSmallAdapterTests(PostgresFixture postgres) : IAsyncLifetim
         var fetch = await PostgresTestData.InsertFetch(postgres.DataSource, url, parsed: true);
         return await PostgresTestData.Scalar<int>(
             postgres.DataSource,
-            """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title") VALUES (@fetch, @title) RETURNING "Id" """,
+            """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "Policy") VALUES (@fetch, @title, '{}') RETURNING "Id" """,
             new { fetch, title });
     }
 

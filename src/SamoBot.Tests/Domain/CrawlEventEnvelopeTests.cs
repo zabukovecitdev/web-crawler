@@ -7,8 +7,8 @@ namespace SamoBot.Tests.Domain;
 
 public class CrawlEventEnvelopeTests
 {
-    private static JsonElement Build(string? payload, long? id = null) =>
-        JsonSerializer.SerializeToElement(CrawlEventEnvelope.Build(7, "FetchStarted", TestData.Now, payload, id));
+    private static JsonElement Build(string? payload, long id = 12) =>
+        JsonSerializer.SerializeToElement(CrawlEventEnvelope.Build(id, 7, "FetchStarted", TestData.Now, payload));
 
     [Fact]
     public void FlattensThePayloadNextToTheEnvelopeFields()
@@ -21,11 +21,10 @@ public class CrawlEventEnvelopeTests
         json.GetProperty("url").GetString().Should().Be("https://a.example/");
         json.GetProperty("depth").GetInt32().Should().Be(1);
         json.TryGetProperty("payload", out _).Should().BeFalse();
-        json.TryGetProperty("id", out _).Should().BeFalse();
     }
 
     [Fact]
-    public void AddsTheIdWhenTheEventIsStored() => Build("{}", 12).GetProperty("id").GetInt64().Should().Be(12);
+    public void AlwaysCarriesTheStoredId() => Build("{}", 12).GetProperty("id").GetInt64().Should().Be(12);
 
     [Fact]
     public void ReservedNamesInThePayloadDoNotWin()
@@ -44,7 +43,7 @@ public class CrawlEventEnvelopeTests
     [InlineData("not json")]
     [InlineData("[1,2]")]
     public void ABadPayloadGivesJustTheEnvelopeFields(string? payload) =>
-        Build(payload).EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("crawlJobId", "eventType", "at");
+        Build(payload).EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("id", "crawlJobId", "eventType", "at");
 
     [Fact]
     public void KeepsNullFields() =>

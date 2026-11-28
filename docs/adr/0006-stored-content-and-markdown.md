@@ -13,10 +13,23 @@ Status: Accepted
   (`Vary: Accept`) then sends HTML when it has some.
 - `HttpFetcher` reads at most 5 MB of a body (`MaxBodyBytes`) and stops reading at that limit.
 
-**Object names (`ObjectNameGenerator`, `MinioContentStore`).**
-- The object name comes from the URL (host, sanitised path and a SHA-256 of the URL), not from the fetch. A recrawl overwrites
-  the object, so every `UrlFetches` row of a URL points at the newest body.
-- `MinioContentStore.Save` gives every name the `.html` extension, whatever the type. The stored Content-Type tells the formats apart.
+**Object overwrite.** The object name comes from the URL (host, sanitised path and a SHA-256 of the URL), not from the fetch. A
+recrawl overwrites the object, so every `UrlFetches` row of a URL points at the newest body. The extension is decided below.
+
+**Body cap (`HttpFetcher.MaxBodyBytes`, `FetchResponse.BodyTruncated`).** Both fetchers keep at most 5 MB of a body: the HTTP
+fetcher stops reading there, and the browser fetcher cuts the rendered HTML. `BodyReader` probes one byte past the cap, so a body of
+exactly 5 MB is not marked as cut. The fetch records `BodyTruncated`. The content and Markdown endpoints report the flag of the
+stored copy they serve as `X-Content-Cut-At-Crawl`, which can be an older fetch than the latest one, so the dashboard never needs to
+know the cap. Migration 028 marks older fetches of exactly 5 MB as cut, the best guess for them. Before that, only the HTTP fetcher
+had a cap.
+
+**Object names (`ObjectNameGenerator`, `StoredMediaTypes.FileExtension`).** An object is named `host/path/sha256(url).ext`, or
+`sha256(url).ext` at the bucket root when the URL does not parse. The store gets `FetchResponse.StoredContentType`: the
+Content-Type header, or `text/html` when the body sniffs as HTML under a type other than HTML or Markdown, which is the same
+decision the parser and the API make (a Markdown body stays Markdown even when it mentions `<html`). The extension (`.md`, `.txt`, `.html`) and the object's metadata both follow it, so a `text/plain` body that is really
+HTML is stored as `.html` with type `text/html`. `UrlFetches.ContentType` keeps the header the server sent. The URL path never
+decides the extension. Objects stored before this rule keep their `.html`
+names, because readers find a body through `UrlFetches.ObjectName` and never by building a name.
 
 **Fetcher choice (`ChromeRenderingOptions.IsAvailable`).** The browser fetcher is in use only when it is enabled and has a
 CDP endpoint. Otherwise the HTTP fetcher is used.

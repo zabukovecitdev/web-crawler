@@ -31,20 +31,7 @@ internal static class ResponseHeadersJson
 
 internal static class PagePolicyJson
 {
-    public static PagePolicy Read(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return PagePolicy.Default;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<PagePolicy>(json, JsonDefaults.Options) ?? PagePolicy.Default;
-        }
-        catch (JsonException)
-        {
-            return PagePolicy.Default;
-        }
-    }
+    public static PagePolicy Read(string json) =>
+        JsonSerializer.Deserialize<PagePolicy>(json, JsonDefaults.Options)
+        ?? throw new JsonException("A stored page policy is the JSON null literal.");
 }

@@ -13,7 +13,8 @@ namespace SamoBot.Tests.Api;
 public class PagesControllerTests
 {
     private sealed class FakePageReader(
-        string? objectName, PagedResult<PageLinkItem>? links = null, PagePolicy? policy = null, string? contentType = "text/html") : IPageReader
+        string? objectName, PagedResult<PageLinkItem>? links = null, PagePolicy? policy = null, string? contentType = "text/html", bool cutAtCrawl = false)
+        : IPageReader
     {
         public LinkQuery? LastLinkQuery { get; private set; }
 
@@ -29,7 +30,7 @@ public class PagesControllerTests
         public Task<PageDetail?> FindPage(int id, CancellationToken ct) => throw new NotSupportedException();
 
         public Task<StoredCopy?> FindStoredCopy(int id, CancellationToken ct) =>
-            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, new Uri("https://example.com/page"), policy ?? PagePolicy.Default, contentType));
+            Task.FromResult(objectName is null ? null : new StoredCopy(objectName, new Uri("https://example.com/page"), policy ?? PagePolicy.Default, contentType, cutAtCrawl));
     }
 
     private static PagesController Controller(
@@ -54,6 +55,19 @@ public class PagesControllerTests
         headers["Content-Security-Policy"].ToString().Should().Be("default-src 'none'; sandbox");
         headers["Content-Disposition"].ToString().Should().StartWith("inline").And.Contain("page-7.txt");
         headers[StoredContent.TruncatedHeader].ToString().Should().Be("false");
+        headers[StoredContent.CutAtCrawlHeader].ToString().Should().Be("false");
+    }
+
+    [Fact]
+    public async Task ContentSaysWhenTheCrawlerCutTheStoredCopy()
+    {
+        var store = new FakeContentStore();
+        store.Put("obj", "<html>");
+        var controller = Controller("obj", store, new FakePageReader("obj", cutAtCrawl: true));
+
+        await controller.GetContent(7, default);
+
+        controller.Response.Headers[StoredContent.CutAtCrawlHeader].ToString().Should().Be("true");
     }
 
     [Fact]

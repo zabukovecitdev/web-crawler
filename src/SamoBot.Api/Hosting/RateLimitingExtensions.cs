@@ -18,8 +18,9 @@ public static partial class RateLimitingExtensions
 
     public static IServiceCollection AddSamoBotRateLimiting(this IServiceCollection services, IConfiguration configuration)
     {
-        var limits = configuration.GetSection(RateLimitOptions.SectionName).Get<RateLimitOptions>() ?? new RateLimitOptions();
+        var limits = RateLimitOptions.From(configuration.GetSection(RateLimitOptions.SectionName));
         limits.Validate();
+        services.AddSingleton(limits);
 
         services.AddRateLimiter(options =>
         {
@@ -35,13 +36,27 @@ public static partial class RateLimitingExtensions
 
     public static IApplicationBuilder UseSamoBotRateLimiting(this IApplicationBuilder app) => app.UseRateLimiter();
 
+    public static void LogIfLegacyRateLimitKey(this IServiceProvider services)
+    {
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("SamoBot.Api.RateLimiting");
+        switch (services.GetRequiredService<RateLimitOptions>().LegacyUserKey)
+        {
+            case LegacyKeyUse.Used:
+                LogLegacyKeyUsed(logger);
+                break;
+            case LegacyKeyUse.Ignored:
+                LogLegacyKeyIgnored(logger);
+                break;
+        }
+    }
+
     private static RateLimitPartition<string> Partition(HttpContext context, RateLimitOptions limits)
     {
         var signedIn = context.User.Identity?.IsAuthenticated == true;
         var user = signedIn ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
         if (user is not null)
         {
-            return Token($"user:{user}", limits.PermitsPerMinute);
+            return Token($"user:{user}", limits.UserPermitsPerMinute);
         }
 
         return context.Request.Headers.ContainsKey(ApiKeyAuthenticationHandler.HeaderName)
@@ -102,33 +117,16 @@ public static partial class RateLimitingExtensions
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Rate limit exceeded for {Path}.")]
     private static partial void LogRejected(ILogger logger, string path);
-}
 
-public sealed class RateLimitOptions
-{
-    public const string SectionName = "RateLimiting";
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Warning,
+        Message = "RateLimiting:PermitsPerMinute is deprecated and will be removed. Rename it to RateLimiting:UserPermitsPerMinute.")]
+    private static partial void LogLegacyKeyUsed(ILogger logger);
 
-    public int PermitsPerMinute { get; set; } = 300;
-
-    public int AnonymousPermitsPerMinute { get; set; } = 120;
-
-    public int SignInPermitsPerMinute { get; set; } = 10;
-
-    public int ApiKeyFailuresPerMinute { get; set; } = 10;
-
-    public void Validate()
-    {
-        Require(PermitsPerMinute, nameof(PermitsPerMinute));
-        Require(AnonymousPermitsPerMinute, nameof(AnonymousPermitsPerMinute));
-        Require(SignInPermitsPerMinute, nameof(SignInPermitsPerMinute));
-        Require(ApiKeyFailuresPerMinute, nameof(ApiKeyFailuresPerMinute));
-    }
-
-    private static void Require(int value, string name)
-    {
-        if (value < 1)
-        {
-            throw new InvalidOperationException($"{SectionName}:{name} must be at least 1.");
-        }
-    }
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Warning,
+        Message = "RateLimiting:PermitsPerMinute is ignored because RateLimiting:UserPermitsPerMinute is set. Remove the deprecated key.")]
+    private static partial void LogLegacyKeyIgnored(ILogger logger);
 }

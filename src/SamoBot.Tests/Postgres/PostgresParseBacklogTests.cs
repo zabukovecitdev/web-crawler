@@ -133,19 +133,4 @@ public class PostgresParseBacklogTests(PostgresFixture postgres) : IAsyncLifetim
         var pending = await new PostgresIndexBacklog(postgres.DataSource, _time).Claim(10, default);
         pending.Single().Policy.Should().BeEquivalentTo(policy);
     }
-
-    [Fact]
-    public async Task APageParsedBeforePoliciesHasTheDefaultPolicyInTheIndexBacklog()
-    {
-        var (_, urlId) = await JobWithUrl();
-        var fetchId = await PostgresTestData.InsertFetch(postgres.DataSource, urlId);
-        await PostgresTestData.Scalar<int>(
-            postgres.DataSource,
-            """INSERT INTO "ParsedDocuments" ("UrlFetchId", "Title", "ParsedAt") VALUES (@fetchId, 'Old', now()) RETURNING "Id" """,
-            new { fetchId });
-
-        var pending = await new PostgresIndexBacklog(postgres.DataSource, _time).Claim(10, default);
-
-        pending.Single().Policy.Should().Be(PagePolicy.Default);
-    }
 }

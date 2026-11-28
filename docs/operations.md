@@ -76,7 +76,7 @@ Token buckets in the API (`Hosting/RateLimitingExtensions.cs`, section `RateLimi
 
 | Setting (`RateLimiting:`) | Default | Applies to |
 |---|---|---|
-| `PermitsPerMinute` | 300 | Each signed-in user |
+| `UserPermitsPerMinute` | 300 | Each signed-in user. The deprecated `PermitsPerMinute` is still read when this one is not set, and logs a warning at startup. |
 | `AnonymousPermitsPerMinute` | 120 | Each anonymous client address |
 | `SignInPermitsPerMinute` | 10 | `POST /api/v1/auth/google` |
 | `ApiKeyFailuresPerMinute` | 10 | An `X-Api-Key` that does not match |
