@@ -80,7 +80,7 @@ public sealed class PostgresUrlFrontier(NpgsqlDataSource dataSource, TimeProvide
     private const string RequeueSql = $"""
         UPDATE "{TableNames.DiscoveredUrls}"
         SET "Status" = 'Idle', "NextCrawlAt" = @Now, "FailCount" = 0, "FailReason" = NULL, "LeaseUntil" = NULL,
-            "LastCrawlAt" = NULL, "LastFetchId" = NULL, "StatusUpdatedAt" = @Now
+            "LastCrawlAt" = NULL, "StatusUpdatedAt" = @Now
         WHERE "CrawlJobId" = @JobId
           AND "Status" <> 'InFlight'
           AND (@UrlId::int IS NULL OR "Id" = @UrlId)
